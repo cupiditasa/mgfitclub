@@ -94,7 +94,8 @@ test("health and role-aware test login", async () => {
   const { env } = envFactory();
   const health = await call(env, "/health");
   assert.equal(health.status, 200);
-  assert.equal(health.body.version, "20260911");
+  assert.equal(health.body.version, "20260912-sms-template-1");
+  assert.deepEqual(health.body.otp, { provider: "sms.ir", method: "verify", templateId: 791767, parameter: "CODE" });
   const login = await call(env, "/api/auth/test-login", {
     method: "POST",
     body: JSON.stringify({ username: "admin", password: "admin" }),
@@ -109,17 +110,21 @@ test("health and role-aware test login", async () => {
   assert.equal(dashboard.body.user.role, "admin");
 });
 
-test("OTP is delivered, hashed and produces an athlete session", async () => {
+test("OTP uses only the approved template, is hashed and produces an athlete session", async () => {
   const { env, DB } = envFactory();
   let sentCode = "";
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (url, options) => {
     assert.equal(url, "https://api.sms.ir/v1/send/verify");
+    assert.equal(options.method, "POST");
+    assert.equal(options.headers["X-API-KEY"], "test-key");
     const payload = JSON.parse(options.body);
+    assert.deepEqual(Object.keys(payload).sort(), ["Mobile", "Parameters", "TemplateId"]);
     assert.equal(payload.Mobile, "09170000009");
     assert.equal(payload.TemplateId, 791767);
     sentCode = payload.Parameters.find((item) => item.name === "CODE")?.value || "";
-    return new Response(JSON.stringify({ status: 1, message: "موفق" }), { status: 200 });
+    assert.deepEqual(payload.Parameters, [{ name: "CODE", value: sentCode }]);
+    return new Response(JSON.stringify({ status: 1, data: { messageId: 9001001 } }), { status: 200 });
   };
   try {
     const requested = await call(env, "/api/auth/request-code", {
@@ -133,6 +138,12 @@ test("OTP is delivered, hashed and produces an athlete session", async () => {
     assert.equal(stored.results.length, 1);
     assert.equal(stored.results[0].delivery_status, "sent");
     assert.notEqual(stored.results[0].code_hash, sentCode);
+    assert.equal(requested.body.devCode, undefined);
+    const log = DB.prepare("SELECT metadata_json FROM audit_logs WHERE action='auth_code_requested'").first();
+    assert.deepEqual(JSON.parse(log.metadata_json), {
+      channel: "phone", sent: true, smsMethod: "verify", templateId: 791767,
+      providerStatus: 1, messageId: 9001001, failureReason: null,
+    });
     const code = sentCode;
     const verified = await call(env, "/api/auth/verify-code", {
       method: "POST",
@@ -149,6 +160,108 @@ test("OTP is delivered, hashed and produces an athlete session", async () => {
     assert.equal(replay.status, 401);
   } finally {
     globalThis.fetch = originalFetch;
+  }
+});
+
+test("approved verification template needs no private line or template binding", async () => {
+  const { env } = envFactory();
+  delete env.SMS_TEMPLATE_ID;
+  delete env.SMS_LINE_NUMBER;
+  const originalFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async (url, options) => {
+    calls++;
+    assert.equal(url, "https://api.sms.ir/v1/send/verify");
+    const payload = JSON.parse(options.body);
+    assert.equal(payload.TemplateId, 791767);
+    assert.equal(payload.Mobile, "09170000009");
+    assert.deepEqual(Object.keys(payload).sort(), ["Mobile", "Parameters", "TemplateId"]);
+    return new Response(JSON.stringify({ status: 1, data: { messageId: 9001002 } }));
+  };
+  try {
+    const result = await call(env, "/api/auth/request-code", {
+      method: "POST", body: JSON.stringify({ phone: "۰۹۱۷۰۰۰۰۰۰۹" }),
+      headers: { "content-type": "application/json" },
+    });
+    assert.equal(result.status, 202);
+    assert.equal(calls, 1);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
+test("a different template or missing API key cannot trigger SMS or a fallback", async (t) => {
+  for (const [name, overrides] of [
+    ["wrong template", { SMS_TEMPLATE_ID: "123456" }],
+    ["invalid template", { SMS_TEMPLATE_ID: "invalid" }],
+    ["missing API key", { SMS_API_KEY: "" }],
+  ]) {
+    await t.test(name, async () => {
+      const { env, DB } = envFactory();
+      Object.assign(env, overrides);
+      const originalFetch = globalThis.fetch;
+      let calls = 0;
+      globalThis.fetch = async () => { calls++; throw new Error("Unexpected SMS request"); };
+      try {
+        const result = await call(env, "/api/auth/request-code", {
+          method: "POST", body: JSON.stringify({ phone: "09170000009" }),
+          headers: { "content-type": "application/json" },
+        });
+        assert.equal(result.status, 503);
+        assert.equal(result.body.error, "code_delivery_failed");
+        assert.equal(calls, 0);
+        assert.equal(DB.prepare("SELECT delivery_status FROM login_challenges").first().delivery_status, "failed");
+      } finally { globalThis.fetch = originalFetch; }
+    });
+  }
+});
+
+test("provider failures cannot silently fall back or create a valid login code", async (t) => {
+  const failures = [
+    ["provider rejection", () => new Response(JSON.stringify({ status: 1008, data: null }))],
+    ["HTTP error", () => new Response(JSON.stringify({ status: 1, data: { messageId: 9001003 } }), { status: 503 })],
+    ["missing message ID", () => new Response(JSON.stringify({ status: 1, data: {} }))],
+    ["invalid JSON", () => new Response("not json")],
+    ["null JSON", () => new Response("null")],
+    ["network error", () => { throw new TypeError("fetch failed"); }],
+    ["timeout", () => { throw new DOMException("timed out", "TimeoutError"); }],
+  ];
+  for (const [name, reply] of failures) {
+    await t.test(name, async () => {
+      const { env, DB } = envFactory();
+      const originalFetch = globalThis.fetch;
+      let calls = 0;
+      let capturedCode = "";
+      globalThis.fetch = async (url, options) => {
+        calls++;
+        assert.equal(url, "https://api.sms.ir/v1/send/verify");
+        capturedCode = JSON.parse(options.body).Parameters[0].value;
+        return reply();
+      };
+      try {
+        const requested = await call(env, "/api/auth/request-code", {
+          method: "POST", body: JSON.stringify({ phone: "09170000009" }),
+          headers: { "content-type": "application/json" },
+        });
+        assert.equal(requested.status, 503);
+        assert.equal(requested.body.error, "code_delivery_failed");
+        assert.equal(calls, 1);
+        const challenge = DB.prepare("SELECT id,delivery_status FROM login_challenges").first();
+        assert.equal(challenge.delivery_status, "failed");
+        const verified = await call(env, "/api/auth/verify-code", {
+          method: "POST", body: JSON.stringify({ phone: "09170000009", code: capturedCode, challengeId: challenge.id }),
+          headers: { "content-type": "application/json" },
+        });
+        assert.equal(verified.status, 401);
+        assert.equal(DB.prepare("SELECT COUNT(*) AS count FROM sessions").first().count, 0);
+        const log = JSON.parse(DB.prepare("SELECT metadata_json FROM audit_logs WHERE action='auth_code_requested'").first().metadata_json);
+        assert.equal(log.sent, false);
+        assert.equal(log.smsMethod, "verify");
+        assert.equal(log.templateId, 791767);
+        assert.deepEqual(Object.keys(log).sort(), [
+          "channel", "failureReason", "messageId", "providerStatus", "sent", "smsMethod", "templateId",
+        ]);
+        assert(!JSON.stringify(log).includes(env.SMS_API_KEY));
+      } finally { globalThis.fetch = originalFetch; }
+    });
   }
 });
 
