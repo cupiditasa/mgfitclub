@@ -1,0 +1,562 @@
+/* Elite Coach command center */
+.coach-command {
+  width: min(100%, 900px);
+  margin: 20px auto 0;
+}
+.coach-briefing {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 116px;
+  padding: 22px 190px 22px 28px;
+  border: 1px solid rgba(198, 255, 63, 0.28);
+  border-radius: 30px;
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    rgba(198, 255, 63, 0.18),
+    rgba(15, 25, 12, 0.72) 58%,
+    rgba(7, 11, 7, 0.86)
+  );
+  box-shadow: 0 18px 45px #0007;
+  overflow: hidden;
+}
+.coach-briefing:before {
+  content: "";
+  position: absolute;
+  inset: -55px 25%;
+  border: 1px dashed rgba(198, 255, 63, 0.18);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.coach-briefing-copy {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+.coach-briefing-copy strong {
+  display: block;
+  color: #f8fbf2;
+  font-size: 22px;
+}
+.coach-briefing-copy span {
+  display: block;
+  margin-top: 5px;
+  color: #b8c6b0;
+  font-size: 13px;
+}
+.elite-badge {
+  position: absolute;
+  right: 30px;
+  top: 50%;
+  z-index: 3;
+  transform: translateY(-50%);
+  width: 122px;
+  height: 122px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  border: 2px solid var(--role-accent, #c6ff3f);
+  background: radial-gradient(
+    circle at 35% 25%,
+    rgba(198, 255, 63, 0.34),
+    rgba(29, 48, 17, 0.9) 60%,
+    rgba(6, 10, 6, 0.96)
+  );
+  box-shadow:
+    0 0 0 8px rgba(198, 255, 63, 0.06),
+    0 0 35px rgba(198, 255, 63, 0.18);
+}
+.elite-badge b {
+  display: block;
+  color: var(--role-accent, #c6ff3f);
+  font-size: 18px;
+}
+.elite-badge small {
+  display: block;
+  color: #dbe7d5;
+  font-size: 10px;
+  margin-top: 2px;
+}
+.coach-orbit {
+  position: relative;
+  width: min(90vw, 610px);
+  height: min(90vw, 610px);
+  margin: 30px auto 12px;
+  border: 1px solid rgba(198, 255, 63, 0.2);
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(198, 255, 63, 0.1) 0 17%,
+      transparent 17.5% 37%,
+      rgba(198, 255, 63, 0.045) 37.5% 38%,
+      transparent 38.5%
+    ),
+    radial-gradient(circle, rgba(8, 14, 8, 0.62), rgba(5, 8, 5, 0.18) 72%);
+  box-shadow:
+    inset 0 0 80px #0008,
+    0 24px 65px #0007;
+}
+.coach-orbit:before,
+.coach-orbit:after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.coach-orbit:before {
+  inset: 7%;
+  border: 1px dashed rgba(198, 255, 63, 0.22);
+  animation: coachOrbitSpin 34s linear infinite;
+}
+.coach-orbit:after {
+  inset: 25%;
+  border: 1px solid rgba(198, 255, 63, 0.12);
+}
+@keyframes coachOrbitSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.coach-orbit-node {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(110px, 12vw, 142px);
+  height: clamp(110px, 12vw, 142px);
+  transform: translate(-50%, -50%) rotate(var(--a))
+    translateY(calc(-1 * var(--r))) rotate(calc(-1 * var(--a)));
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 14px;
+  border: 1px solid rgba(198, 255, 63, 0.28);
+  border-radius: 50%;
+  background: rgba(11, 20, 10, 0.78);
+  color: #f6faf2;
+  text-decoration: none;
+  z-index: 2;
+  animation: coachNodeOrbit 32s linear infinite;
+  will-change: transform;
+  backdrop-filter: blur(8px);
+}
+@keyframes coachNodeOrbit {
+  from {
+    transform: translate(-50%, -50%) rotate(var(--a))
+      translateY(calc(-1 * var(--r))) rotate(calc(-1 * var(--a)));
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(calc(var(--a) + 360deg))
+      translateY(calc(-1 * var(--r))) rotate(calc(-360deg - var(--a)));
+  }
+}
+.coach-orbit-node:hover {
+  animation-play-state: paused;
+  transform: translate(-50%, -50%) rotate(var(--a))
+    translateY(calc(-1 * var(--r))) rotate(calc(-1 * var(--a))) scale(1.08);
+}
+.coach-orbit-node i {
+  display: block;
+  font-style: normal;
+  font-size: 25px;
+  color: var(--role-accent, #c6ff3f);
+  margin-bottom: 5px;
+}
+.coach-orbit-node b {
+  display: block;
+  font-size: 13px;
+}
+.coach-orbit-node small {
+  display: block;
+  color: #acbba5;
+  font-size: 10px;
+  margin-top: 3px;
+}
+.coach-orbit-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(168px, 18vw, 210px);
+  height: clamp(168px, 18vw, 210px);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 25px;
+  border: 2px solid var(--role-accent, #c6ff3f);
+  background: radial-gradient(
+    circle at 35% 24%,
+    rgba(198, 255, 63, 0.4),
+    rgba(34, 59, 18, 0.9) 45%,
+    rgba(7, 12, 7, 0.97) 78%
+  );
+  color: #f7faf3;
+  text-decoration: none;
+  z-index: 4;
+  box-shadow:
+    0 0 0 11px rgba(198, 255, 63, 0.06),
+    0 0 50px rgba(198, 255, 63, 0.23);
+  animation: coachPulse 4s ease-in-out infinite;
+}
+.coach-orbit-center i {
+  display: block;
+  font-style: normal;
+  font-size: 35px;
+  color: var(--role-accent, #c6ff3f);
+  margin-bottom: 6px;
+}
+.coach-orbit-center b {
+  display: block;
+  font-size: 18px;
+}
+.coach-orbit-center small {
+  display: block;
+  color: #c1d0bb;
+  font-size: 11px;
+  margin-top: 4px;
+}
+@keyframes coachPulse {
+  50% {
+    box-shadow:
+      0 0 0 16px rgba(198, 255, 63, 0.035),
+      0 0 62px rgba(198, 255, 63, 0.3);
+  }
+}
+.coach-team-meter {
+  width: min(100%, 650px);
+  margin: 10px auto 0;
+  padding: 14px 18px;
+  border: 1px solid rgba(198, 255, 63, 0.2);
+  border-radius: 18px;
+  background: rgba(11, 18, 10, 0.62);
+  text-align: center;
+}
+.coach-team-meter span {
+  color: #b8c6b0;
+  font-size: 12px;
+}
+.coach-team-meter b {
+  color: var(--role-accent, #c6ff3f);
+  font-size: 18px;
+  margin-inline: 5px;
+}
+.coach-team-meter .meter {
+  height: 6px;
+  margin-top: 9px;
+  border-radius: 9px;
+  background: rgba(198, 255, 63, 0.1);
+  overflow: hidden;
+}
+.coach-team-meter .meter i {
+  display: block;
+  width: 78%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #87a94b, var(--role-accent, #c6ff3f));
+  box-shadow: 0 0 16px rgba(198, 255, 63, 0.3);
+}
+.coach-command .activity {
+  margin-top: 20px;
+}
+.coach-command .title {
+  margin-top: 22px;
+}
+@media (max-width: 720px) {
+  .coach-briefing {
+    padding: 20px 20px 20px 128px;
+    min-height: 108px;
+  }
+  .elite-badge {
+    right: 14px;
+    width: 94px;
+    height: 94px;
+  }
+  .elite-badge b {
+    font-size: 14px;
+  }
+  .coach-orbit {
+    width: min(92vw, 480px);
+    height: min(92vw, 480px);
+    margin-top: 24px;
+  }
+  .coach-orbit-node {
+    --r: min(30vw, 150px) !important;
+    width: clamp(86px, 22vw, 112px);
+    height: clamp(86px, 22vw, 112px);
+    padding: 9px;
+  }
+  .coach-orbit-node i {
+    font-size: 20px;
+    margin-bottom: 3px;
+  }
+  .coach-orbit-node b {
+    font-size: 10px;
+  }
+  .coach-orbit-node small {
+    font-size: 8px;
+  }
+  .coach-orbit-center {
+    width: clamp(124px, 31vw, 154px);
+    height: clamp(124px, 31vw, 154px);
+    padding: 18px;
+  }
+  .coach-orbit-center i {
+    font-size: 27px;
+  }
+  .coach-orbit-center b {
+    font-size: 13px;
+  }
+  .coach-orbit-center small {
+    font-size: 9px;
+  }
+}
+@media (max-width: 460px) {
+  .coach-briefing {
+    padding: 18px 14px 86px;
+    justify-content: center;
+  }
+  .elite-badge {
+    right: 50%;
+    top: auto;
+    bottom: 10px;
+    transform: translateX(50%);
+    width: 66px;
+    height: 66px;
+  }
+  .elite-badge b {
+    font-size: 11px;
+  }
+  .elite-badge small {
+    font-size: 7px;
+  }
+  .coach-orbit {
+    width: calc(100vw - 42px);
+    height: calc(100vw - 42px);
+  }
+  .coach-orbit-node {
+    width: 78px;
+    height: 78px;
+  }
+  .coach-orbit-center {
+    width: 108px;
+    height: 108px;
+  }
+  .coach-orbit-center i {
+    font-size: 22px;
+  }
+  .coach-orbit-center b {
+    font-size: 11px;
+  }
+  .coach-orbit-center small {
+    font-size: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coach-orbit:before,
+  .coach-orbit-node,
+  .coach-orbit-center {
+    animation: none;
+  }
+}
+.coach-app {
+  max-width: none;
+  width: 100%;
+  padding-right: 88px;
+  box-sizing: border-box;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+.coach-app .hero {
+  background: transparent !important;
+  border-bottom: 1px solid #c6ff3f22;
+}
+.coach-app .content {
+  max-width: 1100px;
+  margin-inline: auto;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+.coach-app .tabs,
+.coach-app .welcome,
+.coach-app .stat,
+.coach-app .activity {
+  background: rgba(8, 12, 8, 0.28) !important;
+  backdrop-filter: blur(8px);
+}
+.coach-app > .hero,
+.coach-app .tabs,
+.coach-app .coach-briefing,
+.coach-team-meter {
+  display: none !important;
+}
+.coach-app .content {
+  margin-top: 0;
+  padding-top: 18px;
+}
+.coach-app .stats {
+  width: min(100%, 720px);
+  margin: 0 auto 8px;
+  gap: 8px;
+}
+.coach-app .stat {
+  padding: 10px 8px;
+  border-radius: 16px;
+  text-align: center;
+}
+.coach-app .stat small {
+  font-size: 10px;
+}
+.coach-app .stat strong {
+  font-size: 20px;
+  margin-top: 2px;
+}
+.coach-app .title {
+  max-width: 870px;
+  margin: 10px auto 6px;
+  font-size: 12px;
+}
+.coach-app .coach-orbit {
+  margin: 8px auto 10px;
+  width: min(88vw, 560px);
+  height: min(88vw, 560px);
+  background: transparent;
+  box-shadow: none;
+}
+.coach-app .activity {
+  max-width: 870px;
+  margin: 8px auto 0 !important;
+  max-height: 145px;
+  overflow: auto;
+  padding: 10px 16px;
+}
+.coach-app .activity-row {
+  padding: 8px 0;
+  font-size: 12px;
+}
+.coach-app .coach-orbit.game-solved {
+  border-color: #ff334d;
+  box-shadow: 0 0 55px #ff334d55;
+}
+.coach-app .coach-orbit.game-solved .coach-orbit-center,
+.coach-app .coach-orbit.game-solved .coach-orbit-node {
+  border-color: #ff334d;
+}
+.coach-app .coach-orbit.game-solved .coach-orbit-center i,
+.coach-app .coach-orbit.game-solved .coach-orbit-node i {
+  color: #ff334d;
+}
+.coach-rail {
+  position: fixed;
+  z-index: 20;
+  right: 12px;
+  top: 12px;
+  width: 64px;
+  height: calc(100dvh - 24px);
+  border: 1px solid #c6ff3f55;
+  border-radius: 28px;
+  background: rgba(8, 12, 8, 0.55);
+  backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+}
+.coach-rail button,
+.coach-rail a {
+  width: 44px;
+  height: 44px;
+  border-radius: 15px;
+  border: 1px solid #c6ff3f33;
+  background: #c6ff3f12;
+  color: #dfffa0;
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+  font-size: 22px;
+}
+.coach-rail-toggle {
+  cursor: pointer;
+}
+.coach-rail a {
+  gap: 10px;
+  overflow: hidden;
+}
+.coach-rail-label {
+  display: none;
+  font-size: 12px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.coach-rail-open .coach-rail-label {
+  display: block;
+}
+.coach-rail-open .coach-rail a {
+  justify-content: flex-start;
+}
+.coach-rail-open .coach-rail a span {
+  flex: 0 0 28px;
+  text-align: center;
+}
+.coach-rail-open .coach-rail a:nth-of-type(1)::after {
+  content: "داشبورد";
+}
+.coach-rail-open .coach-rail a:nth-of-type(2)::after {
+  content: "ساخت برنامه";
+}
+.coach-rail-open .coach-rail a:nth-of-type(3)::after {
+  content: "برنامه‌ها";
+}
+.coach-rail-open .coach-rail a:nth-of-type(4)::after {
+  content: "تراکنش‌ها";
+}
+.coach-rail-open .coach-rail a:nth-of-type(5)::after {
+  content: "آموزش";
+}
+.coach-rail-open .coach-rail {
+  width: 220px;
+  align-items: stretch;
+  padding: 8px;
+}
+.coach-rail-open .coach-rail a {
+  width: auto;
+  padding-inline: 18px;
+  justify-content: flex-start;
+}
+.orbit-flipped {
+  filter: hue-rotate(55deg);
+  box-shadow: 0 0 28px #c6ff3f99 !important;
+}
+@media (max-width: 720px) {
+  .coach-app {
+    padding-right: 0;
+    padding-bottom: 70px;
+  }
+  .coach-rail {
+    right: 8px;
+    top: auto;
+    bottom: 8px;
+    width: calc(100% - 16px);
+    height: 58px;
+    border-radius: 20px;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 6px;
+  }
+  .coach-rail button,
+  .coach-rail a {
+    width: 42px;
+    height: 42px;
+  }
+  .coach-rail-open .coach-rail {
+    width: calc(100% - 16px);
+    height: auto;
+    flex-wrap: wrap;
+  }
+  .coach-app .content {
+    margin-inline: 12px;
+  }
+}

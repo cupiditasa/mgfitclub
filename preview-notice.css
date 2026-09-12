@@ -1,0 +1,185 @@
+.mg-preview-notice {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(2, 5, 3, 0.7);
+  backdrop-filter: blur(12px) saturate(0.9);
+  -webkit-backdrop-filter: blur(12px) saturate(0.9);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.28s ease, visibility 0.28s ease;
+  direction: rtl;
+}
+
+.mg-preview-notice::before,
+.mg-preview-notice::after {
+  content: "";
+  position: absolute;
+  width: 34vw;
+  height: 34vw;
+  max-width: 360px;
+  max-height: 360px;
+  border: 1px solid rgba(198, 255, 63, 0.16);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.mg-preview-notice::before {
+  transform: translate(-38%, -22%);
+  box-shadow: 0 0 80px rgba(198, 255, 63, 0.08);
+}
+
+.mg-preview-notice::after {
+  transform: translate(38%, 22%) scale(0.72);
+  border-color: rgba(198, 255, 63, 0.1);
+}
+
+.mg-preview-notice.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mg-preview-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 480px);
+  overflow: hidden;
+  padding: clamp(28px, 5vw, 44px) clamp(22px, 5vw, 42px) 26px;
+  border: 1px solid rgba(198, 255, 63, 0.42);
+  border-radius: 28px;
+  background:
+    linear-gradient(145deg, rgba(25, 37, 20, 0.9), rgba(7, 12, 8, 0.78)),
+    radial-gradient(circle at 18% 0%, rgba(198, 255, 63, 0.2), transparent 48%);
+  box-shadow:
+    0 28px 90px rgba(0, 0, 0, 0.58),
+    0 0 0 1px rgba(255, 255, 255, 0.035) inset,
+    0 0 54px rgba(198, 255, 63, 0.08);
+  color: #f5f7f0;
+  text-align: center;
+  transform: translateY(16px) scale(0.96);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mg-preview-notice.is-visible .mg-preview-dialog {
+  transform: translateY(0) scale(1);
+}
+
+.mg-preview-mark {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 18px;
+  border: 1px solid rgba(198, 255, 63, 0.8);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #dcff7e, #9bd92a 58%, #507c18);
+  box-shadow: 0 0 30px rgba(198, 255, 63, 0.24);
+  color: #0a1008;
+  font: 900 25px/1 Arial, sans-serif;
+}
+
+.mg-preview-kicker {
+  margin: 0 0 10px;
+  color: #c6ff3f;
+  font: 700 0.72rem/1.2 Tahoma, sans-serif;
+  letter-spacing: 0.08em;
+}
+
+.mg-preview-title {
+  margin: 0;
+  color: #f7f9f4;
+  font: 800 clamp(1.2rem, 3vw, 1.55rem)/1.5 inherit;
+}
+
+.mg-preview-copy {
+  margin: 14px auto 0;
+  max-width: 34rem;
+  color: #c4cec0;
+  font: 500 0.95rem/2 inherit;
+}
+
+.mg-preview-signature {
+  margin: 15px 0 0;
+  color: #9faf98;
+  font-size: 0.82rem;
+}
+
+.mg-preview-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.mg-preview-confirm {
+  min-width: 154px;
+  padding: 12px 24px;
+  border: 1px solid rgba(198, 255, 63, 0.9);
+  border-radius: 999px;
+  background: #c6ff3f;
+  color: #10170c;
+  cursor: pointer;
+  font: 800 0.9rem/1.2 inherit;
+  box-shadow: 0 10px 28px rgba(198, 255, 63, 0.16);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.mg-preview-confirm:hover,
+.mg-preview-confirm:focus-visible {
+  background: #d8ff79;
+  box-shadow: 0 14px 34px rgba(198, 255, 63, 0.24);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.mg-preview-close {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: #dbe6d5;
+  cursor: pointer;
+  font: 500 1.25rem/1 Arial, sans-serif;
+}
+
+.mg-preview-close:hover,
+.mg-preview-close:focus-visible {
+  border-color: rgba(198, 255, 63, 0.55);
+  color: #c6ff3f;
+  outline: none;
+}
+
+html.mg-preview-lock,
+html.mg-preview-lock body {
+  overflow: hidden;
+}
+
+@media (max-width: 520px) {
+  .mg-preview-notice {
+    padding: 14px;
+  }
+
+  .mg-preview-dialog {
+    border-radius: 23px;
+  }
+
+  .mg-preview-copy {
+    font-size: 0.88rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-preview-notice,
+  .mg-preview-dialog,
+  .mg-preview-confirm {
+    transition: none;
+  }
+}

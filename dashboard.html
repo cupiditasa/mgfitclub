@@ -1,0 +1,2311 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title>داشبورد ورزشکار | MG FitClub</title>
+    <style>
+      @font-face {
+        font-family: "B Esfehan";
+        src: url("./assets/fonts/B-Esfehan-Bold.ttf?v=20260905")
+          format("truetype");
+        font-weight: 100 900;
+        font-display: swap;
+      }
+      :root {
+        --purple: #7040e8;
+        --purple2: #8a4cf3;
+        --green: #25c978;
+        --ink: #342d55;
+        --muted: #8c879e;
+        --bg: #f5f6fb;
+        --line: #eeeaf6;
+        --shadow: 0 16px 38px rgba(63, 39, 139, 0.12);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "B Esfehan", Tahoma, sans-serif;
+      }
+      body {
+        overflow-x: hidden;
+      }
+      .app {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        min-height: 100vh;
+        transition: padding-right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      .topbar {
+        height: 88px;
+        padding: 18px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff;
+        background: linear-gradient(135deg, #5f31d8, #8a4cf3);
+        border-radius: 0 0 30px 30px;
+      }
+      .topbar h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+      .topbar p {
+        margin: 2px 0 0;
+        color: #eadfff;
+        font-size: 13px;
+      }
+      .icon-btn {
+        width: 46px;
+        height: 46px;
+        border: 0;
+        border-radius: 15px;
+        background: #ffffff20;
+        color: #fff;
+        font-size: 24px;
+        cursor: pointer;
+      }
+      .content {
+        padding: 0 18px 38px;
+      }
+      .hero-card {
+        margin: -18px 0 18px;
+        padding: 22px;
+        border-radius: 25px;
+        background: linear-gradient(135deg, #5f31d8, #8849f1);
+        color: #fff;
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .hero-copy strong {
+        display: block;
+        font-size: 23px;
+      }
+      .hero-copy span {
+        display: block;
+        margin-top: 4px;
+        color: #eadfff;
+        font-size: 14px;
+      }
+      .avatar {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        border: 3px solid #fff;
+        background: linear-gradient(135deg, #d8c6ff, #6b37dc);
+        font-size: 28px;
+        flex: 0 0 auto;
+      }
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 22px 2px 11px;
+      }
+      .section-head h2 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .section-head a {
+        color: var(--purple);
+        font-size: 13px;
+        text-decoration: none;
+      }
+      .gallery {
+        position: relative;
+        overflow: hidden;
+        height: 185px;
+        border-radius: 23px;
+        box-shadow: var(--shadow);
+        background: #25104f;
+      }
+      .gallery-track {
+        height: 100%;
+        display: flex;
+        direction: ltr;
+        transition: transform 0.45s cubic-bezier(0.2, 0.75, 0.2, 1);
+      }
+      .gallery-slide {
+        position: relative;
+        min-width: 100%;
+        height: 100%;
+      }
+      .gallery-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .gallery-slide:after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(0deg, #16072aaa, transparent 60%);
+      }
+      .gallery-caption {
+        position: absolute;
+        z-index: 1;
+        right: 20px;
+        bottom: 17px;
+        color: #fff;
+        font-size: 16px;
+      }
+      .gallery-nav {
+        position: absolute;
+        z-index: 2;
+        left: 12px;
+        bottom: 13px;
+        display: flex;
+        gap: 6px;
+      }
+      .gallery-nav button {
+        width: 30px;
+        height: 30px;
+        border: 0;
+        border-radius: 50%;
+        background: #ffffff33;
+        color: #fff;
+        cursor: pointer;
+      }
+      .dots {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      .dots i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #d7d1e7;
+      }
+      .dots i.active {
+        width: 22px;
+        border-radius: 8px;
+        background: var(--purple);
+      }
+      .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .quick {
+        min-height: 136px;
+        padding: 17px 10px;
+        border: 1px solid #e8e2fb;
+        border-radius: 21px;
+        background: #fff;
+        box-shadow: var(--shadow);
+        text-align: center;
+        color: var(--ink);
+        text-decoration: none;
+      }
+      .quick .qicon {
+        width: 43px;
+        height: 43px;
+        margin: auto;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: #eee8ff;
+        color: var(--purple);
+        font-size: 23px;
+      }
+      .quick h3 {
+        margin: 9px 0 3px;
+        font-size: 14px;
+      }
+      .quick small {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .chat {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 15px 16px;
+        margin-top: 17px;
+        background: #fff;
+        border-radius: 19px;
+        box-shadow: var(--shadow);
+      }
+      .chat p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .chat strong {
+        display: block;
+        color: var(--ink);
+        font-size: 15px;
+      }
+      .chat a {
+        padding: 11px 14px;
+        border-radius: 13px;
+        background: var(--green);
+        color: #fff;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        background: #160c3970;
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.25s;
+      }
+      .drawer {
+        position: fixed;
+        z-index: 21;
+        top: 0;
+        right: 0;
+        width: min(88vw, 360px);
+        height: 100dvh;
+        padding: 22px 18px;
+        background: #fff;
+        box-shadow: -18px 0 40px #26104a25;
+        transform: translateX(105%);
+        transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        overflow: auto;
+      }
+      .drawer.open {
+        transform: translateX(0);
+      }
+      .drawer-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .drawer-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+      .drawer-head h2 {
+        margin: 0;
+        color: var(--purple);
+      }
+      .close {
+        border: 0;
+        background: transparent;
+        color: var(--purple);
+        font-size: 31px;
+        cursor: pointer;
+      }
+      .profile-card {
+        padding: 20px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #612fd6, #8a4cf3);
+        color: #fff;
+      }
+      .profile-card .avatar {
+        margin-bottom: 12px;
+      }
+      .profile-card strong {
+        display: block;
+        font-size: 21px;
+      }
+      .profile-card span {
+        display: block;
+        margin-top: 3px;
+        color: #eadfff;
+      }
+      .wallet {
+        margin-top: 15px;
+        padding-top: 12px;
+        border-top: 1px solid #ffffff44;
+        display: flex;
+        justify-content: space-between;
+      }
+      .menu {
+        display: grid;
+        gap: 5px;
+        margin-top: 18px;
+      }
+      .menu button {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        width: 100%;
+        padding: 14px 10px;
+        border: 0;
+        border-radius: 13px;
+        background: transparent;
+        color: var(--ink);
+        font: inherit;
+        text-align: right;
+        cursor: pointer;
+      }
+      .menu button:hover,
+      .menu button.active {
+        background: #f0ebff;
+        color: var(--purple);
+      }
+      .menu .mi {
+        width: 30px;
+        text-align: center;
+        font-size: 21px;
+      }
+      .logout {
+        margin-top: 20px;
+        width: 100%;
+        padding: 13px;
+        border: 0;
+        border-radius: 14px;
+        background: #fff0ef;
+        color: #e45650;
+        font: inherit;
+        cursor: pointer;
+      }
+      .pane {
+        display: none;
+      }
+      .pane.active {
+        display: block;
+      }
+      .panel-card {
+        padding: 22px;
+        background: #fff;
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        margin-top: 17px;
+      }
+      .panel-card h2 {
+        margin: 0 0 8px;
+      }
+      .panel-card p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.9;
+      }
+      .primary {
+        display: inline-block;
+        margin-top: 18px;
+        padding: 12px 16px;
+        border-radius: 13px;
+        background: var(--purple);
+        color: #fff;
+        text-decoration: none;
+      }
+      .form-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .form-row input {
+        min-width: 0;
+        flex: 1;
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        font: inherit;
+      }
+      .form-row button {
+        padding: 12px 16px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--green);
+        color: #fff;
+        font: inherit;
+      }
+      @media (min-width: 900px) {
+        body {
+          --rail: 88px;
+        }
+        .app {
+          padding-right: var(--rail);
+        }
+        body.menu-expanded .app {
+          padding-right: 334px;
+        }
+        .content {
+          padding: 0 34px 48px;
+        }
+        .topbar {
+          padding-inline: 34px;
+        }
+        .quick-grid {
+          grid-template-columns: repeat(6, 1fr);
+        }
+        .quick {
+          min-height: 145px;
+        }
+        .gallery {
+          height: 260px;
+        }
+        .icon-btn#menuButton {
+          position: fixed;
+          z-index: 24;
+          top: 16px;
+          right: 23px;
+          width: 54px;
+          height: 54px;
+          border-radius: 17px;
+          background: linear-gradient(135deg, #6335db, #8a4cf3);
+          box-shadow: 0 10px 25px #4b24b044;
+        }
+        .drawer {
+          display: block;
+          position: fixed;
+          z-index: 22;
+          transform: none;
+          right: 12px;
+          top: 80px;
+          width: 64px;
+          height: calc(100dvh - 94px);
+          padding: 10px 7px;
+          border-radius: 23px;
+          background: #fff;
+          box-shadow: 0 16px 45px #26104a22;
+          opacity: 1;
+          pointer-events: auto;
+          overflow-x: hidden;
+          transition:
+            width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+            padding 0.3s;
+        }
+        .drawer.open {
+          width: 310px;
+          padding: 20px 17px;
+        }
+        .drawer-backdrop {
+          display: none;
+        }
+        .drawer-head {
+          display: none;
+        }
+        .drawer.open .drawer-head {
+          display: flex;
+        }
+        .profile-card {
+          padding: 8px 4px;
+          background: transparent;
+        }
+        .profile-card .avatar {
+          width: 46px;
+          height: 46px;
+          margin: 0 auto;
+          border-color: #e6ddff;
+          background: linear-gradient(135deg, #d8c6ff, #6b37dc);
+          font-size: 20px;
+        }
+        .profile-card strong,
+        .profile-card > span,
+        .profile-card .wallet {
+          display: none;
+        }
+        .drawer.open .profile-card {
+          padding: 20px;
+          background: linear-gradient(135deg, #612fd6, #8a4cf3);
+        }
+        .drawer.open .profile-card .avatar {
+          width: 70px;
+          height: 70px;
+          margin: 0 0 12px;
+          border-color: #fff;
+          font-size: 28px;
+        }
+        .drawer.open .profile-card strong,
+        .drawer.open .profile-card > span,
+        .drawer.open .profile-card .wallet {
+          display: flex;
+        }
+        .drawer.open .profile-card strong {
+          display: block;
+        }
+        .drawer.open .profile-card > span {
+          display: block;
+        }
+        .menu {
+          gap: 7px;
+          margin-top: 12px;
+        }
+        .menu button {
+          height: 50px;
+          justify-content: center;
+          padding: 10px 5px;
+          font-size: 0;
+          white-space: nowrap;
+        }
+        .menu .mi {
+          width: 34px;
+          font-size: 23px;
+        }
+        .drawer.open .menu button {
+          justify-content: flex-start;
+          padding: 12px 10px;
+          font-size: inherit;
+        }
+        .logout {
+          height: 50px;
+          padding: 10px 4px;
+          font-size: 0;
+        }
+        .drawer.open .logout {
+          padding: 13px;
+          font-size: inherit;
+        }
+      }
+      @media (max-width: 560px) {
+        .topbar {
+          height: 82px;
+          padding: 14px 15px;
+        }
+        .topbar h1 {
+          font-size: 20px;
+        }
+        .content {
+          padding-inline: 12px;
+        }
+        .hero-card {
+          padding: 18px;
+        }
+        .hero-copy strong {
+          font-size: 20px;
+        }
+        .gallery {
+          height: 174px;
+        }
+        .quick-grid {
+          gap: 9px;
+        }
+        .quick {
+          min-height: 128px;
+          padding: 14px 5px;
+        }
+        .quick h3 {
+          font-size: 12px;
+        }
+        .quick small {
+          font-size: 10px;
+        }
+        .chat {
+          align-items: stretch;
+          flex-direction: column;
+        }
+        .chat a {
+          width: 100%;
+          text-align: center;
+        }
+        .drawer {
+          padding: 18px 15px;
+        }
+      }
+    </style>
+    <style id="dashboard-theme-v2">
+      :root {
+        --acid: #c6ff3f;
+        --dark: #080a08;
+        --glass: rgba(12, 17, 10, 0.82);
+        --glass2: rgba(18, 25, 15, 0.9);
+        --gline: rgba(198, 255, 63, 0.24);
+      }
+      html {
+        background: var(--dark) !important;
+      }
+      body {
+        background: transparent !important;
+        color: #f5f7f1;
+      }
+      .dashboard-bg {
+        position: fixed;
+        inset: -3%;
+        width: 106%;
+        height: 106%;
+        object-fit: cover;
+        z-index: 0;
+        transform: translate3d(var(--bg-x, 0), var(--bg-y, 0), 0) scale(1.06);
+        filter: saturate(0.78) contrast(1.05);
+        will-change: transform;
+      }
+      .dashboard-bg-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        background:
+          radial-gradient(
+            circle at var(--pointer-x, 50%) var(--pointer-y, 45%),
+            rgba(198, 255, 63, 0.14),
+            transparent 28%
+          ),
+          linear-gradient(
+            135deg,
+            rgba(8, 10, 8, 0.9),
+            rgba(8, 10, 8, 0.66) 55%,
+            rgba(8, 10, 8, 0.88)
+          );
+        pointer-events: none;
+      }
+      .app {
+        position: relative;
+        z-index: 2;
+      }
+      .topbar {
+        background: rgba(8, 10, 8, 0.78) !important;
+        border: 1px solid var(--gline);
+        border-top: 0;
+        box-shadow: 0 18px 44px #0008;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+      }
+      .topbar p {
+        color: #bac5b3;
+      }
+      .hero-card {
+        background: linear-gradient(
+          135deg,
+          rgba(16, 23, 12, 0.94),
+          rgba(29, 42, 19, 0.88)
+        ) !important;
+        border: 1px solid var(--gline);
+        box-shadow: 0 18px 48px #0008;
+        backdrop-filter: blur(12px);
+      }
+      .hero-copy strong,
+      .section-head h2 {
+        color: #f7f8f4;
+      }
+      .hero-copy span {
+        color: #aeb8a7;
+      }
+      .avatar {
+        background: linear-gradient(135deg, #c6ff3f, #5f8f16) !important;
+        color: #080a08;
+        border-color: #eaffba;
+      }
+      .gallery {
+        width: min(100%, 1180px);
+        max-width: 1180px;
+        height: auto !important;
+        aspect-ratio: 16/9;
+        margin-inline: auto;
+        border: 2px solid var(--acid);
+        border-radius: 26px;
+        padding: 8px;
+        background: rgba(5, 7, 5, 0.9);
+        box-shadow:
+          0 20px 55px #000b,
+          0 0 0 1px rgba(198, 255, 63, 0.12);
+      }
+      .gallery-track,
+      .gallery-slide {
+        height: 100%;
+        border-radius: 18px;
+      }
+      .gallery-slide {
+        display: grid;
+        place-items: center;
+        background: #050705;
+        overflow: hidden;
+      }
+      .gallery-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain !important;
+        object-position: center;
+        padding: 0;
+        background: #050705;
+      }
+      .gallery-slide:after {
+        border-radius: 18px;
+        background: linear-gradient(0deg, rgba(0, 0, 0, 0.7), transparent 38%);
+      }
+      .gallery-caption {
+        color: #fff;
+      }
+      .dots i {
+        background: #586151;
+      }
+      .dots i.active {
+        background: var(--acid);
+      }
+      .quick,
+      .chat,
+      .panel-card {
+        background: var(--glass) !important;
+        color: #f5f7f1 !important;
+        border: 1px solid var(--gline) !important;
+        box-shadow: 0 16px 42px #0007 !important;
+        backdrop-filter: blur(13px);
+      }
+      .quick:hover {
+        transform: translateY(-4px);
+        border-color: var(--acid) !important;
+      }
+      .quick .qicon {
+        background: rgba(198, 255, 63, 0.12) !important;
+        color: var(--acid) !important;
+        border: 1px solid rgba(198, 255, 63, 0.22);
+      }
+      .quick h3,
+      .chat strong,
+      .panel-card h2 {
+        color: #f6f8f3;
+      }
+      .quick small,
+      .chat p,
+      .panel-card p {
+        color: #aab4a4;
+      }
+      .chat a,
+      .primary,
+      .form-row button {
+        background: var(--acid) !important;
+        color: #080a08 !important;
+      }
+      .drawer {
+        background: rgba(10, 14, 9, 0.96) !important;
+        border: 1px solid var(--gline);
+        color: #f5f7f1;
+        backdrop-filter: blur(18px);
+      }
+      .drawer-head h2,
+      .close {
+        color: var(--acid);
+      }
+      .profile-card {
+        background: linear-gradient(135deg, #14200e, #2b4118) !important;
+        border: 1px solid var(--gline);
+      }
+      .menu button {
+        color: #d8dfd3;
+      }
+      .menu button:hover,
+      .menu button.active {
+        background: rgba(198, 255, 63, 0.13) !important;
+        color: var(--acid) !important;
+      }
+      .logout {
+        background: rgba(255, 90, 82, 0.12) !important;
+        color: #ff817b !important;
+      }
+      .form-row input {
+        background: #080a08;
+        color: #fff;
+        border-color: var(--gline);
+      }
+      .icon-btn#menuButton {
+        background: linear-gradient(135deg, #10170d, #263719) !important;
+        border: 1px solid var(--gline);
+      }
+      @media (max-width: 700px) {
+        .gallery {
+          aspect-ratio: 4/3;
+          padding: 6px;
+          border-radius: 21px;
+        }
+        .gallery-track,
+        .gallery-slide {
+          border-radius: 14px;
+        }
+        .dashboard-bg {
+          inset: -5%;
+          width: 110%;
+          height: 110%;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .dashboard-bg {
+          transform: none !important;
+        }
+      }
+    </style>
+    <style id="gallery-modes">
+      .gallery {
+        transition:
+          width 0.38s cubic-bezier(0.2, 0.8, 0.2, 1),
+          height 0.38s,
+          aspect-ratio 0.38s;
+      }
+      .gallery.state-medium {
+        width: min(68vw, 820px);
+        aspect-ratio: 16/9;
+      }
+      .gallery.state-full {
+        width: min(100%, 1180px);
+        aspect-ratio: 16/9;
+      }
+      .gallery.state-mini {
+        width: 76px !important;
+        height: 76px !important;
+        aspect-ratio: 1;
+        margin-right: 0;
+        margin-left: auto;
+        padding: 0;
+        border-radius: 22px;
+        background: rgba(12, 17, 10, 0.9);
+      }
+      .gallery-mode-controls {
+        position: absolute;
+        z-index: 5;
+        top: 12px;
+        left: 12px;
+        display: flex;
+        gap: 6px;
+        padding: 5px;
+        border: 1px solid rgba(198, 255, 63, 0.24);
+        border-radius: 14px;
+        background: rgba(8, 10, 8, 0.72);
+        backdrop-filter: blur(10px);
+      }
+      .gallery-mode-controls button {
+        width: 34px;
+        height: 34px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: #eaf5df;
+        font-size: 17px;
+        cursor: pointer;
+      }
+      .gallery-mode-controls button:hover,
+      .gallery-mode-controls button.active {
+        background: #c6ff3f;
+        color: #080a08;
+      }
+      .gallery.state-mini .gallery-track,
+      .gallery.state-mini .gallery-nav {
+        display: none;
+      }
+      .gallery.state-mini .gallery-mode-controls {
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 0;
+        border: 0;
+        background: transparent;
+      }
+      .gallery.state-mini .gallery-mode-controls button {
+        display: none;
+        width: 76px;
+        height: 76px;
+        font-size: 25px;
+      }
+      .gallery.state-mini
+        .gallery-mode-controls
+        button[data-gallery-state="medium"] {
+        display: grid;
+        place-items: center;
+      }
+      .gallery.state-mini + .dots {
+        display: none;
+      }
+      @media (max-width: 700px) {
+        .gallery.state-medium {
+          width: min(86%, 520px);
+          aspect-ratio: 4/3;
+        }
+        .gallery.state-full {
+          width: 100%;
+          aspect-ratio: 4/3;
+        }
+        .gallery.state-mini {
+          width: 68px !important;
+          height: 68px !important;
+        }
+        .gallery.state-mini .gallery-mode-controls button {
+          width: 68px;
+          height: 68px;
+        }
+      }
+    </style>
+    <style id="dashboard-final-polish">
+      .topbar {
+        position: relative;
+        height: 176px;
+        align-items: flex-start;
+        padding: 20px 28px 18px;
+      }
+      .topbar > div {
+        position: relative;
+        z-index: 2;
+      }
+      .hero-card {
+        position: absolute;
+        z-index: 3;
+        top: 72px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(48vw, 590px);
+        min-height: 88px;
+        margin: 0;
+        padding: 15px 18px;
+        border-radius: 22px;
+        background: linear-gradient(
+          135deg,
+          rgba(12, 18, 10, 0.34),
+          rgba(25, 37, 17, 0.27)
+        ) !important;
+        border-color: rgba(198, 255, 63, 0.2) !important;
+        box-shadow: 0 14px 38px rgba(0, 0, 0, 0.34) !important;
+        backdrop-filter: blur(8px) saturate(1.05);
+        -webkit-backdrop-filter: blur(8px) saturate(1.05);
+      }
+      .hero-card .avatar {
+        width: 58px;
+        height: 58px;
+        font-size: 23px;
+        border-width: 2px;
+      }
+      .hero-copy strong {
+        font-size: 20px;
+      }
+      .hero-copy span {
+        font-size: 13px;
+      }
+      .content {
+        position: relative;
+        padding-top: 18px;
+      }
+      .quick {
+        background: linear-gradient(
+          135deg,
+          rgba(10, 15, 9, 0.38),
+          rgba(20, 30, 14, 0.26)
+        ) !important;
+        border-color: rgba(198, 255, 63, 0.18) !important;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32) !important;
+        backdrop-filter: blur(8px) saturate(1.04);
+        -webkit-backdrop-filter: blur(8px) saturate(1.04);
+        transition:
+          transform 0.25s,
+          border-color 0.25s,
+          background 0.25s;
+      }
+      .quick:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(16, 23, 12, 0.54),
+          rgba(31, 45, 20, 0.4)
+        ) !important;
+      }
+      .quick .qicon {
+        background: rgba(198, 255, 63, 0.09) !important;
+      }
+      #homePane > .section-head,
+      #homePane .quick-grid,
+      #homePane .chat {
+        width: min(100%, 900px);
+        margin-right: auto;
+        margin-left: auto;
+      }
+      #homePane > .section-head {
+        margin-top: 26px;
+        margin-bottom: 13px;
+      }
+      #homePane .quick-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+      #homePane .quick {
+        min-height: 145px;
+      }
+      #homePane .chat {
+        margin-top: 16px;
+      }
+      .gallery-pane {
+        width: 100%;
+        padding-top: 10px;
+      }
+      .gallery-pane-head {
+        width: min(100%, 1180px);
+        margin: 10px auto 18px;
+      }
+      .gallery-pane-head > div p {
+        margin: 4px 0 0;
+        color: #aab4a4;
+        font-size: 13px;
+      }
+      .pane-back {
+        padding: 10px 14px;
+        border: 1px solid rgba(198, 255, 63, 0.24);
+        border-radius: 13px;
+        background: rgba(198, 255, 63, 0.1);
+        color: var(--acid);
+        font: inherit;
+        cursor: pointer;
+      }
+      .gallery-pane .dots {
+        margin-bottom: 24px;
+      }
+      @media (min-width: 900px) {
+        .drawer {
+          top: 12px;
+          right: 12px;
+          height: calc(100dvh - 24px);
+          padding: 76px 7px 10px;
+          border-radius: 23px;
+        }
+        .drawer.open {
+          padding: 76px 17px 20px;
+        }
+        .icon-btn#menuButton {
+          top: 17px;
+          right: 17px;
+          margin: 0;
+          box-shadow: 0 8px 22px rgba(0, 0, 0, 0.38);
+        }
+        .drawer-head {
+          margin-top: 0;
+        }
+        .topbar {
+          padding-right: 34px;
+          padding-left: 34px;
+        }
+      }
+      @media (max-width: 899px) {
+        .topbar {
+          height: 205px;
+          padding: 16px 15px 14px;
+        }
+        .hero-card {
+          top: 92px;
+          width: calc(100% - 30px);
+        }
+        .content {
+          padding-top: 14px;
+        }
+        #homePane .quick-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 700px) {
+        #homePane .quick-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 10px;
+        }
+        #homePane .quick {
+          min-height: 132px;
+        }
+        .gallery-pane-head {
+          align-items: flex-start;
+          gap: 12px;
+        }
+        .pane-back {
+          padding: 9px 11px;
+          font-size: 12px;
+        }
+      }
+      @media (max-width: 560px) {
+        .topbar {
+          height: 198px;
+        }
+        .hero-card {
+          top: 88px;
+          min-height: 90px;
+          padding: 14px 15px;
+        }
+        .hero-card .avatar {
+          width: 52px;
+          height: 52px;
+        }
+        .hero-copy strong {
+          font-size: 18px;
+        }
+        .hero-copy span {
+          font-size: 12px;
+        }
+      }
+    </style>
+    <style id="dashboard-orbit-ui">
+      @keyframes hud-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes center-breathe {
+        50% {
+          box-shadow:
+            0 0 0 11px rgba(198, 255, 63, 0.06),
+            0 0 52px rgba(198, 255, 63, 0.24),
+            0 18px 45px rgba(0, 0, 0, 0.52) !important;
+        }
+      }
+      .topbar {
+        width: min(calc(100% - 100px), 960px);
+        height: 160px;
+        margin-right: auto;
+        margin-left: auto;
+      }
+      .topbar .hero-card {
+        top: 56px;
+        width: min(46%, 420px);
+        min-height: 84px;
+      }
+      #homePane > .section-head {
+        width: min(100%, 650px);
+        justify-content: center;
+        text-align: center;
+        margin-top: 18px;
+      }
+      #homePane .orbit-menu {
+        --orbit-size: clamp(440px, 52vw, 620px);
+        --orbit-radius: clamp(160px, 19vw, 215px);
+        --node-size: clamp(116px, 10vw, 138px);
+        position: relative;
+        display: block !important;
+        width: var(--orbit-size);
+        height: var(--orbit-size);
+        margin: 0 auto;
+        border: 1px solid rgba(198, 255, 63, 0.22);
+        border-radius: 50%;
+        background:
+          radial-gradient(
+            circle at center,
+            rgba(198, 255, 63, 0.1) 0 14%,
+            transparent 14.5% 34%,
+            rgba(198, 255, 63, 0.045) 34.5% 35%,
+            transparent 35.5%
+          ),
+          radial-gradient(circle, rgba(10, 16, 9, 0.54), rgba(5, 8, 5, 0.2) 70%);
+        box-shadow:
+          inset 0 0 80px rgba(0, 0, 0, 0.48),
+          0 28px 75px rgba(0, 0, 0, 0.38);
+        isolation: isolate;
+      }
+      #homePane .orbit-menu::before,
+      #homePane .orbit-menu::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+        border-radius: 50%;
+      }
+      #homePane .orbit-menu::before {
+        inset: 8%;
+        border: 1px dashed rgba(198, 255, 63, 0.2);
+        animation: hud-spin 38s linear infinite;
+      }
+      #homePane .orbit-menu::after {
+        inset: 27%;
+        border: 1px solid rgba(198, 255, 63, 0.13);
+        box-shadow: 0 0 45px rgba(198, 255, 63, 0.08);
+      }
+      #homePane .orbit-menu .quick {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        z-index: 2;
+        width: var(--node-size);
+        height: var(--node-size);
+        min-height: 0;
+        margin: 0;
+        padding: 13px 9px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        text-wrap: balance;
+      }
+      #homePane .orbit-menu .quick .qicon {
+        width: 40px;
+        height: 40px;
+        margin: 0 0 6px;
+        border-radius: 50%;
+        font-size: 20px;
+      }
+      #homePane .orbit-menu .quick h3 {
+        margin: 0 0 2px;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      #homePane .orbit-menu .quick small {
+        font-size: 10px;
+      }
+      #homePane .orbit-item {
+        transform: translate(-50%, -50%) rotate(var(--angle))
+          translateY(calc(-1 * var(--orbit-radius)))
+          rotate(calc(-1 * var(--angle)));
+      }
+      #homePane .orbit-1 {
+        --angle: 0deg;
+      }
+      #homePane .orbit-2 {
+        --angle: 72deg;
+      }
+      #homePane .orbit-3 {
+        --angle: 144deg;
+      }
+      #homePane .orbit-4 {
+        --angle: 216deg;
+      }
+      #homePane .orbit-5 {
+        --angle: 288deg;
+      }
+      #homePane .orbit-menu .quick-center {
+        z-index: 4;
+        width: clamp(148px, 13vw, 178px);
+        height: clamp(148px, 13vw, 178px);
+        transform: translate(-50%, -50%);
+        border: 2px solid var(--acid) !important;
+        background: radial-gradient(
+          circle at 35% 28%,
+          rgba(198, 255, 63, 0.34),
+          rgba(41, 62, 25, 0.88) 42%,
+          rgba(9, 14, 8, 0.94) 76%
+        ) !important;
+        box-shadow:
+          0 0 0 9px rgba(198, 255, 63, 0.055),
+          0 0 42px rgba(198, 255, 63, 0.18),
+          0 18px 45px rgba(0, 0, 0, 0.52) !important;
+        animation: center-breathe 4.5s ease-in-out infinite;
+      }
+      #homePane .orbit-menu .quick-center .qicon {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+        background: var(--acid) !important;
+        color: #080a08 !important;
+      }
+      #homePane .orbit-menu .quick-center h3 {
+        font-size: 16px;
+      }
+      #homePane .orbit-item:hover {
+        transform: translate(-50%, -50%) rotate(var(--angle))
+          translateY(calc(-1 * var(--orbit-radius)))
+          rotate(calc(-1 * var(--angle))) scale(1.07);
+      }
+      #homePane .orbit-menu .quick-center:hover {
+        transform: translate(-50%, -50%) scale(1.05);
+      }
+      #homePane .chat {
+        width: min(100%, 650px);
+        margin-top: 18px;
+      }
+      @media (min-width: 900px) {
+        .drawer {
+          padding-top: 76px;
+        }
+        .drawer.open {
+          padding-top: 76px;
+        }
+        .drawer > #menuButton {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          z-index: 3;
+          margin: 0;
+        }
+      }
+      @media (max-width: 899px) {
+        .app {
+          padding-right: 70px;
+        }
+        .topbar {
+          width: calc(100% - 16px);
+          height: 184px;
+          margin-inline: auto;
+        }
+        .topbar .hero-card {
+          top: 82px;
+          width: calc(100% - 24px);
+        }
+        .drawer {
+          display: block;
+          position: fixed;
+          top: 8px;
+          right: 8px;
+          width: 58px;
+          height: calc(100dvh - 16px);
+          padding: 70px 6px 10px;
+          transform: none;
+          border-radius: 21px;
+          overflow-x: hidden;
+          transition:
+            width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+            padding 0.3s;
+        }
+        .drawer.open {
+          width: min(86vw, 330px);
+          padding: 70px 16px 18px;
+        }
+        .drawer > #menuButton {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          z-index: 3;
+          width: 46px;
+          height: 46px;
+          margin: 0;
+        }
+        .drawer-head {
+          display: none;
+        }
+        .drawer.open .drawer-head {
+          display: flex;
+        }
+        .profile-card {
+          padding: 6px 2px;
+          background: transparent !important;
+          border-color: transparent !important;
+        }
+        .profile-card .avatar {
+          width: 42px;
+          height: 42px;
+          margin: 0 auto;
+          font-size: 18px;
+        }
+        .profile-card strong,
+        .profile-card > span,
+        .profile-card .wallet {
+          display: none;
+        }
+        .drawer.open .profile-card {
+          padding: 18px;
+          background: linear-gradient(135deg, #14200e, #2b4118) !important;
+          border-color: var(--gline) !important;
+        }
+        .drawer.open .profile-card .avatar {
+          width: 64px;
+          height: 64px;
+          margin: 0 0 10px;
+          font-size: 25px;
+        }
+        .drawer.open .profile-card strong,
+        .drawer.open .profile-card > span {
+          display: block;
+        }
+        .drawer.open .profile-card .wallet {
+          display: flex;
+        }
+        .menu {
+          gap: 6px;
+          margin-top: 10px;
+        }
+        .menu button {
+          height: 46px;
+          justify-content: center;
+          padding: 8px 4px;
+          font-size: 0;
+          white-space: nowrap;
+        }
+        .menu .mi {
+          width: 32px;
+          font-size: 21px;
+        }
+        .drawer.open .menu button {
+          justify-content: flex-start;
+          padding: 10px;
+          font-size: inherit;
+        }
+        .logout {
+          height: 46px;
+          padding: 8px 4px;
+          font-size: 0;
+        }
+        .drawer.open .logout {
+          padding: 12px;
+          font-size: inherit;
+        }
+        #homePane .orbit-menu {
+          --orbit-size: min(calc(100vw - 94px), 430px);
+          --orbit-radius: min(27vw, 150px);
+          --node-size: clamp(88px, 23vw, 112px);
+        }
+        #homePane .orbit-menu .quick-center {
+          width: clamp(112px, 30vw, 142px);
+          height: clamp(112px, 30vw, 142px);
+        }
+      }
+      @media (max-width: 560px) {
+        .topbar {
+          height: 178px;
+          padding: 13px 11px;
+        }
+        .topbar h1 {
+          font-size: 18px;
+        }
+        .topbar .hero-card {
+          top: 72px;
+          min-height: 88px;
+          padding: 12px 13px;
+        }
+        #homePane > .section-head {
+          margin-top: 12px;
+        }
+        #homePane .orbit-menu {
+          --orbit-size: calc(100vw - 94px);
+          --orbit-radius: min(26vw, 115px);
+          --node-size: 82px;
+        }
+        #homePane .orbit-menu .quick-center {
+          width: 104px;
+          height: 104px;
+        }
+        #homePane .orbit-menu .quick .qicon {
+          width: 31px;
+          height: 31px;
+          margin-bottom: 3px;
+          font-size: 16px;
+        }
+        #homePane .orbit-menu .quick h3 {
+          font-size: 10px;
+          line-height: 1.35;
+        }
+        #homePane .orbit-menu .quick small {
+          font-size: 8px;
+        }
+        #homePane .orbit-menu .quick-center h3 {
+          font-size: 12px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #homePane .orbit-menu::before,
+        #homePane .orbit-menu .quick-center {
+          animation: none;
+        }
+      }
+    </style>
+    <style id="orbit-arc-frames">
+      .topbar {
+        height: 196px;
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        overflow: visible;
+      }
+      .topbar > div {
+        position: absolute;
+        top: 24px;
+        right: 28px;
+        z-index: 5;
+        text-align: right;
+      }
+      .topbar .hero-card {
+        top: 0;
+        width: min(58%, 560px);
+        height: 190px;
+        min-height: 0;
+        padding: 32px 68px 76px;
+        overflow: hidden;
+        border: 1px solid rgba(198, 255, 63, 0.3) !important;
+        border-top: 0 !important;
+        border-radius: 0 0 50% 50% / 0 0 100% 100%;
+        background: radial-gradient(
+          ellipse at 50% 0%,
+          rgba(198, 255, 63, 0.14),
+          rgba(18, 29, 13, 0.48) 48%,
+          rgba(7, 11, 7, 0.76) 78%
+        ) !important;
+        box-shadow:
+          inset 0 -24px 55px rgba(0, 0, 0, 0.4),
+          0 18px 55px rgba(0, 0, 0, 0.36),
+          0 0 36px rgba(198, 255, 63, 0.07) !important;
+        backdrop-filter: blur(10px) saturate(1.08);
+        -webkit-backdrop-filter: blur(10px) saturate(1.08);
+      }
+      .topbar .hero-card::before {
+        content: "";
+        position: absolute;
+        z-index: 0;
+        top: 14px;
+        right: 42px;
+        bottom: 34px;
+        left: 42px;
+        border-bottom: 1px dashed rgba(198, 255, 63, 0.18);
+        border-radius: 0 0 50% 50% / 0 0 100% 100%;
+        pointer-events: none;
+      }
+      .topbar .hero-copy,
+      .topbar .hero-card .avatar {
+        position: relative;
+        z-index: 2;
+      }
+      #homePane .chat {
+        position: relative;
+        width: min(100%, 560px);
+        height: 154px;
+        min-height: 154px;
+        margin-top: 12px;
+        padding: 72px 26px 18px;
+        overflow: hidden;
+        align-items: flex-end;
+        border: 1px solid rgba(198, 255, 63, 0.3) !important;
+        border-bottom: 0 !important;
+        border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+        background: radial-gradient(
+          ellipse at 50% 100%,
+          rgba(198, 255, 63, 0.13),
+          rgba(18, 29, 13, 0.48) 50%,
+          rgba(7, 11, 7, 0.78) 80%
+        ) !important;
+        box-shadow:
+          inset 0 24px 55px rgba(0, 0, 0, 0.42),
+          0 -16px 48px rgba(0, 0, 0, 0.34),
+          0 0 36px rgba(198, 255, 63, 0.07) !important;
+        backdrop-filter: blur(10px) saturate(1.08);
+        -webkit-backdrop-filter: blur(10px) saturate(1.08);
+      }
+      #homePane .chat::before {
+        content: "";
+        position: absolute;
+        z-index: 0;
+        top: 28px;
+        right: 42px;
+        bottom: 10px;
+        left: 42px;
+        border-top: 1px dashed rgba(198, 255, 63, 0.18);
+        border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+        pointer-events: none;
+      }
+      #homePane .chat > * {
+        position: relative;
+        z-index: 2;
+      }
+      #homePane .chat a {
+        border-radius: 999px;
+        box-shadow: 0 0 24px rgba(198, 255, 63, 0.18);
+      }
+      @media (max-width: 899px) {
+        .topbar {
+          width: calc(100% - 12px);
+          height: 206px;
+        }
+        .topbar > div {
+          top: 16px;
+          right: 16px;
+        }
+        .topbar .hero-card {
+          top: 58px;
+          width: min(100%, 520px);
+          height: 145px;
+          padding: 23px 42px 56px;
+        }
+        #homePane .chat {
+          width: min(100%, 520px);
+          height: 142px;
+          min-height: 142px;
+          padding: 67px 22px 15px;
+        }
+      }
+      @media (max-width: 560px) {
+        .topbar {
+          height: 198px;
+          padding: 0;
+        }
+        .topbar > div {
+          top: 12px;
+          right: 12px;
+        }
+        .topbar .hero-card {
+          top: 54px;
+          width: 100%;
+          height: 140px;
+          padding: 22px 22px 54px;
+        }
+        .topbar .hero-card::before {
+          right: 24px;
+          left: 24px;
+        }
+        #homePane .chat {
+          width: 100%;
+          height: 132px;
+          min-height: 132px;
+          padding: 62px 13px 13px;
+          flex-direction: row;
+          align-items: flex-end;
+          gap: 8px;
+        }
+        #homePane .chat::before {
+          right: 22px;
+          left: 22px;
+        }
+        #homePane .chat strong {
+          font-size: 12px;
+        }
+        #homePane .chat p {
+          font-size: 10px;
+        }
+        #homePane .chat a {
+          width: auto;
+          padding: 10px 11px;
+          font-size: 11px;
+        }
+      }
+    </style>
+    <style id="orbit-motion-and-centering">
+      :root {
+        --orbit-axis-shift: 44px;
+      }
+      .topbar,
+      #homePane .orbit-menu,
+      #homePane .chat {
+        position: relative;
+        left: var(--orbit-axis-shift);
+      }
+      .topbar {
+        margin-bottom: 0;
+      }
+      #homePane > .section-head {
+        height: 24px;
+        min-height: 24px;
+        margin-top: 8px;
+        margin-bottom: 10px;
+      }
+      #homePane .orbit-menu {
+        margin-top: 0;
+        margin-bottom: 0;
+      }
+      #homePane .chat {
+        margin-top: 48px;
+      }
+      #homePane .orbit-menu + .chat {
+        margin-top: 48px;
+      }
+      @media (max-width: 700px) {
+        .dashboard-bg {
+          object-position: 58% center;
+        }
+      }
+      @keyframes orbit-clockwise {
+        from {
+          transform: translate(-50%, -50%) rotate(var(--angle))
+            translateY(calc(-1 * var(--orbit-radius)))
+            rotate(calc(0deg - var(--angle)));
+        }
+        to {
+          transform: translate(-50%, -50%) rotate(calc(var(--angle) + 360deg))
+            translateY(calc(-1 * var(--orbit-radius)))
+            rotate(calc(-360deg - var(--angle)));
+        }
+      }
+      .topbar .hero-card {
+        justify-content: center;
+      }
+      .topbar .hero-copy {
+        position: absolute;
+        top: 33px;
+        left: 50%;
+        width: 55%;
+        transform: translateX(-50%);
+        text-align: center;
+      }
+      .topbar .hero-card .avatar {
+        position: absolute;
+        top: 30px;
+        left: 68px;
+        margin: 0;
+      }
+      #homePane .chat > div {
+        position: absolute;
+        top: 76px;
+        left: 50%;
+        width: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+      }
+      #homePane .chat > a {
+        position: absolute;
+        bottom: 18px;
+        left: 26px;
+      }
+      #homePane .orbit-item {
+        animation: orbit-clockwise 30s linear infinite;
+        will-change: transform;
+      }
+      #homePane .orbit-menu:hover .orbit-item,
+      #homePane .orbit-menu:focus-within .orbit-item {
+        animation-play-state: paused;
+      }
+      @media (max-width: 899px) {
+        :root {
+          --orbit-axis-shift: 35px;
+        }
+        .topbar .hero-copy {
+          top: 24px;
+          width: 56%;
+        }
+        .topbar .hero-card .avatar {
+          top: 22px;
+          left: 42px;
+        }
+        #homePane .chat > div {
+          top: 69px;
+        }
+        #homePane .chat > a {
+          bottom: 15px;
+          left: 22px;
+        }
+      }
+      @media (max-width: 560px) {
+        :root {
+          --orbit-axis-shift: 35px;
+        }
+        .topbar .hero-copy {
+          top: 21px;
+          width: 54%;
+        }
+        .topbar .hero-card .avatar {
+          top: 20px;
+          left: 18px;
+        }
+        #homePane .chat > div {
+          top: 65px;
+          width: 42%;
+        }
+        #homePane .chat > a {
+          bottom: 12px;
+          left: 12px;
+          padding: 8px 9px;
+          font-size: 10px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #homePane .orbit-item {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <video
+      class="dashboard-bg"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="auto"
+      poster="assets/video/dashboard-poster.jpg"
+      aria-hidden="true"
+    >
+      <source
+        src="assets/video/dashboard-bg-progressive.mp4"
+        type="video/mp4"
+      />
+    </video>
+    <div class="dashboard-bg-overlay" aria-hidden="true"></div>
+    <div class="app">
+      <header class="topbar">
+        <div>
+          <h1>محمد کاشانی</h1>
+          <p>ورزشکار · باشگاه ویوا</p>
+        </div>
+        <section class="hero-card">
+          <div class="hero-copy">
+            <strong>آماده‌ای قوی‌تر بشی؟</strong
+            ><span>برنامه امروزت را ادامه بده و پیشرفتت را ببین.</span>
+          </div>
+          <div class="avatar">م</div>
+        </section>
+      </header>
+      <main class="content">
+        <section id="homePane" class="pane active">
+          <div class="section-head"><h2>دسترسی سریع</h2></div>
+          <section class="quick-grid orbit-menu" aria-label="دسترسی سریع">
+            <a class="quick orbit-item orbit-1" href="#" data-pane-link="club"
+              ><span class="qicon">♙</span>
+              <h3>عضویت</h3>
+              <small>وضعیت اشتراک</small></a
+            ><a
+              class="quick orbit-item orbit-2"
+              href="#"
+              data-pane-link="sessions"
+              ><span class="qicon">◷</span>
+              <h3>جلسات باقی‌مانده</h3>
+              <small>۶۸ جلسه</small></a
+            ><a
+              class="quick orbit-item orbit-3"
+              href="education.html?demo=athlete"
+              ><span class="qicon">◉</span>
+              <h3>آموزش‌ها</h3>
+              <small>کتابخانه حرکات</small></a
+            ><a class="quick quick-center" href="workout-view.html?demo=athlete"
+              ><span class="qicon">🏋</span>
+              <h3>برنامه تمرینی</h3>
+              <small>برنامه امروز</small></a
+            ><a
+              class="quick orbit-item orbit-4"
+              href="food-plan-view.html?demo=athlete"
+              ><span class="qicon">🍽</span>
+              <h3>برنامه غذایی</h3>
+              <small>وعده‌های من</small></a
+            ><a
+              class="quick orbit-item orbit-5"
+              href="#"
+              data-pane-link="gallery"
+              ><span class="qicon">▧</span>
+              <h3>گالری باشگاه</h3>
+              <small>تصاویر محیط</small></a
+            >
+          </section>
+          <div class="chat">
+            <div>
+              <strong>با مربی خود در ارتباط باش</strong>
+              <p>پیام جدیدی برای مربی‌ات بفرست.</p>
+            </div>
+            <a href="#" data-pane-link="chat">✈ ارسال پیام</a>
+          </div>
+        </section>
+        <section class="pane gallery-pane" id="galleryPane">
+          <div class="section-head gallery-pane-head">
+            <div>
+              <h2>گالری باشگاه</h2>
+              <p>تصاویر را با لمس یا حرکت موس ورق بزن.</p>
+            </div>
+            <button class="pane-back" type="button" data-pane-link="home">
+              بازگشت به داشبورد
+            </button>
+          </div>
+          <div class="gallery state-medium" id="gallery">
+            <div class="gallery-mode-controls" aria-label="اندازه گالری">
+              <button data-gallery-state="mini" title="جمع کردن">−</button
+              ><button data-gallery-state="medium" title="اندازه متوسط">
+                ▣</button
+              ><button data-gallery-state="full" title="تمام‌عرض">⛶</button>
+            </div>
+            <div class="gallery-track" id="galleryTrack">
+              <figure class="gallery-slide">
+                <img src="assets/images/gym-04.webp" alt="فضای تمرین باشگاه" />
+                <figcaption class="gallery-caption">
+                  فضای تمرین باشگاه
+                </figcaption>
+              </figure>
+              <figure class="gallery-slide">
+                <img src="assets/images/gym-05.webp" alt="تجهیزات باشگاه" />
+                <figcaption class="gallery-caption">تجهیزات حرفه‌ای</figcaption>
+              </figure>
+              <figure class="gallery-slide">
+                <img src="assets/images/gym-11.webp" alt="تمرین گروهی" />
+                <figcaption class="gallery-caption">
+                  انرژی تمرین گروهی
+                </figcaption>
+              </figure>
+              <figure class="gallery-slide">
+                <img src="assets/images/gym-18.webp" alt="محیط باشگاه" />
+                <figcaption class="gallery-caption">
+                  محیط اختصاصی MG FitClub
+                </figcaption>
+              </figure>
+            </div>
+            <div class="gallery-nav">
+              <button id="galleryPrev" aria-label="تصویر قبلی">‹</button
+              ><button id="galleryNext" aria-label="تصویر بعدی">›</button>
+            </div>
+          </div>
+          <div class="dots" id="galleryDots"></div>
+        </section>
+        <section class="pane" id="clubPane">
+          <div class="panel-card">
+            <h2>عضویت در باشگاه</h2>
+            <p>
+              پلن سه‌ماههٔ شما فعال است و ۶۸ روز تا پایان اعتبار باقی مانده.
+            </p>
+            <a class="primary" href="#" data-pane-link="wallet"
+              >افزایش اعتبار کیف پول</a
+            >
+          </div>
+        </section>
+        <section class="pane" id="sessionsPane">
+          <div class="panel-card">
+            <h2>جلسات باقی‌مانده</h2>
+            <p>
+              از پلن فعلی شما ۶۸ جلسه باقی مانده است. حضور و غیاب تأییدشده از
+              همین بخش ثبت می‌شود.
+            </p>
+            <button class="primary" onclick="requestEntry()">
+              درخواست ورود به باشگاه
+            </button>
+          </div>
+        </section>
+        <section class="pane" id="chatPane">
+          <div class="panel-card">
+            <h2>گفت‌وگو با مربی</h2>
+            <p>پیامت را برای محمد کاشانی بنویس.</p>
+            <div class="form-row">
+              <input id="chatInput" placeholder="پیام شما..." /><button
+                onclick="sendChat()"
+              >
+                ارسال
+              </button>
+            </div>
+            <p id="chatStatus"></p>
+          </div>
+        </section>
+        <section class="pane" id="walletPane">
+          <div class="panel-card">
+            <h2>کیف پول</h2>
+            <p>اعتبار فعلی کیف پول: <b>۷۵۰,۰۰۰ ریال</b></p>
+            <button
+              class="primary"
+              onclick="alert('درخواست افزایش اعتبار ثبت شد.')"
+            >
+              افزایش اعتبار
+            </button>
+          </div>
+        </section>
+        <section class="pane" id="profilePane">
+          <div class="panel-card">
+            <h2>مشخصات کاربری</h2>
+            <p>
+              نام و نام خانوادگی، شماره موبایل و اطلاعات حساب خود را ویرایش
+              کنید.
+            </p>
+            <div class="form-row">
+              <input
+                value="محمد کاشانی"
+                aria-label="نام و نام خانوادگی"
+              /><button onclick="alert('مشخصات کاربری ذخیره شد.')">
+                ذخیره
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true">
+      <button class="icon-btn" id="menuButton" aria-label="باز کردن منو">
+        ☰
+      </button>
+      <div class="drawer-head">
+        <h2>منوی اصلی</h2>
+        <button class="close" id="closeDrawer">×</button>
+      </div>
+      <div class="profile-card">
+        <div class="avatar">م</div>
+        <strong>محمد کاشانی</strong><span>ورزشکار</span>
+        <div class="wallet"><span>اعتبار کیف پول</span><b>۷۵۰,۰۰۰ ریال</b></div>
+      </div>
+      <nav class="menu">
+        <button class="active" data-menu="home">
+          <span class="mi">⌂</span>داشبورد کاربری</button
+        ><button data-menu="gallery">
+          <span class="mi">▧</span>گالری باشگاه</button
+        ><button data-menu="profile">
+          <span class="mi">♙</span>مشخصات کاربری (ویرایش)</button
+        ><button data-menu="wallet">
+          <span class="mi">▣</span>اعتبار کیف پول</button
+        ><button data-menu="chat">
+          <span class="mi">☏</span>گفت‌وگو با مربی</button
+        ><button data-menu="home"><span class="mi">◉</span>سؤالات متداول</button
+        ><button data-menu="home"><span class="mi">?</span>تماس با ما</button>
+      </nav>
+      <button class="logout" onclick="logout()">↪ خروج از حساب</button>
+    </aside>
+    <script src="mg-api.js?v=20260911"></script>
+    <script>
+      const q = new URLSearchParams(location.search).get("demo");
+      if (q !== "athlete" && !localStorage.getItem("mg_session"))
+        location.href = "account.html";
+      const drawer = document.querySelector("#drawer"),
+        backdrop = document.querySelector("#drawerBackdrop"),
+        menuButton = document.querySelector("#menuButton"),
+        closeButton = document.querySelector("#closeDrawer");
+      function openDrawer() {
+        drawer.classList.add("open");
+        document.body.classList.add("menu-expanded");
+        backdrop.classList.add("open");
+        drawer.setAttribute("aria-hidden", "false");
+      }
+      function closeDrawer() {
+        drawer.classList.remove("open");
+        document.body.classList.remove("menu-expanded");
+        backdrop.classList.remove("open");
+        drawer.setAttribute("aria-hidden", "true");
+      }
+      function toggleDrawer() {
+        if (drawer.classList.contains("open")) closeDrawer();
+        else openDrawer();
+      }
+      menuButton.onclick = toggleDrawer;
+      closeButton.onclick = closeDrawer;
+      backdrop.onclick = closeDrawer;
+      const panes = {
+        home: "homePane",
+        gallery: "galleryPane",
+        club: "clubPane",
+        sessions: "sessionsPane",
+        chat: "chatPane",
+        wallet: "walletPane",
+        profile: "profilePane",
+      };
+      function showPane(name) {
+        Object.values(panes).forEach((id) =>
+          document.getElementById(id)?.classList.remove("active"),
+        );
+        document
+          .getElementById(panes[name] || "homePane")
+          ?.classList.add("active");
+        document
+          .querySelectorAll("[data-menu]")
+          .forEach((b) =>
+            b.classList.toggle("active", b.dataset.menu === name),
+          );
+        history.replaceState(null, "", `#${name}`);
+        closeDrawer();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      document.querySelectorAll("[data-pane-link]").forEach(
+        (a) =>
+          (a.onclick = (e) => {
+            e.preventDefault();
+            showPane(a.dataset.paneLink);
+          }),
+      );
+      document
+        .querySelectorAll("[data-menu]")
+        .forEach((b) => (b.onclick = () => showPane(b.dataset.menu)));
+      const initialPane = location.hash.slice(1);
+      if (panes[initialPane]) showPane(initialPane);
+      async function logout() {
+        try {
+          await MGApi.logout();
+        } finally {
+          localStorage.clear();
+          location.href = "account.html";
+        }
+      }
+      async function requestEntry() {
+        if (q !== "athlete" && localStorage.getItem("mg_session")) {
+          try {
+            const planData = await MGApi.trainingPlans();
+            const plan = planData.plans && planData.plans[0];
+            if (!plan) throw new Error("هنوز برنامه تمرینی فعالی ثبت نشده است.");
+            const result = await MGApi.createTrainingRequest({
+              planId: plan.id,
+              goal: "درخواست شروع برنامه تمرینی",
+              notes: "درخواست از داشبورد ورزشکار",
+              idempotencyKey:
+                sessionStorage.getItem("mg_training_request_key") ||
+                (() => {
+                  const key = crypto.randomUUID();
+                  sessionStorage.setItem("mg_training_request_key", key);
+                  return key;
+                })(),
+            });
+            sessionStorage.removeItem("mg_training_request_key");
+            alert(
+              "درخواست شما ثبت شد. کد درخواست: " +
+                (result.requestId || "در انتظار بررسی"),
+            );
+            return;
+          } catch (error) {
+            if (error.status === 401) {
+              localStorage.removeItem("mg_session");
+              location.href = "account.html";
+              return;
+            }
+            alert(error.message || "ثبت درخواست انجام نشد.");
+            return;
+          }
+        }
+        const a = JSON.parse(localStorage.getItem("mg_entry_requests") || "[]");
+        a.push({
+          user: "ورزشکار تست",
+          at: new Date().toLocaleString("fa-IR"),
+          sessions: 67,
+          status: "در انتظار تایید",
+        });
+        localStorage.setItem("mg_entry_requests", JSON.stringify(a));
+        alert("درخواست ورود برای منشی ارسال شد.");
+      }
+      async function hydrateAthleteDashboard() {
+        if (q === "athlete" || !localStorage.getItem("mg_session")) return;
+        try {
+          const data = await MGApi.dashboard();
+          const user = data.user || {};
+          const name = user.full_name || user.phone || "ورزشکار";
+          document.querySelector(".topbar h1")?.replaceChildren(name);
+          document.querySelector(".profile-card strong")?.replaceChildren(name);
+          if (user.role)
+            document.querySelector(".profile-card > span")?.replaceChildren(
+              user.role === "athlete" ? "ورزشکار" : user.role,
+            );
+        } catch (error) {
+          if (error.status === 401) {
+            localStorage.removeItem("mg_session");
+            location.href = "account.html";
+          }
+        }
+      }
+      hydrateAthleteDashboard();
+      function sendChat() {
+        const v = chatInput.value.trim();
+        if (!v) return;
+        if (q !== "athlete" && localStorage.getItem("mg_session")) {
+          try {
+            await MGApi.request("/api/messages", {
+              method: "POST",
+              body: { body: v },
+            });
+            chatStatus.textContent = "پیام شما برای مربی ارسال شد.";
+            chatInput.value = "";
+          } catch (error) {
+            chatStatus.textContent = error.message || "ارسال پیام انجام نشد.";
+          }
+          return;
+        }
+        chatStatus.textContent = "پیام شما برای مربی ارسال شد.";
+        chatInput.value = "";
+      }
+      const track = document.querySelector("#galleryTrack"),
+        slides = [...document.querySelectorAll(".gallery-slide")],
+        dots = document.querySelector("#galleryDots");
+      let gi = 0,
+        startX = 0,
+        dragX = 0,
+        dragging = false;
+      slides.forEach((_, i) => {
+        const d = document.createElement("i");
+        d.onclick = () => go(i);
+        dots.appendChild(d);
+      });
+      function go(i) {
+        gi = (i + slides.length) % slides.length;
+        track.style.transform = `translateX(${-gi * 100}%)`;
+        dots
+          .querySelectorAll("i")
+          .forEach((d, n) => d.classList.toggle("active", n === gi));
+      }
+      galleryPrev.onclick = () => go(gi - 1);
+      galleryNext.onclick = () => go(gi + 1);
+      gallery.addEventListener("pointerdown", (e) => {
+        if (e.target.closest(".gallery-mode-controls")) return;
+        dragging = true;
+        startX = e.clientX;
+        dragX = 0;
+        gallery.setPointerCapture?.(e.pointerId);
+      });
+      gallery.addEventListener("pointermove", (e) => {
+        if (!dragging) return;
+        dragX = e.clientX - startX;
+        track.style.transform = `translateX(calc(${-gi * 100}% + ${dragX}px))`;
+      });
+      gallery.addEventListener("pointerup", () => {
+        if (Math.abs(dragX) > 45) go(gi + (dragX < 0 ? 1 : -1));
+        else go(gi);
+        dragging = false;
+      });
+      gallery.addEventListener("pointercancel", () => {
+        dragging = false;
+        go(gi);
+      });
+      function setGalleryState(state) {
+        const allowed = ["mini", "medium", "full"],
+          next = allowed.includes(state) ? state : "medium";
+        gallery.classList.remove("state-mini", "state-medium", "state-full");
+        gallery.classList.add("state-" + next);
+        document
+          .querySelectorAll("[data-gallery-state]")
+          .forEach((b) =>
+            b.classList.toggle("active", b.dataset.galleryState === next),
+          );
+        localStorage.setItem("mg_gallery_state", next);
+      }
+      document.querySelectorAll("[data-gallery-state]").forEach(
+        (b) =>
+          (b.onclick = (e) => {
+            e.stopPropagation();
+            setGalleryState(b.dataset.galleryState);
+          }),
+      );
+      go(0);
+      setGalleryState(localStorage.getItem("mg_gallery_state") || "medium");
+    </script>
+    <script>
+      (() => {
+        const video = document.querySelector(".dashboard-bg"),
+          overlay = document.querySelector(".dashboard-bg-overlay");
+        if (!video) return;
+        let target = 0,
+          current = 0,
+          active = false,
+          dragging = false,
+          raf = 0,
+          lastSeek = 0;
+        const clamp = (n) => Math.max(0, Math.min(1, n));
+        const render = () => {
+          if (!active) {
+            raf = 0;
+            return;
+          }
+          current += (target - current) * 0.1;
+          if (video.duration) {
+            const t = Math.max(
+                0.05,
+                Math.min(video.duration - 0.05, current * video.duration),
+              ),
+              now = performance.now();
+            if (
+              !video.seeking &&
+              now - lastSeek > 120 &&
+              Math.abs(video.currentTime - t) > 0.1
+            ) {
+              video.currentTime = t;
+              lastSeek = now;
+            }
+          }
+          raf = requestAnimationFrame(render);
+        };
+        const resume = () => {
+          dragging = false;
+          active = false;
+          if (raf) {
+            cancelAnimationFrame(raf);
+            raf = 0;
+          }
+          video.play().catch(() => {});
+        };
+        document.addEventListener(
+          "pointermove",
+          (e) => {
+            const x = clamp(e.clientX / innerWidth),
+              y = clamp(e.clientY / innerHeight);
+            overlay?.style.setProperty("--pointer-x", `${x * 100}%`);
+            overlay?.style.setProperty("--pointer-y", `${y * 100}%`);
+            video.style.setProperty("--bg-x", `${(x - 0.5) * -12}px`);
+            video.style.setProperty("--bg-y", `${(y - 0.5) * -8}px`);
+            if (e.pointerType === "touch" && !dragging) return;
+            if (e.target.closest("button,a,input,.drawer,.gallery")) return;
+            target = x;
+            if (!active) {
+              active = true;
+              video.pause();
+              raf = requestAnimationFrame(render);
+            }
+          },
+          { passive: true },
+        );
+        document.addEventListener(
+          "pointerdown",
+          (e) => {
+            if (
+              e.pointerType === "touch" &&
+              !e.target.closest("button,a,input,.drawer,.gallery")
+            ) {
+              dragging = true;
+              target = clamp(e.clientX / innerWidth);
+              active = true;
+              video.pause();
+              if (!raf) raf = requestAnimationFrame(render);
+            }
+          },
+          { passive: true },
+        );
+        document.addEventListener("pointerup", resume, { passive: true });
+        document.addEventListener("pointercancel", resume, { passive: true });
+        window.addEventListener("blur", resume);
+      })();
+    </script>
+  </body>
+</html>

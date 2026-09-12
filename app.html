@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#080a08" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="preview-notice.css?v=20260912" />
+    <script src="preview-notice.js?v=20260912" defer></script>
+    <title>MG FitClub App</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #080a08;
+        color: #f5f7f1;
+        font-family: Tahoma, sans-serif;
+      }
+      main {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        text-align: center;
+      }
+      a {
+        color: #c6ff3f;
+      }
+    </style>
+  </head>
+  <body data-preview-app>
+    <main>
+      <p>
+        در حال انتقال به صفحه ورود…<br /><a href="account.html?source=pwa"
+          >ورود به MG FitClub</a
+        >
+      </p>
+    </main>
+    <script>
+      window.__MG_PREVIEW_NOTICE_ON_CLOSE = () => {
+        location.replace("account.html?source=pwa");
+      };
+    </script>
+  </body>
+</html>

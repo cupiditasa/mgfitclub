@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>داشبورد مربی | MG FitClub</title>
+    <link rel="stylesheet" href="panel-theme.css?v=20260829" />
+    <link rel="stylesheet" href="mg-role-theme.css?v=20260906" />
+    <link rel="stylesheet" href="coach-command-center.css?v=20260906" />
+    <script src="orbit-play.js?v=20260906" defer></script>
+    <style>
+      body {
+        margin: 0;
+        background: #080a08;
+        color: #f5f6f1;
+        font-family: "B Esfehan", Tahoma, sans-serif;
+      }
+      .coach-app {
+        max-width: 1180px;
+        margin: auto;
+        padding-bottom: 40px;
+      }
+      .hero {
+        padding: 28px 24px 86px;
+        background: linear-gradient(135deg, #111a0d, #263515);
+        border-bottom: 1px solid #c6ff3f44;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+      }
+      .icon {
+        width: 46px;
+        height: 46px;
+        border: 1px solid #c6ff3f55;
+        border-radius: 15px;
+        background: #ffffff12;
+        color: #fff;
+        font-size: 25px;
+      }
+      .hero h1 {
+        margin: 30px 0 5px;
+        font-size: clamp(25px, 4vw, 42px);
+      }
+      .hero p {
+        margin: 0;
+        color: #c9d1c1;
+      }
+      .content {
+        margin: -48px 20px 0;
+        position: relative;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+        overflow: auto;
+        padding: 10px;
+        background: #11150f;
+        border: 1px solid #c6ff3f44;
+        border-radius: 20px;
+        box-shadow: 0 18px 40px #0006;
+      }
+      .tabs a {
+        white-space: nowrap;
+        text-decoration: none;
+        padding: 12px 18px;
+        border-radius: 13px;
+        color: #dce5d4;
+      }
+      .tabs a.active,
+      .tabs a:hover {
+        background: #c6ff3f;
+        color: #080a08;
+      }
+      .welcome,
+      .stat,
+      .quick,
+      .activity {
+        background: #11150f;
+        border: 1px solid #c6ff3f44;
+        border-radius: 22px;
+      }
+      .welcome {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+        margin-top: 18px;
+        padding: 24px;
+      }
+      .welcome h2 {
+        margin: 0 0 6px;
+      }
+      .welcome p {
+        margin: 0;
+        color: #aab2a2;
+      }
+      .primary {
+        display: inline-block;
+        padding: 13px 18px;
+        border-radius: 13px;
+        background: #c6ff3f;
+        color: #080a08;
+        text-decoration: none;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-top: 16px;
+      }
+      .stat {
+        padding: 20px;
+      }
+      .stat small {
+        display: block;
+        color: #aab2a2;
+      }
+      .stat strong {
+        display: block;
+        margin-top: 7px;
+        font-size: 30px;
+        color: #c6ff3f;
+      }
+      .title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 28px 0 12px;
+      }
+      .title h2 {
+        margin: 0;
+      }
+      .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      .quick {
+        display: block;
+        text-decoration: none;
+        padding: 22px;
+        color: #f5f6f1;
+        transition: 0.2s;
+      }
+      .quick:hover {
+        transform: translateY(-3px);
+        border-color: #c6ff3f;
+      }
+      .quick .emoji {
+        font-size: 32px;
+      }
+      .quick h3 {
+        margin: 12px 0 4px;
+      }
+      .quick p {
+        margin: 0;
+        color: #aab2a2;
+        font-size: 14px;
+      }
+      .activity {
+        padding: 20px;
+      }
+      .activity-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 13px 0;
+        border-bottom: 1px solid #263020;
+      }
+      .activity-row:last-child {
+        border: 0;
+      }
+      .activity-row small {
+        color: #aab2a2;
+      }
+      @media (max-width: 720px) {
+        .hero {
+          padding: 20px 16px 76px;
+        }
+        .content {
+          margin-inline: 10px;
+        }
+        .welcome {
+          align-items: stretch;
+          flex-direction: column;
+        }
+        .stats,
+        .quick-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .tabs a {
+          padding-inline: 13px;
+          font-size: 14px;
+        }
+      }
+      @media (max-width: 460px) {
+        .stats,
+        .quick-grid {
+          grid-template-columns: 1fr;
+        }
+        .activity-row {
+          flex-direction: column;
+          gap: 2px;
+        }
+      }
+    </style>
+  </head>
+  <body data-role="coach">
+    <script src="mg-role-theme.js?v=20260906"></script>
+    <script src="mg-api.js?v=20260911"></script>
+    <aside class="coach-rail" id="coachRail">
+      <button
+        class="coach-rail-toggle"
+        id="coachRailToggle"
+        aria-label="منوی مربی"
+      >
+        ☰
+      </button>
+      <a href="coach-dashboard.html?demo=coach" title="داشبورد">⌂</a>
+      <a href="coach.html?demo=coach" title="ساخت برنامه">＋</a>
+      <a href="coach-programs.html?demo=coach" title="برنامه‌ها">▤</a>
+      <a href="coach-transactions.html?demo=coach" title="تراکنش‌ها">◉</a>
+      <a href="education.html?demo=coach" title="آموزش">?</a>
+    </aside>
+    <div class="coach-app">
+      <header class="hero">
+        <div class="top">
+          <button
+            class="icon"
+            onclick="location.href = 'coach-dashboard.html?demo=coach'"
+          >
+            ‹</button
+          ><button class="icon" onclick="logout()">☰</button>
+        </div>
+        <h1>داشبورد مربی</h1>
+        <p>مدیریت برنامه‌ها، ورزشکاران و ارتباط با اعضا</p>
+      </header>
+      <main class="content">
+        <nav class="tabs">
+          <a class="active" href="coach-dashboard.html?demo=coach">داشبورد</a
+          ><a href="coach.html?demo=coach">ساخت برنامه</a
+          ><a href="coach-programs.html?demo=coach">برنامه‌ها</a
+          ><a href="coach-transactions.html?demo=coach">تراکنش‌ها</a
+          ><a href="education.html?demo=coach">آموزش‌ها</a>
+        </nav>
+        <section class="welcome coach-briefing">
+          <div class="elite-badge">
+            <span><b>ELITE</b><small>COACH</small></span>
+          </div>
+          <div>
+            <h2>اتاق کنترل مربی</h2>
+            <p>
+              امروز تیم آمادهٔ رکورد زدنه؛ ۱۲ ورزشکار در برنامه فعال شما هستند.
+            </p>
+          </div>
+          <a class="primary" href="coach.html?demo=coach">ساخت برنامه جدید</a>
+        </section>
+        <section class="stats">
+          <div class="stat">
+            <small>ورزشکاران فعال</small><strong>۱۲۴</strong>
+          </div>
+          <div class="stat">
+            <small>برنامه‌های فعال</small><strong>۱۸</strong>
+          </div>
+          <div class="stat"><small>درخواست جدید</small><strong>۷</strong></div>
+          <div class="stat"><small>درآمد ماه</small><strong>۸.۶M</strong></div>
+        </section>
+        <div class="title"><h2>مرکز فرماندهی</h2></div>
+        <section class="coach-orbit" aria-label="مرکز فرماندهی مربی">
+          <a class="coach-orbit-center" href="coach.html?demo=coach"
+            ><span
+              ><i>＋</i><b>ساخت برنامه جدید</b
+              ><small>فرمان اصلی مربی</small></span
+            ></a
+          >
+          <a
+            class="coach-orbit-node"
+            style="--a: 0deg; --r: 220px"
+            href="coach.html?demo=coach"
+            ><span
+              ><i>🏋</i><b>ورزشکاران امروز</b><small>۱۲ نفر فعال</small></span
+            ></a
+          >
+          <a
+            class="coach-orbit-node"
+            style="--a: 72deg; --r: 220px"
+            href="coach-programs.html?demo=coach"
+            ><span
+              ><i>▤</i><b>برنامه‌های فعال</b><small>۱۸ برنامه</small></span
+            ></a
+          >
+          <a
+            class="coach-orbit-node"
+            style="--a: 144deg; --r: 220px"
+            href="coach-transactions.html?demo=coach"
+            ><span><i>▣</i><b>درآمد ماه</b><small>۸.۶M</small></span></a
+          >
+          <a
+            class="coach-orbit-node"
+            style="--a: 216deg; --r: 220px"
+            href="coach-programs.html?demo=coach"
+            ><span><i>◌</i><b>درخواست جدید</b><small>۷ مورد</small></span></a
+          >
+          <a
+            class="coach-orbit-node"
+            style="--a: 288deg; --r: 220px"
+            href="education.html?demo=coach"
+            ><span><i>◉</i><b>آموزش حرکات</b><small>کتابخانه</small></span></a
+          >
+        </section>
+        <section class="coach-team-meter">
+          <span>انرژی تیم</span><b>۷۸٪</b>
+          <div class="meter"><i></i></div>
+        </section>
+        <div class="title">
+          <h2>فعالیت‌های اخیر</h2>
+          <a href="coach-transactions.html?demo=coach">مشاهده همه</a>
+        </div>
+        <section class="activity">
+          <div class="activity-row">
+            <span>درخواست برنامه تمرینی از سارا محمدی</span
+            ><small>امروز، ۱۰:۳۰</small>
+          </div>
+          <div class="activity-row">
+            <span>برنامه «قدرتی سه‌روزه» ارسال شد</span><small>دیروز</small>
+          </div>
+          <div class="activity-row">
+            <span>تراکنش جدید ثبت شد</span><small>۲ روز پیش</small>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script>
+      const q = new URLSearchParams(location.search).get("demo");
+      if (q !== "coach" && !localStorage.getItem("mg_session"))
+        location.href = "account.html";
+      async function logout() {
+        try {
+          await MGApi.logout();
+        } finally {
+          localStorage.clear();
+          location.href = "account.html";
+        }
+      }
+      async function hydrateCoachDashboard() {
+        if (q === "coach" || !localStorage.getItem("mg_session")) return;
+        try {
+          const data = await MGApi.dashboard();
+          const user = data.user || {};
+          const name = user.full_name || user.phone || "مربی";
+          document.querySelector(".coach-app h1")?.replaceChildren(name);
+          const stats = [...document.querySelectorAll(".stat strong")];
+          const assigned = Number(data.stats?.assigned || 0);
+          const pending = Number(data.stats?.pending || 0);
+          if (stats[0]) stats[0].textContent = String(assigned);
+          if (stats[1]) stats[1].textContent = String(pending);
+        } catch (error) {
+          if (error.status === 401) {
+            localStorage.removeItem("mg_session");
+            location.href = "account.html";
+          }
+        }
+      }
+      hydrateCoachDashboard();
+      document
+        .getElementById("coachRailToggle")
+        ?.addEventListener("click", () =>
+          document.body.classList.toggle("coach-rail-open"),
+        );
+    </script>
+  </body>
+</html>

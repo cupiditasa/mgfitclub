@@ -1,0 +1,28 @@
+@font-face{font-family:"B Esfehan";src:url("./assets/fonts/B-Esfehan-Bold.ttf?v=20260829") format("truetype");font-weight:100 900;font-style:normal;font-display:swap}
+:root{--panel-bg:#080a08!important;--panel-card:#11150f!important;--panel-acid:#c6ff3f!important;--panel-line:rgba(198,255,63,.22)!important;--panel-muted:#aab2a2!important;--panel-radius:22px}
+*,*::before,*::after{box-sizing:border-box}
+html,body{background:var(--panel-bg)!important;color:#f5f6f1!important}
+body{font-family:"B Esfehan",Tahoma,sans-serif!important}
+body{min-height:100vh;line-height:1.7;-webkit-font-smoothing:antialiased}
+.app{width:min(100%,1280px);margin-inline:auto}
+.hero,.top,.header{border-bottom:1px solid var(--panel-line)!important}
+.tabs{scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button,.tab,.role,.btn,.button,button,a{min-height:44px}
+.tabs button:focus-visible,.tab:focus-visible,.btn:focus-visible,.button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--panel-acid);outline-offset:2px}
+.app,.card,.content,.shell,.panel,.modalbox{background:var(--panel-card)!important;color:#f5f6f1!important}
+.hero,.top,.header{background:linear-gradient(135deg,#080a08,#16200f)!important;color:#f5f6f1!important}
+button,.btn,.button{transition:transform .2s,box-shadow .2s,background .2s!important}
+button:hover,.btn:hover,.button:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(198,255,63,.2)!important}
+.btn,.button,.tab.active,.role.active{background:var(--panel-acid)!important;color:#080a08!important;border-color:var(--panel-acid)!important}
+.tabs,.card,.person,.quick,.summary,.balance,.feature,.news,.program,.exercise,.meal,.tx,.broadcast,.tablebox,.create{border-color:var(--panel-line)!important;box-shadow:0 12px 30px rgba(0,0,0,.3)!important}
+.tabs button,.tab,.role,.field,.search,.goal,.quick,.summary,.balance,.feature,.news,.create{background:#0d110c!important;color:#f5f6f1!important;border-color:var(--panel-line)!important}
+.tabs button.active,.tab.active{background:var(--panel-acid)!important;color:#080a08!important}
+.purple,.program{background:linear-gradient(145deg,#111a0d,#0b0e0a)!important}
+.muted,.date,.detail,.status,.subtitle{color:#aab2a2!important}
+a{color:var(--panel-acid)}
+.bottom{background:#0d110c!important;border-top:1px solid var(--panel-line)}
+.bottom a{color:#f5f6f1}
+input,textarea,select{background:#080a08!important;color:#fff!important;border-color:var(--panel-line)!important}
+@media(max-width:680px){.content,.shell{padding-inline:14px!important}.hero{padding-inline:18px!important}.cards{grid-template-columns:1fr!important}.tabs{gap:6px!important;overflow-x:auto}.tabs button,.tab{padding-inline:14px!important;font-size:14px!important}.person-actions{flex-direction:column}.person-actions .btn{width:100%}.broadcast{flex-direction:column;align-items:stretch}.field,.search{max-width:100%!important}}
+@media(max-width:680px){.top{height:76px!important;padding:10px 14px!important}.top h1{font-size:20px!important;max-width:68%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.icon,.iconbtn{width:44px!important;height:44px!important;min-height:44px!important;padding:0!important;border-radius:14px!important;font-size:25px!important;display:grid!important;place-items:center!important}.hero{min-height:0!important;padding-bottom:64px!important}.shell{min-height:calc(100vh - 76px)!important;border-radius:28px 28px 0 0!important;padding-top:18px!important}.back{width:100%!important;max-width:none!important;margin-top:18px!important;padding:13px!important}.controls{gap:8px!important}.controls button{min-height:46px!important;flex:1!important}.controls .main{flex:0 0 76px!important;width:76px!important}.exercise-head{align-items:stretch!important;flex-direction:column!important;gap:12px!important}.exercise-head .btn{width:100%!important}.create{align-items:stretch!important;flex-direction:column!important}.create .btn{width:100%!important}.days,.week{padding-bottom:16px!important}.day{min-height:44px!important}.switch{padding:8px 0!important}.bottom{height:64px!important}.bottom a{font-size:20px!important}}

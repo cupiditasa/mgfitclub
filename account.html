@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#080a08" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="assets/brand/mg-mark-acid.webp" />
+    <link rel="stylesheet" href="preview-notice.css?v=20260912" />
+    <script src="mg-api.js?v=20260911"></script>
+    <script src="preview-notice.js?v=20260912" defer></script>
+    <title>ورود | MG FitClub</title>
+    <style>
+      @font-face {
+        font-family: "B Esfehan";
+        src: url("./assets/fonts/B-Esfehan-Bold.ttf?v=20260828")
+          format("truetype");
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+      }
+      :root {
+        --bg: #080a08;
+        --panel: #11150f;
+        --line: #39402f;
+        --text: #f6f7f2;
+        --muted: #aab2a2;
+        --lime: #c6ff3f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: radial-gradient(circle at 15% 10%, #1b2414 0, #080a08 45%);
+        color: var(--text);
+        font-family: "B Esfehan", Tahoma, sans-serif;
+      }
+      .card {
+        width: min(94vw, 520px);
+        padding: 30px;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        background: rgba(17, 21, 15, 0.96);
+        box-shadow: 0 24px 80px #0008;
+      }
+      .brand {
+        color: var(--lime);
+        letter-spacing: 0.12em;
+        font-size: 12px;
+      }
+      .back {
+        float: left;
+        color: var(--muted);
+        text-decoration: none;
+      }
+      .muted {
+        color: var(--muted);
+        line-height: 1.9;
+      }
+      .field {
+        width: 100%;
+        padding: 14px 15px;
+        margin-top: 10px;
+        border: 1px solid #59634a;
+        border-radius: 10px;
+        background: #080a08;
+        color: var(--text);
+        font: inherit;
+      }
+      .button {
+        width: 100%;
+        padding: 14px;
+        margin-top: 12px;
+        border: 0;
+        border-radius: 10px;
+        background: var(--lime);
+        color: #10140c;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .button.ghost {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid #59634a;
+      }
+      .roles {
+        display: none;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 9px;
+        margin-top: 10px;
+      }
+      .roles.open {
+        display: grid;
+      }
+      .role {
+        padding: 12px;
+        border: 1px solid #59634a;
+        border-radius: 9px;
+        background: #0b0e0a;
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+      }
+      .role.active {
+        border-color: var(--lime);
+        color: var(--lime);
+      }
+      #code {
+        display: none;
+      }
+      #status {
+        min-height: 25px;
+        margin: 15px 0 0;
+        color: var(--lime);
+      }
+    </style>
+    <style>
+      .login-video-bg {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -3;
+        background: #080a08;
+      }
+      .login-video-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background:
+          radial-gradient(
+            circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+            rgba(198, 255, 63, 0.12),
+            transparent 24%
+          ),
+          linear-gradient(
+            135deg,
+            rgba(8, 10, 8, 0.86),
+            rgba(8, 10, 8, 0.6) 55%,
+            rgba(18, 28, 10, 0.82)
+          );
+        transition: background 0.18s ease;
+      }
+      .login-video-full {
+        opacity: 0;
+        transition: opacity 1.2s ease;
+      }
+      .login-video-full.ready {
+        opacity: 1;
+      }
+      .login-video-intro.hidden {
+        opacity: 0;
+      }
+      .card {
+        position: relative;
+        z-index: 1;
+        background: rgba(17, 21, 15, 0.82);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-color: rgba(198, 255, 63, 0.3);
+      }
+      @media (max-width: 600px) {
+        .card {
+          width: min(94vw, 520px);
+          padding: 24px 20px;
+        }
+        .login-video-overlay {
+          background: linear-gradient(
+            135deg,
+            rgba(8, 10, 8, 0.9),
+            rgba(8, 10, 8, 0.7)
+          );
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .login-video-bg {
+          display: none;
+        }
+        body {
+          background: #080a08;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () =>
+          navigator.serviceWorker.register("./sw.js"),
+        );
+      }
+    </script>
+    <video
+      class="login-video-bg"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="auto"
+      poster="assets/video/login-poster.jpg"
+      aria-hidden="true"
+    >
+      <source src="assets/video/login-bg-progressive.mp4" type="video/mp4" />
+    </video>
+    <div class="login-video-overlay" aria-hidden="true"></div>
+    <main class="card">
+      <a class="back" href="index.html">بازگشت</a>
+      <div class="brand">MG FITCLUB</div>
+      <h1>ورود به حساب</h1>
+      <p class="muted">
+        نقش خود را انتخاب کنید، سپس نام کاربری و کد ورود را وارد کنید.
+      </p>
+      <button id="roleToggle" class="button ghost" type="button">
+        انتخاب نقش: ورزشکار
+      </button>
+      <div id="roles" class="roles">
+        <button class="role active" data-role="athlete" type="button">
+          ورزشکار</button
+        ><button class="role" data-role="coach" type="button">مربی</button
+        ><button class="role" data-role="manager" type="button">مدیریت</button
+        ><button class="role" data-role="secretary" type="button">منشی</button
+        ><button class="role" data-role="support" type="button">
+          پشتیبان فنی
+        </button>
+      </div>
+      <input
+        id="target"
+        class="field"
+        placeholder="شماره موبایل یا ایمیل"
+        autocomplete="username"
+      /><input
+        id="code"
+        class="field"
+        placeholder="کد ورود"
+        inputmode="numeric"
+        autocomplete="one-time-code"
+      /><button id="action" class="button" type="button">دریافت کد ورود</button>
+      <p id="status"></p>
+    </main>
+    <script>
+      (() => {
+        const API = "https://mg-fitclub-api.cupiditasa.workers.dev",
+          $ = (id) => document.getElementById(id),
+          target = $("target"),
+          code = $("code"),
+          action = $("action"),
+          status = $("status"),
+          roles = $("roles"),
+          roleToggle = $("roleToggle");
+        let sent = false,
+          challengeId = "",
+          selected = "athlete";
+        const names = {
+            admin: "مدیریت کل",
+            athlete: "ورزشکار",
+            coach: "مربی",
+            manager: "مدیریت",
+            secretary: "منشی",
+            support: "پشتیبان فنی",
+          },
+          routes = {
+            admin: "admin.html",
+            athlete: "dashboard.html",
+            coach: "coach-dashboard.html",
+            manager: "admin.html",
+            secretary: "secretary.html",
+            support: "support.html",
+          },
+          set = (x) => (status.textContent = x),
+          req = async (u, b) => {
+            const r = await fetch(API + u, {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify(b),
+              }),
+              d = await r.json().catch(() => ({}));
+            if (!r.ok) throw Error(d.error || "خطای سرویس");
+            return d;
+          };
+        roleToggle.onclick = () => roles.classList.toggle("open");
+        roles.onclick = (e) => {
+          const b = e.target.closest("[data-role]");
+          if (!b) return;
+          selected = b.dataset.role;
+          roles
+            .querySelectorAll(".role")
+            .forEach((x) => x.classList.toggle("active", x === b));
+          roleToggle.textContent = "انتخاب نقش: " + names[selected];
+          roles.classList.remove("open");
+        };
+        const login = async () => {
+          const v = target.value.trim();
+          if (!v) return set("شماره موبایل یا ایمیل را وارد کنید.");
+          try {
+            if (!sent) {
+              if (v === "admin") {
+                sent = true;
+                code.style.display = "block";
+                action.textContent = "ورود";
+                set("کد تست را وارد کنید؛ هر کد عددی ۱ تا ۵ رقمی مثل 12345");
+                return;
+              }
+              const d = await req(
+                "/api/auth/request-code",
+                Object.assign(
+                  v.includes("@") ? { email: v } : { phone: v },
+                  { role: selected },
+                ),
+              );
+              sent = true;
+              challengeId = d.challengeId || "";
+              code.style.display = "block";
+              action.textContent = "ورود";
+              set(d.devCode ? "کد آزمایشی: " + d.devCode : "کد ارسال شد.");
+            } else {
+              const entered = code.value
+                .trim()
+                .replace(/[۰-۹]/g, (n) => "۰۱۲۳۴۵۶۷۸۹".indexOf(n));
+              if (v === "admin" && /^[0-9]{1,5}$/.test(entered)) {
+                localStorage.setItem("mg_demo_role", selected);
+                localStorage.setItem("mg_demo_code", entered);
+                location.href = routes[selected] + "?demo=" + selected;
+                return;
+              }
+              const d = await req(
+                "/api/auth/verify-code",
+                Object.assign(v.includes("@") ? { email: v } : { phone: v }, {
+                  code: code.value.trim(),
+                  role: selected,
+                  challengeId,
+                }),
+              );
+              localStorage.setItem("mg_session", d.token);
+              const actualRole = d.user?.role || "athlete";
+              localStorage.setItem("mg_role", actualRole);
+              location.href = routes[actualRole] || routes.athlete;
+            }
+          } catch (e) {
+            set(e.message);
+          }
+        };
+        action.onclick = login;
+        [target, code].forEach(
+          (x) =>
+            (x.onkeydown = (e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                login();
+              }
+            }),
+        );
+      })();
+    </script>
+    <script>
+      (() => {
+        const video = document.querySelector(".login-video-bg"),
+          card = document.querySelector(".card"),
+          overlay = document.querySelector(".login-video-overlay");
+        if (!video) return;
+        let target = 0,
+          current = 0,
+          raf = 0,
+          lastSeek = 0,
+          active = false,
+          dragging = false;
+        const clamp = (n) => Math.max(0, Math.min(1, n));
+        const render = () => {
+          if (!active) {
+            raf = 0;
+            return;
+          }
+          current += (target - current) * 0.12;
+          if (video.duration) {
+            const t = Math.max(
+                0.05,
+                Math.min(video.duration - 0.05, current * video.duration),
+              ),
+              now = performance.now();
+            if (
+              !video.seeking &&
+              now - lastSeek > 110 &&
+              Math.abs(video.currentTime - t) > 0.08
+            ) {
+              video.currentTime = t;
+              lastSeek = now;
+            }
+          }
+          if (raf) raf = requestAnimationFrame(render);
+        };
+        const start = () => {
+          if (!active) {
+            active = true;
+            video.pause();
+            raf = requestAnimationFrame(render);
+          }
+        };
+        const update = (e) => {
+          if (e.pointerType === "touch" && !dragging) return;
+          if (card && e.target.closest(".card")) return;
+          const x = clamp(e.clientX / window.innerWidth),
+            y = clamp(e.clientY / window.innerHeight);
+          target = x;
+          overlay?.style.setProperty("--pointer-x", `${x * 100}%`);
+          overlay?.style.setProperty("--pointer-y", `${y * 100}%`);
+          start();
+        };
+        document.addEventListener("pointermove", update, { passive: true });
+        document.addEventListener(
+          "pointerdown",
+          (e) => {
+            if (e.pointerType === "touch") {
+              dragging = true;
+              update(e);
+            }
+          },
+          { passive: true },
+        );
+        const resume = () => {
+          dragging = false;
+          active = false;
+          if (raf) {
+            cancelAnimationFrame(raf);
+            raf = 0;
+          }
+          video.play().catch(() => {});
+        };
+        document.addEventListener("pointerup", resume, { passive: true });
+        document.addEventListener("pointercancel", resume, { passive: true });
+        window.addEventListener("blur", resume);
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,224 @@
+/* MG FitClub role surfaces: shared video + branded 70/20/10 palettes */
+:root {
+  --role-accent: #c6ff3f;
+  --role-overlay: rgba(8, 12, 9, 0.72);
+  --role-surface: rgba(12, 17, 10, 0.82);
+  --role-surface2: rgba(22, 29, 18, 0.9);
+  --role-line: rgba(198, 255, 63, 0.24);
+  --role-text: #f5f7f1;
+  --role-muted: #aab4a4;
+}
+html,
+body {
+  background: #080a08 !important;
+  color: var(--role-text) !important;
+}
+body {
+  position: relative;
+  overflow-x: hidden;
+  font-family: "B Esfehan", Tahoma, sans-serif !important;
+}
+.role-bg {
+  position: fixed;
+  inset: -4%;
+  z-index: 0;
+  width: 108%;
+  height: 108%;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(0.72) contrast(1.05);
+  transform: translate3d(var(--role-bg-x, 0), var(--role-bg-y, 0), 0)
+    scale(1.05);
+  will-change: transform;
+}
+.role-bg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at var(--role-px, 50%) var(--role-py, 42%),
+      color-mix(in srgb, var(--role-accent) 12%, transparent),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      var(--role-overlay),
+      color-mix(in srgb, var(--role-overlay) 70%, transparent) 55%,
+      var(--role-overlay)
+    );
+}
+.app,
+.wrap,
+.box,
+.modal {
+  position: relative;
+  z-index: 2;
+}
+button,
+a,
+.btn,
+.button,
+.tab,
+.role,
+.back,
+.primary {
+  border-color: var(--role-line) !important;
+}
+button,
+a,
+.btn,
+.button,
+.tab,
+.role,
+.back,
+.primary {
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    background 0.2s !important;
+}
+button:hover,
+.btn:hover,
+.button:hover,
+.tab:hover,
+.role:hover,
+.back:hover,
+.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--role-accent) 20%, transparent) !important;
+}
+.hero,
+.top,
+.header,
+.content,
+.shell,
+.card,
+.panel,
+.box,
+.modal,
+.program,
+.exercise-wrap,
+.purple,
+.balance,
+.summary,
+.feature,
+.news,
+.create,
+.tablebox,
+.broadcast,
+.meal,
+.exercise,
+.timer,
+.controls,
+.sub,
+.parts,
+.switch,
+.tabs,
+.bottom {
+  background: var(--role-surface) !important;
+  color: var(--role-text) !important;
+  border-color: var(--role-line) !important;
+  backdrop-filter: blur(13px);
+  -webkit-backdrop-filter: blur(13px);
+}
+.hero,
+.top,
+.header {
+  background: linear-gradient(
+    135deg,
+    var(--role-surface),
+    var(--role-surface2)
+  ) !important;
+}
+.muted,
+.subtitle,
+.detail,
+.date,
+.stats,
+.time small,
+p {
+  color: var(--role-muted);
+}
+.btn,
+.button,
+.tab.active,
+.role.active,
+.primary,
+.back,
+.controls .main,
+.day.active,
+.switch .active {
+  background: var(--role-accent) !important;
+  color: #080a08 !important;
+  border-color: var(--role-accent) !important;
+}
+.accent,
+a {
+  color: var(--role-accent);
+}
+input,
+textarea,
+select,
+.field,
+.search {
+  background: rgba(5, 8, 5, 0.75) !important;
+  color: var(--role-text) !important;
+  border-color: var(--role-line) !important;
+}
+.day,
+.tab,
+.role,
+.controls button,
+.icon {
+  color: var(--role-text) !important;
+  background: rgba(198, 255, 63, 0.08) !important;
+}
+.meal-icon,
+.circle.green {
+  background: var(--role-accent) !important;
+  color: #080a08 !important;
+}
+.circle.coral {
+  background: #78937a !important;
+}
+body[data-role="coach"] {
+  --role-accent: #c6ff3f;
+  --role-overlay: rgba(7, 15, 8, 0.68);
+  --role-surface: rgba(10, 18, 10, 0.82);
+  --role-surface2: rgba(22, 35, 16, 0.9);
+}
+body[data-role="manager"] {
+  --role-accent: #b9d985;
+  --role-overlay: rgba(18, 18, 11, 0.72);
+  --role-surface: rgba(22, 24, 15, 0.84);
+  --role-surface2: rgba(35, 39, 21, 0.9);
+}
+body[data-role="secretary"] {
+  --role-accent: #a9e6a4;
+  --role-overlay: rgba(8, 18, 15, 0.72);
+  --role-surface: rgba(10, 22, 18, 0.84);
+  --role-surface2: rgba(18, 36, 28, 0.9);
+}
+body[data-role="support"] {
+  --role-accent: #9ed7c8;
+  --role-overlay: rgba(8, 15, 18, 0.74);
+  --role-surface: rgba(10, 19, 21, 0.84);
+  --role-surface2: rgba(18, 34, 35, 0.9);
+}
+@media (max-width: 680px) {
+  .role-bg {
+    object-position: 58% center;
+  }
+  .app,
+  .wrap {
+    width: 100%;
+    max-width: 100%;
+  }
+  .hero,
+  .top,
+  .header {
+    border-radius: 0 !important;
+  }
+}

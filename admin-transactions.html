@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>تراکنش‌های باشگاه | MG FitClub</title>
+    <style>
+      :root {
+        --p: #713de2;
+        --green: #2dcc75;
+        --yellow: #f7ca55;
+        --ink: #77727f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--p);
+        font-family: Tahoma, "Segoe UI", sans-serif;
+        color: var(--ink);
+      }
+      .app {
+        max-width: 760px;
+        margin: auto;
+        min-height: 100vh;
+      }
+      .top {
+        height: 116px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 34px;
+      }
+      .top h1 {
+        font-size: 27px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .icon {
+        border: 0;
+        background: none;
+        color: #fff;
+        font-size: 48px;
+        cursor: pointer;
+      }
+      .shell {
+        background: #fff;
+        border-radius: 44px 44px 0 0;
+        min-height: calc(100vh - 116px);
+        padding: 38px 40px 60px;
+      }
+      .balance,
+      .summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #fafafa;
+        border-radius: 28px;
+        padding: 22px;
+        margin-bottom: 22px;
+        gap: 16px;
+      }
+      .balance strong {
+        font-size: 21px;
+        font-weight: 400;
+      }
+      .btn {
+        border: 0;
+        border-radius: 18px;
+        padding: 14px 21px;
+        font: inherit;
+        cursor: pointer;
+        color: #fff;
+      }
+      .yellow {
+        background: var(--yellow);
+      }
+      .green {
+        background: var(--green);
+      }
+      .summary {
+        padding: 18px 25px;
+        margin-bottom: 30px;
+      }
+      .summary b {
+        font-size: 21px;
+        font-weight: 400;
+      }
+      .wallet {
+        font-size: 46px;
+        color: var(--green);
+      }
+      .purple {
+        background: var(--p);
+        border-radius: 42px 42px 0 0;
+        padding: 54px 30px 36px;
+      }
+      .tabs {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin-bottom: 34px;
+      }
+      .tab {
+        border: 2px solid #fff;
+        background: #fff;
+        color: var(--p);
+        border-radius: 23px;
+        padding: 15px 28px;
+        font: inherit;
+        font-size: 20px;
+        cursor: pointer;
+      }
+      .tab.active {
+        background: transparent;
+        color: #fff;
+      }
+      .heads,
+      .tx {
+        display: grid;
+        grid-template-columns: 1.1fr 1fr 1fr 1fr;
+        gap: 10px;
+        align-items: center;
+        text-align: center;
+      }
+      .heads {
+        color: #fff;
+        font-size: 14px;
+        margin: 0 6px 18px;
+      }
+      .tx {
+        background: #fff;
+        border-radius: 25px;
+        padding: 23px 15px;
+        margin: 14px 0;
+        font-size: 15px;
+      }
+      .muted {
+        color: #999;
+      }
+      .back {
+        display: block;
+        max-width: 240px;
+        margin: 25px auto 0;
+        text-align: center;
+        text-decoration: none;
+        color: #fff;
+        background: #5b2ec7;
+        border-radius: 15px;
+        padding: 13px;
+      }
+      @media (max-width: 520px) {
+        .top {
+          height: 96px;
+          padding: 12px 20px;
+        }
+        .top h1 {
+          font-size: 22px;
+        }
+        .shell {
+          padding: 25px 12px;
+        }
+        .balance {
+          padding: 17px;
+          gap: 9px;
+        }
+        .balance strong {
+          font-size: 16px;
+        }
+        .btn {
+          padding: 11px 13px;
+          font-size: 13px;
+        }
+        .summary {
+          padding: 16px;
+        }
+        .summary b {
+          font-size: 17px;
+        }
+        .purple {
+          padding: 36px 10px;
+        }
+        .tabs {
+          gap: 10px;
+        }
+        .tab {
+          font-size: 15px;
+          padding: 13px 15px;
+        }
+        .heads,
+        .tx {
+          font-size: 11px;
+          grid-template-columns: 1.1fr 1fr 1fr 1fr;
+        }
+        .tx {
+          padding: 18px 5px;
+          font-size: 12px;
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="panel-theme.css?v=20260829" />
+    <link rel="stylesheet" href="mg-role-theme.css?v=20260906" />
+    <link rel="stylesheet" href="tabs-modern.css?v=20260907" />
+  </head>
+  <body data-role="manager">
+    <script src="mg-role-theme.js?v=20260906"></script>
+    <div class="app">
+      <header class="top">
+        <button class="icon" id="back">‹</button>
+        <h1>تراکنش‌ها</h1>
+        <button class="icon" onclick="location.href = 'account.html'">
+          ☰
+        </button>
+      </header>
+      <main class="shell">
+        <section class="balance">
+          <strong>درآمد کل باشگاه : <b>۳۸,۵۰۰,۰۰۰</b> ریال</strong
+          ><button class="btn yellow" id="report">＋ درخواست گزارش مالی</button>
+        </section>
+        <section class="summary">
+          <div><b>دریافتی‌های امروز</b><br /><span>۸,۶۰۰,۰۰۰ ریال</span></div>
+          <span class="wallet">▣</span>
+        </section>
+        <section class="purple">
+          <div class="tabs">
+            <button class="tab active" data-filter="today">
+              تراکنش‌های امروز</button
+            ><button class="tab" data-filter="all">همه تراکنش‌ها</button>
+          </div>
+          <div class="heads">
+            <span>شماره تراکنش</span><span>مبلغ</span><span>پرداخت‌کننده</span
+            ><span>تاریخ و ساعت</span>
+          </div>
+          <div id="rows"></div>
+        </section>
+        <a class="back" href="admin.html?demo=manager">بازگشت به پنل مدیریت</a>
+      </main>
+    </div>
+    <script src="mg-api.js?v=20260911"></script>
+    <script src="tabs-modern.js?v=20260907"></script>
+    <script>
+      const p = new URLSearchParams(location.search);
+      if (p.get("demo") !== "manager" && !localStorage.getItem("mg_session"))
+        location.href = "account.html";
+      const tx = [
+        [
+          "۷۸۱۴۰۲",
+          "۱,۸۰۰,۰۰۰",
+          "محمد کاظمی - عضویت سه‌ماهه",
+          "۱۴۰۳/۰۸/۲۷ - ۱۳:۵۰",
+        ],
+        [
+          "۷۸۱۴۰۳",
+          "۸۰۰,۰۰۰",
+          "سارا احمدی - برنامه تمرینی",
+          "۱۴۰۳/۰۸/۲۷ - ۱۲:۲۵",
+        ],
+        [
+          "۷۸۱۴۰۴",
+          "۶,۰۰۰,۰۰۰",
+          "رضا مرادی - عضویت شش‌ماهه",
+          "۱۴۰۳/۰۸/۲۷ - ۱۱:۱۰",
+        ],
+        [
+          "۷۸۱۳۹۸",
+          "۲,۴۰۰,۰۰۰",
+          "نگار مرادی - عضویت سه‌ماهه",
+          "۱۴۰۳/۰۸/۲۶ - ۱۸:۴۰",
+        ],
+        [
+          "۷۸۱۳۹۹",
+          "۸۰۰,۰۰۰",
+          "پارسا کریمی - برنامه غذایی",
+          "۱۴۰۳/۰۸/۲۶ - ۱۶:۲۰",
+        ],
+        [
+          "۷۸۱۴۰۰",
+          "۱,۸۰۰,۰۰۰",
+          "آرین نوری - تمدید عضویت",
+          "۱۴۰۳/۰۸/۲۵ - ۱۴:۱۵",
+        ],
+      ];
+      const rows = document.querySelector("#rows");
+      function render(f) {
+        rows.innerHTML = tx
+          .filter((x, i) => f === "all" || i < 3)
+          .map(
+            (x) =>
+              `<article class="tx"><span>${x[0]}</span><span><b>${x[1]}</b><small> ریال</small></span><span>${x[2]}</span><span class="muted">${x[3]}</span></article>`,
+          )
+          .join("");
+      }
+      document.querySelectorAll(".tab").forEach(
+        (b) =>
+          (b.onclick = () => {
+            document
+              .querySelectorAll(".tab")
+              .forEach((x) => x.classList.toggle("active", x === b));
+            render(b.dataset.filter);
+          }),
+      );
+      document.querySelector("#report").onclick = () =>
+        alert("درخواست گزارش مالی برای مدیریت ثبت شد.");
+      document.querySelector("#back").onclick = () =>
+        (location.href = "admin.html?demo=manager");
+      render("today");
+    </script>
+  </body>
+</html>

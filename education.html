@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>آموزش‌ها | MG FitClub</title>
+    <style>
+      :root {
+        --p: #713de2;
+        --green: #2dcc75;
+        --yellow: #f7ca55;
+        --ink: #625d92;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--p);
+        font-family: Tahoma, "Segoe UI", sans-serif;
+        color: var(--ink);
+      }
+      .app {
+        max-width: 760px;
+        margin: auto;
+        min-height: 100vh;
+      }
+      .top {
+        height: 116px;
+        color: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 30px;
+      }
+      .top h1 {
+        font-size: 26px;
+        font-weight: 500;
+      }
+      .icon {
+        border: 0;
+        background: none;
+        color: #fff;
+        font-size: 42px;
+        cursor: pointer;
+      }
+      .shell {
+        background: #fff;
+        border-radius: 42px 42px 0 0;
+        min-height: calc(100vh - 116px);
+        padding: 25px 25px 60px;
+      }
+      .anatomy {
+        display: flex;
+        justify-content: center;
+        gap: 28px;
+        align-items: center;
+      }
+      .body {
+        width: 210px;
+        height: 470px;
+        object-fit: contain;
+      }
+      .switch {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        margin: 14px;
+      }
+      .switch button {
+        border: 1px solid #eee;
+        background: #fff;
+        padding: 9px 22px;
+        color: #777;
+        border-radius: 9px;
+        font: inherit;
+        cursor: pointer;
+      }
+      .switch .active {
+        background: var(--green);
+        color: #fff;
+      }
+      .parts {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin: 25px 5px;
+      }
+      .part {
+        border: 0;
+        background: #f8f8f8;
+        border-radius: 18px;
+        padding: 8px;
+        color: var(--ink);
+        font: inherit;
+        cursor: pointer;
+      }
+      .part img {
+        width: 100%;
+        height: 62px;
+        object-fit: contain;
+      }
+      .part.active {
+        outline: 3px solid var(--green);
+      }
+      .sub {
+        background: #fafafa;
+        border-radius: 30px;
+        padding: 20px;
+        margin-top: 18px;
+      }
+      .sub h2 {
+        font-size: 22px;
+        margin: 0 0 18px;
+      }
+      .exercise {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        background: #fff;
+        border-radius: 17px;
+        padding: 12px 15px;
+        margin: 10px 0;
+      }
+      .exercise button {
+        border: 0;
+        background: var(--yellow);
+        color: #fff;
+        border-radius: 13px;
+        width: 45px;
+        height: 45px;
+        font-size: 23px;
+        cursor: pointer;
+      }
+      .exercise span {
+        font-size: 15px;
+      }
+      .back {
+        display: block;
+        text-align: center;
+        text-decoration: none;
+        color: #fff;
+        background: #5b2ec7;
+        border-radius: 14px;
+        padding: 12px;
+        max-width: 230px;
+        margin: 22px auto 0;
+      }
+      @media (max-width: 520px) {
+        .top {
+          height: 96px;
+          padding: 12px 20px;
+        }
+        .top h1 {
+          font-size: 22px;
+        }
+        .shell {
+          padding: 20px 12px;
+        }
+        .body {
+          width: 155px;
+          height: 365px;
+        }
+        .parts {
+          gap: 7px;
+        }
+        .part {
+          font-size: 12px;
+          padding: 5px;
+        }
+        .part img {
+          height: 53px;
+        }
+        .sub h2 {
+          font-size: 19px;
+        }
+        .exercise span {
+          font-size: 13px;
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="panel-theme.css?v=20260829" />
+    <link rel="stylesheet" href="athlete-shared-theme.css?v=20260906" />
+    <link rel="stylesheet" href="tabs-modern.css?v=20260907" />
+  </head>
+  <body data-page-theme="education">
+    <script src="athlete-shared-theme.js?v=20260906"></script>
+    <div class="app">
+      <header class="top">
+        <button class="icon" id="back">‹</button>
+        <h1>آموزش‌ها</h1>
+        <button class="icon" onclick="location.href = 'account.html'">
+          ☰
+        </button>
+      </header>
+      <main class="shell">
+        <section class="anatomy">
+          <img
+            id="body"
+            class="body"
+            src="assets/education/anatomy-front.png"
+            alt="آناتومی بدن"
+          />
+        </section>
+        <div class="switch">
+          <button id="front" class="active">حرکات جلو</button
+          ><button id="rear">حرکات پشت</button>
+        </div>
+        <section class="parts" id="parts"></section>
+        <section class="sub">
+          <h2 id="title">آموزش حرکات سینه</h2>
+          <div id="exerciseList"></div>
+        </section>
+        <a class="back" id="backLink" href="#">بازگشت به پنل</a>
+      </main>
+    </div>
+    <script src="mg-api.js?v=20260911"></script>
+    <script src="tabs-modern.js?v=20260907"></script>
+    <script>
+      const p = new URLSearchParams(location.search),
+        role = p.get("demo") || localStorage.getItem("mg_role") || "athlete";
+      if (!p.get("demo") && !localStorage.getItem("mg_session"))
+        location.href = "account.html";
+      const names = [
+          "شکم",
+          "زیر بغل",
+          "سینه",
+          "ساق",
+          "سرشانه",
+          "بازو",
+          "پا",
+          "کمر",
+        ],
+        ex = {
+          شکم: ["کرانچ", "پلانک", "بالا آوردن پا"],
+          "زیر بغل": ["لت از جلو", "قایقی", "بارفیکس"],
+          سینه: ["پرس سینه", "شنا", "فلای دستگاه"],
+          ساق: ["ساق ایستاده", "ساق نشسته"],
+          سرشانه: ["پرس سرشانه", "نشر جانب"],
+          بازو: ["جلو بازو دمبل", "پشت بازو سیم‌کش"],
+          پا: ["اسکوات", "جفت پا"],
+          کمر: ["ددلیفت", "سوپرمن"],
+        };
+      let current = "سینه";
+      const parts = document.querySelector("#parts"),
+        list = document.querySelector("#exerciseList"),
+        title = document.querySelector("#title");
+      function render() {
+        parts.innerHTML = names
+          .map(
+            (n) =>
+              `<button class="part ${n === current ? "active" : ""}" data-n="${n}"><img src="assets/education/anatomy-front.png" alt=""><span>${n}</span></button>`,
+          )
+          .join("");
+        parts.querySelectorAll(".part").forEach(
+          (b) =>
+            (b.onclick = () => {
+              current = b.dataset.n;
+              render();
+            }),
+        );
+        title.textContent = `آموزش حرکات ${current}`;
+        list.innerHTML = (ex[current] || [])
+          .map(
+            (n, i) =>
+              `<div class="exercise"><span>${n}</span><span>آموزش ${i + 1}</span><button onclick="alert('ویدیوی آموزش ${n} به‌زودی پخش می‌شود')">▷</button></div>`,
+          )
+          .join("");
+      }
+      front.onclick = () => {
+        body.src = "assets/education/anatomy-front.png";
+        front.classList.add("active");
+        rear.classList.remove("active");
+      };
+      rear.onclick = () => {
+        body.src = "assets/education/anatomy-back.png";
+        rear.classList.add("active");
+        front.classList.remove("active");
+      };
+      const backUrl =
+        role === "coach"
+          ? "coach-dashboard.html?demo=coach"
+          : role === "manager"
+            ? "admin.html?demo=manager"
+            : "dashboard.html?demo=athlete";
+      back.onclick = () => (location.href = backUrl);
+      backLink.href = backUrl;
+      render();
+    </script>
+  </body>
+</html>

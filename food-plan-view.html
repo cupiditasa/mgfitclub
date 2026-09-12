@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>برنامه غذایی | MG FitClub</title>
+    <style>
+      :root {
+        --p: #713de2;
+        --ink: #40375e;
+        --muted: #716a8e;
+        --yellow: #f7ca55;
+        --coral: #ff645b;
+        --green: #2dcc75;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--p);
+        font-family: Tahoma, "Segoe UI", sans-serif;
+        color: var(--ink);
+      }
+      .app {
+        max-width: 760px;
+        margin: auto;
+        min-height: 100vh;
+      }
+      .top {
+        height: 116px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 34px;
+      }
+      .top h1 {
+        font-size: 27px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .icon {
+        border: 0;
+        background: none;
+        color: #fff;
+        font-size: 48px;
+        cursor: pointer;
+      }
+      .shell {
+        background: #fff;
+        border-radius: 44px 44px 0 0;
+        min-height: calc(100vh - 116px);
+        padding: 30px 34px 60px;
+      }
+      .days {
+        display: flex;
+        justify-content: space-around;
+        gap: 8px;
+        overflow: auto;
+        padding: 8px 0 28px;
+      }
+      .day {
+        border: 0;
+        background: none;
+        color: var(--muted);
+        padding: 13px 15px;
+        border-radius: 15px;
+        white-space: nowrap;
+        font: inherit;
+        font-size: 17px;
+        cursor: pointer;
+      }
+      .day.active {
+        background: #ff655b;
+        color: #fff;
+        font-weight: bold;
+      }
+      .plan {
+        display: grid;
+        gap: 24px;
+      }
+      .meal {
+        background: #fafafa;
+        border-radius: 28px;
+        min-height: 136px;
+        padding: 25px 130px 24px 25px;
+        position: relative;
+        box-shadow: 0 5px 14px #33235e0a;
+        cursor: pointer;
+      }
+      .meal h2 {
+        margin: 0 0 18px;
+        font-size: 23px;
+        font-weight: 500;
+      }
+      .meal p {
+        margin: 0;
+        font-size: 17px;
+        color: #342b53;
+      }
+      .meal-icon {
+        position: absolute;
+        right: 14px;
+        top: 14px;
+        width: 86px;
+        height: 108px;
+        border-radius: 22px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 40px;
+      }
+      .breakfast .meal-icon {
+        background: var(--yellow);
+      }
+      .snack .meal-icon {
+        background: var(--coral);
+      }
+      .lunch .meal-icon {
+        background: var(--green);
+      }
+      .dinner .meal-icon {
+        background: var(--p);
+      }
+      .supp .meal-icon {
+        background: #888;
+      }
+      .detail {
+        display: none;
+        margin-top: 16px;
+        padding-top: 14px;
+        border-top: 1px solid #eee;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .meal.open .detail {
+        display: block;
+      }
+      .back {
+        display: block;
+        text-align: center;
+        text-decoration: none;
+        color: #fff;
+        background: #5b2ec7;
+        border-radius: 15px;
+        padding: 13px;
+        max-width: 240px;
+        margin: 28px auto 0;
+      }
+      @media (max-width: 520px) {
+        .top {
+          height: 96px;
+          padding: 12px 20px;
+        }
+        .top h1 {
+          font-size: 21px;
+        }
+        .shell {
+          padding: 24px 12px 50px;
+        }
+        .days {
+          justify-content: flex-start;
+        }
+        .day {
+          font-size: 15px;
+          padding: 11px;
+        }
+        .meal {
+          padding: 22px 105px 20px 18px;
+          min-height: 125px;
+        }
+        .meal-icon {
+          width: 74px;
+          height: 100px;
+          right: 12px;
+        }
+        .meal h2 {
+          font-size: 20px;
+        }
+        .meal p {
+          font-size: 15px;
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="panel-theme.css?v=20260829" />
+    <link rel="stylesheet" href="athlete-shared-theme.css?v=20260906" />
+    <link rel="stylesheet" href="tabs-modern.css?v=20260907" />
+  </head>
+  <body data-page-theme="food">
+    <script src="athlete-shared-theme.js?v=20260906"></script>
+    <div class="app">
+      <header class="top">
+        <button class="icon" id="back">‹</button>
+        <h1>برنامه غذایی استاد محمدی</h1>
+        <button class="icon" onclick="location.href = 'account.html'">
+          ☰
+        </button>
+      </header>
+      <main class="shell">
+        <nav class="days" id="days"></nav>
+        <section id="plan" class="plan"></section>
+        <a class="back" href="dashboard.html?demo=athlete"
+          >بازگشت به پنل ورزشکار</a
+        >
+      </main>
+    </div>
+    <script src="mg-api.js?v=20260911"></script>
+    <script src="tabs-modern.js?v=20260907"></script>
+    <script>
+      const p = new URLSearchParams(location.search);
+      if (p.get("demo") !== "athlete" && !localStorage.getItem("mg_session"))
+        location.href = "account.html";
+      const days = [
+          "شنبه",
+          "یکشنبه",
+          "دوشنبه",
+          "سه‌شنبه",
+          "چهارشنبه",
+          "پنجشنبه",
+          "جمعه",
+        ],
+        meals = [
+          [
+            "صبحانه",
+            "تخم مرغ: ۲ عدد　 عدسی: ۱ بشقاب　 نان سبوس‌دار: ۲ عدد",
+            "breakfast",
+            "♨",
+            "پروتئین کافی برای شروع روز؛ همراه با یک لیوان آب و میوه فصل.",
+          ],
+          [
+            "ناهار",
+            "تخم مرغ: ۲ عدد　 عدسی: ۱ بشقاب　 نان سبوس‌دار: ۲ عدد",
+            "snack",
+            "♨",
+            "وعده اصلی را آرام و در زمان مشخص میل کنید.",
+          ],
+          [
+            "شام",
+            "تخم مرغ: ۲ عدد　 عدسی: ۱ بشقاب　 نان سبوس‌دار: ۲ عدد",
+            "lunch",
+            "♧",
+            "حجم وعده شام سبک و متناسب با برنامه تمرینی است.",
+          ],
+          [
+            "میان وعده",
+            "تخم مرغ: ۲ عدد　 عدسی: ۱ بشقاب　 نان سبوس‌دار: ۲ عدد",
+            "dinner",
+            "◉",
+            "میان‌وعده را در فاصله بین وعده‌های اصلی مصرف کنید.",
+          ],
+          [
+            "مکمل",
+            "تخم مرغ: ۲ عدد　 عدسی: ۱ بشقاب　 نان سبوس‌دار: ۲ عدد",
+            "supp",
+            "▤",
+            "مصرف مکمل فقط طبق توصیه مربی و برنامه ثبت‌شده انجام شود.",
+          ],
+        ];
+      let active = "شنبه";
+      const daysEl = document.querySelector("#days"),
+        plan = document.querySelector("#plan");
+      days.forEach((d) => {
+        const b = document.createElement("button");
+        b.className = "day" + (d === active ? " active" : "");
+        b.textContent = d;
+        b.onclick = () => {
+          active = d;
+          render();
+        };
+        daysEl.appendChild(b);
+      });
+      function render() {
+        document
+          .querySelectorAll(".day")
+          .forEach((b) =>
+            b.classList.toggle("active", b.textContent === active),
+          );
+        plan.innerHTML = meals
+          .map(
+            (m) =>
+              `<article class="meal ${m[2]}"><span class="meal-icon">${m[3]}</span><h2>${m[0]}</h2><p>${m[1]}</p><div class="detail">${m[4]}</div></article>`,
+          )
+          .join("");
+        plan
+          .querySelectorAll(".meal")
+          .forEach((x) => (x.onclick = () => x.classList.toggle("open")));
+      }
+      back.onclick = () => (location.href = "dashboard.html?demo=athlete");
+      render();
+    </script>
+  </body>
+</html>

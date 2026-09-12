@@ -1,0 +1,131 @@
+#adminOrbit {
+  position: relative;
+  width: min(92vw, 620px);
+  height: min(92vw, 620px);
+  margin: 24px auto;
+  display: block;
+  border: 1px solid rgba(198, 255, 63, 0.22);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(198, 255, 63, 0.1) 0 16%,
+    transparent 16.5% 36%,
+    rgba(198, 255, 63, 0.05) 36.5% 37%,
+    transparent 37%
+  );
+  box-shadow:
+    inset 0 0 80px #0008,
+    0 24px 70px #0006;
+}
+#adminOrbit:before {
+  content: "";
+  position: absolute;
+  inset: 7%;
+  border: 1px dashed rgba(198, 255, 63, 0.2);
+  border-radius: 50%;
+  animation: adminOrbitSpin 34s linear infinite;
+}
+@keyframes adminOrbitSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+#adminOrbit .admin-orbit-item {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: clamp(106px, 12vw, 136px);
+  height: clamp(106px, 12vw, 136px);
+  transform: translate(-50%, -50%) rotate(var(--a))
+    translateY(calc(-1 * var(--r))) rotate(calc(-1 * var(--a)));
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 12px;
+  color: #f5f7f1;
+  background: rgba(14, 22, 12, 0.78) !important;
+  border: 1px solid rgba(198, 255, 63, 0.3) !important;
+  backdrop-filter: blur(9px);
+  z-index: 2;
+  animation: adminOrbitItems 30s linear infinite;
+}
+@keyframes adminOrbitItems {
+  from {
+    transform: translate(-50%, -50%) rotate(var(--a))
+      translateY(calc(-1 * var(--r))) rotate(calc(-1 * var(--a)));
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(calc(var(--a) + 360deg))
+      translateY(calc(-1 * var(--r))) rotate(calc(-360deg - var(--a)));
+  }
+}
+#adminOrbit .admin-orbit-item:hover {
+  animation-play-state: paused;
+  transform: translate(-50%, -50%) rotate(var(--a))
+    translateY(calc(-1 * var(--r))) rotate(calc(-1 * var(--a))) scale(1.08);
+}
+#adminOrbit .admin-orbit-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(148px, 17vw, 190px);
+  height: clamp(148px, 17vw, 190px);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 22px;
+  background: radial-gradient(
+    circle at 35% 25%,
+    rgba(198, 255, 63, 0.35),
+    rgba(35, 58, 20, 0.9) 45%,
+    rgba(8, 13, 8, 0.96) 78%
+  ) !important;
+  border: 2px solid #c6ff3f !important;
+  color: #f5f7f1;
+  z-index: 4;
+  box-shadow:
+    0 0 0 10px rgba(198, 255, 63, 0.06),
+    0 0 45px rgba(198, 255, 63, 0.2);
+}
+#adminOrbit .admin-orbit-center b {
+  font-size: 18px;
+  color: #f7faf2;
+}
+#adminOrbit .admin-orbit-center small {
+  color: #b9c8af;
+}
+#adminOrbit .admin-orbit-icon {
+  display: block;
+  font-size: 24px;
+  color: #c6ff3f;
+  margin-bottom: 4px;
+}
+@media (max-width: 700px) {
+  #adminOrbit {
+    width: min(92vw, 430px);
+    height: min(92vw, 430px);
+    --r: clamp(125px, 29vw, 150px);
+  }
+  #adminOrbit .admin-orbit-item {
+    --r: min(31vw, 150px) !important;
+    width: clamp(84px, 22vw, 110px);
+    height: clamp(84px, 22vw, 110px);
+    font-size: 11px;
+  }
+  #adminOrbit .admin-orbit-center {
+    width: clamp(112px, 30vw, 140px);
+    height: clamp(112px, 30vw, 140px);
+  }
+  #adminOrbit .admin-orbit-center b {
+    font-size: 13px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #adminOrbit:before,
+  #adminOrbit .admin-orbit-item {
+    animation: none;
+  }
+}

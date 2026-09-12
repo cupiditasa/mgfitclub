@@ -1,0 +1,183 @@
+/* MG FitClub athlete tabs: shared video surface + 70/20/10 brand system */
+:root {
+  --ath-accent: #c6ff3f;
+  --ath-accent-soft: rgba(198, 255, 63, 0.18);
+  --ath-overlay: rgba(8, 12, 9, 0.72);
+  --ath-surface: rgba(12, 17, 10, 0.78);
+  --ath-surface-2: rgba(22, 29, 18, 0.86);
+  --ath-line: rgba(198, 255, 63, 0.24);
+  --ath-text: #f5f7f1;
+  --ath-muted: #aab4a4;
+}
+html,
+body {
+  background: #080a08 !important;
+  color: var(--ath-text) !important;
+}
+body {
+  position: relative;
+  overflow-x: hidden;
+}
+.athlete-bg {
+  position: fixed;
+  inset: -4%;
+  z-index: 0;
+  width: 108%;
+  height: 108%;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(0.72) contrast(1.05);
+  transform: translate3d(var(--ath-bg-x, 0), var(--ath-bg-y, 0), 0) scale(1.05);
+  will-change: transform;
+}
+.athlete-bg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle at var(--ath-px, 50%) var(--ath-py, 42%),
+      color-mix(in srgb, var(--ath-accent) 12%, transparent),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      var(--ath-overlay),
+      color-mix(in srgb, var(--ath-overlay) 70%, transparent) 55%,
+      var(--ath-overlay)
+    );
+}
+.app {
+  position: relative;
+  z-index: 2;
+}
+.top,
+.shell {
+  background: var(--ath-surface) !important;
+  border-color: var(--ath-line) !important;
+  color: var(--ath-text) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.top {
+  border-bottom: 1px solid var(--ath-line) !important;
+}
+.shell {
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.32) !important;
+}
+.top h1,
+.shell h1,
+.shell h2,
+.shell h3,
+.shell p,
+.shell span,
+.shell label {
+  color: var(--ath-text);
+}
+.shell p,
+.muted,
+.detail,
+.subtitle {
+  color: var(--ath-muted) !important;
+}
+.program,
+.plan,
+.sub,
+.timer,
+.controls,
+.exercise,
+.meal,
+.anatomy,
+.parts,
+.switch {
+  background: transparent !important;
+  color: var(--ath-text) !important;
+}
+.program,
+.timer,
+.sub,
+.meal,
+.exercise {
+  border: 1px solid var(--ath-line) !important;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.3) !important;
+  background: var(--ath-surface-2) !important;
+}
+.exercise.collapsed,
+.meal {
+  background: rgba(17, 24, 14, 0.72) !important;
+}
+.day,
+.switch button,
+.controls button,
+.back {
+  border-color: var(--ath-line) !important;
+  background: rgba(198, 255, 63, 0.08) !important;
+  color: var(--ath-text) !important;
+}
+.day.active,
+.switch .active,
+.controls .main,
+.back,
+.play {
+  background: var(--ath-accent) !important;
+  color: #080a08 !important;
+  border-color: var(--ath-accent) !important;
+}
+.icon {
+  color: var(--ath-accent) !important;
+}
+.meal-icon,
+.circle.green {
+  background: var(--ath-accent) !important;
+  color: #080a08 !important;
+}
+.circle.coral {
+  background: #7f9a76 !important;
+}
+.part {
+  background: rgba(17, 24, 14, 0.68) !important;
+  color: var(--ath-text) !important;
+  border: 1px solid var(--ath-line) !important;
+}
+.part.active {
+  outline: 2px solid var(--ath-accent) !important;
+}
+body[data-page-theme="workout"] {
+  --ath-accent: #c6ff3f;
+  --ath-overlay: rgba(7, 15, 8, 0.68);
+  --ath-surface: rgba(10, 18, 10, 0.78);
+  --ath-surface-2: rgba(22, 35, 16, 0.88);
+}
+body[data-page-theme="food"] {
+  --ath-accent: #b8d878;
+  --ath-overlay: rgba(20, 18, 9, 0.72);
+  --ath-surface: rgba(23, 25, 15, 0.79);
+  --ath-surface-2: rgba(34, 38, 20, 0.88);
+}
+body[data-page-theme="education"] {
+  --ath-accent: #a7e8b0;
+  --ath-overlay: rgba(8, 18, 17, 0.72);
+  --ath-surface: rgba(10, 22, 19, 0.79);
+  --ath-surface-2: rgba(18, 35, 28, 0.88);
+}
+@media (max-width: 680px) {
+  .athlete-bg {
+    object-position: 58% center;
+  }
+  .top,
+  .shell {
+    background: var(--ath-surface) !important;
+  }
+  .shell {
+    border-radius: 28px 28px 0 0 !important;
+  }
+  .top {
+    border-radius: 0 !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .athlete-bg {
+    transform: scale(1.05) !important;
+  }
+}

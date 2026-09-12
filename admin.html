@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>پنل مدیریت | MG FitClub</title>
+    <style>
+      :root {
+        --purple: #7040e8;
+        --purple2: #8b5cf6;
+        --bg: #f7f7fb;
+        --card: #fff;
+        --text: #302b3f;
+        --muted: #8c8994;
+        --green: #23c978;
+        --red: #ff635d;
+        --line: #eeeaf2;
+        --shadow: 0 10px 30px #29213b12;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "B Esfehan", Tahoma, sans-serif;
+      }
+      .app {
+        max-width: 1280px;
+        margin: auto;
+        min-height: 100vh;
+      }
+      .hero {
+        background: linear-gradient(135deg, #6335db, #8b48f0);
+        color: #fff;
+        padding: 24px 28px 58px;
+        border-radius: 0 0 32px 32px;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 15px;
+      }
+      .top h1 {
+        margin: 10px 0 0;
+        font-size: clamp(22px, 4vw, 34px);
+      }
+      .top p {
+        margin: 6px 0;
+        color: #eee4ff;
+      }
+      .iconbtn {
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: 14px;
+        background: #ffffff22;
+        color: #fff;
+        font-size: 23px;
+        cursor: pointer;
+      }
+      .content {
+        margin: -30px 22px 30px;
+        position: relative;
+      }
+      .tabs {
+        display: flex;
+        gap: 10px;
+        overflow: auto;
+        padding: 10px;
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+      }
+      .tabs button {
+        white-space: nowrap;
+        padding: 13px 22px;
+        border: 1px solid #e8defe;
+        border-radius: 12px;
+        background: #fff;
+        color: var(--purple);
+        font: inherit;
+        cursor: pointer;
+      }
+      .tabs button.active {
+        background: var(--purple);
+        color: #fff;
+        box-shadow: 0 6px 15px #7040e844;
+      }
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin: 22px 0 14px;
+        flex-wrap: wrap;
+      }
+      .toolbar h2 {
+        margin: 0;
+      }
+      .search {
+        padding: 12px 16px;
+        width: min(100%, 320px);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        font: inherit;
+      }
+      .panel {
+        display: none;
+      }
+      .panel.active {
+        display: block;
+      }
+      .broadcast {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        padding: 18px 22px;
+        background: #fff;
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        margin-bottom: 16px;
+      }
+      .btn {
+        border: 0;
+        border-radius: 12px;
+        padding: 12px 18px;
+        color: #fff;
+        background: var(--green);
+        font: inherit;
+        cursor: pointer;
+        box-shadow: 0 6px 14px #23c97833;
+      }
+      .btn.red {
+        background: var(--red);
+        box-shadow: 0 6px 14px #ff635d33;
+      }
+      .btn.purple {
+        background: var(--purple);
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 16px;
+      }
+      .person {
+        background: var(--card);
+        border-radius: 22px;
+        padding: 20px;
+        box-shadow: var(--shadow);
+      }
+      .person-head {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .avatar {
+        width: 68px;
+        height: 68px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #ddd, #fafafa);
+        display: grid;
+        place-items: center;
+        color: var(--purple);
+        font-size: 28px;
+        font-weight: bold;
+      }
+      .person h3 {
+        margin: 0;
+        font-size: 21px;
+      }
+      .status {
+        margin-right: auto;
+        padding: 6px 10px;
+        border-radius: 20px;
+        background: #e4faef;
+        color: #159b5a;
+        font-size: 12px;
+      }
+      .status.off {
+        background: #fff0ef;
+        color: #e55550;
+      }
+      .details {
+        margin-top: 16px;
+        border-top: 1px solid var(--line);
+      }
+      .detail {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+      }
+      .detail strong {
+        color: var(--text);
+        font-weight: 500;
+      }
+      .person-actions {
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+      .person-actions .btn {
+        flex: 1;
+        min-width: 130px;
+      }
+      .empty {
+        padding: 35px;
+        text-align: center;
+        background: #fff;
+        border-radius: 18px;
+        color: var(--muted);
+      }
+      .tablebox {
+        overflow: auto;
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 680px;
+      }
+      th,
+      td {
+        padding: 15px;
+        border-bottom: 1px solid var(--line);
+        text-align: right;
+      }
+      th {
+        color: var(--purple);
+        background: #fcfaff;
+      }
+      .metric {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+      }
+      .metric .box {
+        background: #fff;
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: var(--shadow);
+      }
+      .metric b {
+        display: block;
+        font-size: 28px;
+        color: var(--purple);
+        margin-top: 8px;
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 5;
+        background: #20163e66;
+        place-items: center;
+        padding: 20px;
+      }
+      .modal.open {
+        display: grid;
+      }
+      .modalbox {
+        width: min(95vw, 520px);
+        padding: 24px;
+        background: #fff;
+        border-radius: 20px;
+      }
+      .form {
+        display: grid;
+        gap: 12px;
+      }
+      .form input,
+      .form textarea {
+        padding: 13px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        font: inherit;
+      }
+      @media (max-width: 650px) {
+        .hero {
+          padding: 18px 16px 50px;
+        }
+        .content {
+          margin: -25px 10px 20px;
+        }
+        .broadcast {
+          align-items: stretch;
+          flex-direction: column;
+        }
+        .person {
+          padding: 16px;
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="panel-theme.css?v=20260829" />
+    <link rel="stylesheet" href="mg-role-theme.css?v=20260906" />
+    <link rel="stylesheet" href="tabs-modern.css?v=20260907" />
+  </head>
+  <body data-role="manager">
+    <script src="mg-role-theme.js?v=20260906"></script>
+    <div class="app">
+      <header class="hero">
+        <div class="top">
+          <button class="iconbtn" onclick="location.href = 'index.html'">
+            ‹</button
+          ><button class="iconbtn" onclick="logout()">☰</button>
+        </div>
+        <h1>مربیان و ورزشکاران</h1>
+        <p>مدیریت اعضا، ارتباط و وضعیت باشگاه</p>
+      </header>
+      <main class="content">
+        <nav class="tabs" id="tabs">
+          <button class="active" data-tab="athletes">لیست ورزشکاران</button
+          ><button data-tab="coaches">لیست مربیان</button
+          ><button data-tab="attendance">ورود و خروج</button
+          ><button data-tab="overview">خلاصه مدیریت</button>
+        </nav>
+        <section class="panel active" id="athletes">
+          <div class="toolbar">
+            <h2>ورزشکاران عضو باشگاه</h2>
+            <input
+              id="athleteSearch"
+              class="search"
+              placeholder="جستجوی نام یا شماره"
+            />
+          </div>
+          <div class="broadcast">
+            <span>ارسال پیام همگانی برای تمامی ورزشکاران</span
+            ><button
+              class="btn"
+              onclick="alert('پیام همگانی در حالت تست ارسال نشد.')"
+            >
+              ارسال پیام همگانی
+            </button>
+          </div>
+          <div class="cards" id="athleteCards"></div>
+        </section>
+        <section class="panel" id="coaches">
+          <div class="toolbar">
+            <h2>مربیان باشگاه</h2>
+            <input
+              id="coachSearch"
+              class="search"
+              placeholder="جستجوی نام مربی"
+            />
+          </div>
+          <div class="cards" id="coachCards"></div>
+        </section>
+        <section class="panel" id="attendance">
+          <div class="toolbar">
+            <h2>ورود و خروج تاییدشده</h2>
+            <button class="btn purple" onclick="renderAttendance()">
+              به‌روزرسانی
+            </button>
+          </div>
+          <div class="tablebox">
+            <table>
+              <thead>
+                <tr>
+                  <th>ورزشکار</th>
+                  <th>تاریخ</th>
+                  <th>ساعت ورود</th>
+                  <th>ساعت خروج</th>
+                  <th>جلسات باقی‌مانده</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceRows"></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="panel" id="overview">
+          <div class="metric">
+            <div class="box">ورزشکاران فعال<b>۱۲۴</b></div>
+            <div class="box">مربیان<b>۸</b></div>
+            <div class="box">درخواست‌های جدید<b>۱۷</b></div>
+            <div class="box">پیام‌های امروز<b>۳۶۵</b></div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div id="messageModal" class="modal">
+      <div class="modalbox">
+        <h2 id="messageTitle">ارسال پیام</h2>
+        <form class="form" onsubmit="sendMessage(event)">
+          <input id="messageSubject" placeholder="عنوان پیام" /><textarea
+            id="messageText"
+            rows="5"
+            placeholder="متن پیام"
+          ></textarea>
+          <div>
+            <button class="btn" type="submit">ارسال</button
+            ><button class="btn purple" type="button" onclick="closeModal()">
+              انصراف
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <script src="tabs-modern.js?v=20260907"></script>
+    <script src="mg-api.js?v=20260911"></script>
+    <script>
+      const q = new URLSearchParams(location.search).get("demo");
+      if (q !== "manager" && !localStorage.getItem("mg_session"))
+        location.href = "account.html";
+      const athletes = [
+          {
+            name: "محمد کاشانی",
+            phone: "0917 123 4567",
+            join: "۲۰ دی ماه ۱۳۹۸",
+            days: "۱۲۸ روز",
+            last: "۲۰ دی ماه ۱۳۹۸",
+            status: "فعال",
+          },
+          {
+            name: "حسین علیزاده",
+            phone: "0917 234 5678",
+            join: "۱۵ آذر ماه ۱۳۹۸",
+            days: "۱۷ روز",
+            last: "۵ دی ماه ۱۳۹۸",
+            status: "فعال",
+          },
+        ],
+        coaches = [
+          { name: "مریم رضایی", specialty: "تمرین قدرتی", status: "فعال" },
+          { name: "الهام موسوی", specialty: "فیتنس و اصلاحی", status: "معلق" },
+        ];
+      let messageTarget = "";
+      function cardAthlete(x) {
+        return `<article class="person"><div class="person-head"><div class="avatar">${x.name.slice(0, 1)}</div><h3>${x.name}</h3><span class="status">${x.status}</span></div><div class="details"><div class="detail"><span>تاریخ عضویت:</span><strong>${x.join}</strong></div><div class="detail"><span>مدت زمان باقی‌مانده عضویت:</span><strong>${x.days}</strong></div><div class="detail"><span>تاریخ آخرین حضور در باشگاه:</span><strong>${x.last}</strong></div></div><div class="person-actions"><button class="btn red" onclick="report('${x.name}')">ریپورت ورزشکار به پشتیبانی</button><button class="btn purple" onclick="alert('لیست کامل ورود و خروج ${x.name} نمایش داده شد.')">لیست کامل ورود و خروج</button><button class="btn" onclick="openMessage('${x.name}')">ارسال پیام</button></div></article>`;
+      }
+      function cardCoach(x, i) {
+        return `<article class="person"><div class="person-head"><div class="avatar">${x.name.slice(0, 1)}</div><h3>${x.name}</h3><span class="status ${x.status === "فعال" ? "" : "off"}">${x.status}</span></div><div class="details"><div class="detail"><span>تخصص:</span><strong>${x.specialty}</strong></div></div><div class="person-actions"><button class="btn" onclick="coaches[${i}].status='فعال';renderCoaches()">فعال</button><button class="btn purple" onclick="coaches[${i}].status='معلق';renderCoaches()">معلق</button><button class="btn red" onclick="coaches[${i}].status='حذف‌شده';renderCoaches()">حذف</button></div></article>`;
+      }
+      function renderAthletes() {
+        const term = athleteSearch.value.trim();
+        athleteCards.innerHTML =
+          athletes
+            .filter((x) => (x.name + x.phone).includes(term))
+            .map(cardAthlete)
+            .join("") || '<div class="empty">ورزشکاری پیدا نشد.</div>';
+      }
+      function renderCoaches() {
+        const term = coachSearch.value.trim();
+        coachCards.innerHTML =
+          coaches
+            .filter((x) => x.name.includes(term))
+            .map(cardCoach)
+            .join("") || '<div class="empty">مربی‌ای پیدا نشد.</div>';
+      }
+      function renderAttendance() {
+        const a = JSON.parse(
+          localStorage.getItem("mg_entry_requests") || "[]",
+        ).filter((x) => x.status === "تایید شد");
+        attendanceRows.innerHTML =
+          a
+            .map(
+              (x) =>
+                `<tr><td>${x.user}</td><td>${x.date || x.at}</td><td>${x.time || "ثبت‌شده"}</td><td>${x.exit || "در حال حضور"}</td><td>${x.sessions || "—"}</td></tr>`,
+            )
+            .join("") ||
+          '<tr><td colspan="5">هنوز ورود تاییدشده‌ای ثبت نشده است.</td></tr>';
+      }
+      tabs.onclick = (e) => {
+        const b = e.target.closest("[data-tab]");
+        if (!b) return;
+        document
+          .querySelectorAll(".tabs button")
+          .forEach((x) => x.classList.toggle("active", x === b));
+        document
+          .querySelectorAll(".panel")
+          .forEach((x) => x.classList.toggle("active", x.id === b.dataset.tab));
+        if (b.dataset.tab === "attendance") renderAttendance();
+      };
+      athleteSearch.oninput = renderAthletes;
+      coachSearch.oninput = renderCoaches;
+      function openMessage(name) {
+        messageTarget = name;
+        messageTitle.textContent = "ارسال پیام برای " + name;
+        messageModal.classList.add("open");
+      }
+      function closeModal() {
+        messageModal.classList.remove("open");
+      }
+      function sendMessage(e) {
+        e.preventDefault();
+        closeModal();
+        alert("پیام برای " + messageTarget + " ارسال شد (حالت تست).");
+      }
+      function report(name) {
+        alert("گزارش " + name + " برای پشتیبانی ثبت شد (حالت تست).");
+      }
+      async function logout() {
+        try {
+          await MGApi.logout();
+        } finally {
+          localStorage.clear();
+          location.href = "account.html";
+        }
+      }
+      async function hydrateAdmin() {
+        if (q === "manager" || !localStorage.getItem("mg_session")) return;
+        try {
+          const data = await MGApi.dashboard();
+          const users = data.users || [];
+          const liveAthletes = users
+            .filter((user) => user.role === "athlete")
+            .map((user) => ({
+              id: user.id,
+              name: user.full_name || user.phone || user.email || "ورزشکار",
+              phone: user.phone || user.email || "",
+              join: user.created_at || "",
+              days: "فعال",
+              last: user.updated_at || "",
+              status: user.status === "active" ? "فعال" : "معلق",
+            }));
+          const liveCoaches = users
+            .filter((user) => user.role === "coach")
+            .map((user) => ({
+              id: user.id,
+              name: user.full_name || user.phone || user.email || "مربی",
+              specialty: "مربی MG FitClub",
+              status: user.status === "active" ? "فعال" : "معلق",
+            }));
+          athletes.splice(0, athletes.length, ...liveAthletes);
+          coaches.splice(0, coaches.length, ...liveCoaches);
+          renderAthletes();
+          renderCoaches();
+        } catch (error) {
+          if (error.status === 401) {
+            localStorage.removeItem("mg_session");
+            location.href = "account.html";
+          }
+        }
+      }
+      renderAthletes();
+      renderCoaches();
+      renderAttendance();
+      hydrateAdmin();
+    </script>
+    <script>
+      function upgradedCoachCard(x, i) {
+        const active = x.status === "فعال";
+        return `<article class="person"><div class="person-head"><div class="avatar">${x.name.slice(0, 1)}</div><h3>${x.name}</h3><span class="status ${active ? "" : "off"}">${x.status}</span></div><div class="details"><div class="detail"><span>تخصص:</span><strong>${x.specialty}</strong></div><div class="detail"><span>آخرین حضور در باشگاه:</span><strong>${x.last || "امروز، ۲۰:۲۶"}</strong></div><div class="detail"><span>تعداد ورود و خروج مربی:</span><strong>${x.visits || "۹۵"} بار</strong></div></div><div class="person-actions"><button class="btn red" onclick="reportCoach('${x.name}')">ریپورت مربی به پشتیبانی</button><button class="btn purple" onclick="alert('لیست کامل ورود و خروج ${x.name} نمایش داده شد.')">لیست کامل ورود و خروج</button><button class="btn" onclick="openMessage('${x.name}')">ارسال پیام</button><button class="btn ${active ? "" : "purple"}" onclick="coaches[${i}].status='فعال';renderCoaches()">فعال</button><button class="btn purple" onclick="coaches[${i}].status='معلق';renderCoaches()">معلق</button><button class="btn red" onclick="coaches[${i}].status='حذف‌شده';renderCoaches()">حذف</button></div></article>`;
+      }
+      function renderCoaches() {
+        const term = coachSearch.value.trim();
+        coachCards.innerHTML =
+          coaches
+            .filter((x) => (x.name + x.specialty).includes(term))
+            .map(upgradedCoachCard)
+            .join("") || '<div class="empty">مربی‌ای پیدا نشد.</div>';
+      }
+      function reportCoach(name) {
+        alert("گزارش " + name + " برای پشتیبانی ثبت شد (حالت تست).");
+      }
+      coaches[0].last = "امروز، ۲۰:۲۶";
+      coaches[0].visits = "۹۵";
+      coaches[1].last = "امروز، ۲۰:۲۶";
+      coaches[1].visits = "۳۶";
+      renderCoaches();
+    </script>
+    <script>
+      document.querySelectorAll("a,button").forEach((x) => {
+        if ((x.textContent || "").includes("??????")) {
+          x.onclick = () =>
+            (location.href = "admin-transactions.html?demo=manager");
+        }
+      });
+    </script>
+  </body>
+</html>

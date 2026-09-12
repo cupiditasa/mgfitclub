@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>لیست برنامه‌های من | MG FitClub</title>
+    <style>
+      :root {
+        --p: #713de2;
+        --p2: #5b2ec7;
+        --green: #2dcc75;
+        --yellow: #f7ca55;
+        --coral: #ff645b;
+        --ink: #665e93;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--p);
+        font-family: Tahoma, "Segoe UI", sans-serif;
+        color: var(--ink);
+      }
+      .app {
+        max-width: 760px;
+        margin: auto;
+        min-height: 100vh;
+      }
+      .top {
+        height: 116px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 34px;
+      }
+      .top h1 {
+        font-size: 27px;
+        font-weight: 500;
+        margin: 0;
+      }
+      .icon {
+        background: none;
+        border: 0;
+        color: #fff;
+        font-size: 48px;
+        cursor: pointer;
+      }
+      .shell {
+        background: #fff;
+        border-radius: 44px 44px 0 0;
+        min-height: calc(100vh - 116px);
+        padding: 38px 40px 60px;
+      }
+      .create {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #fafafa;
+        border-radius: 28px;
+        padding: 22px;
+        margin-bottom: 38px;
+        gap: 18px;
+      }
+      .create span {
+        font-size: 21px;
+        color: #888;
+      }
+      .btn {
+        border: 0;
+        border-radius: 17px;
+        padding: 14px 22px;
+        font: inherit;
+        cursor: pointer;
+        color: #fff;
+      }
+      .green {
+        background: var(--green);
+      }
+      .purple {
+        background: var(--p);
+      }
+      .yellow {
+        background: var(--yellow);
+      }
+      .coral {
+        background: var(--coral);
+      }
+      .tabs {
+        background: var(--p);
+        border-radius: 40px 40px 0 0;
+        padding: 54px 30px 30px;
+      }
+      .tabrow {
+        display: flex;
+        justify-content: center;
+        gap: 18px;
+        margin-bottom: 28px;
+      }
+      .tab {
+        background: #fff;
+        border: 2px solid #fff;
+        color: var(--p);
+        border-radius: 22px;
+        padding: 16px 28px;
+        font: inherit;
+        font-size: 20px;
+        cursor: pointer;
+      }
+      .tab.active {
+        background: transparent;
+        color: #fff;
+      }
+      .search {
+        width: 100%;
+        padding: 18px 22px;
+        border: 1px solid #6332d1;
+        border-radius: 18px;
+        background: transparent;
+        color: #fff;
+        font: inherit;
+        font-size: 16px;
+        outline: none;
+      }
+      .search::placeholder {
+        color: #eee;
+      }
+      .list {
+        background: var(--p);
+        padding: 0 0 20px;
+      }
+      .program {
+        background: #fff;
+        border-radius: 30px;
+        padding: 24px 28px;
+        margin: 14px 0;
+        box-shadow: 0 9px 20px #3d1a9333;
+      }
+      .program-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .program h2 {
+        font-size: 19px;
+        margin: 0;
+        color: #777;
+      }
+      .date {
+        color: #777;
+        font-size: 16px;
+      }
+      .actions {
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        margin-top: 24px;
+      }
+      .actions .btn {
+        font-size: 15px;
+        min-width: 145px;
+      }
+      .hidden {
+        display: none;
+      }
+      .empty {
+        text-align: center;
+        color: #eee;
+        padding: 34px;
+      }
+      .back {
+        display: block;
+        text-align: center;
+        text-decoration: none;
+        color: #fff;
+        background: var(--p2);
+        padding: 13px;
+        border-radius: 16px;
+        max-width: 240px;
+        margin: 25px auto 0;
+      }
+      @media (max-width: 520px) {
+        .top {
+          height: 96px;
+          padding: 12px 20px;
+        }
+        .top h1 {
+          font-size: 22px;
+        }
+        .shell {
+          padding: 25px 12px 50px;
+        }
+        .create {
+          padding: 18px;
+          flex-direction: row;
+        }
+        .create span {
+          font-size: 17px;
+        }
+        .btn {
+          padding: 12px 15px;
+          font-size: 14px;
+        }
+        .tabs {
+          padding: 36px 12px 20px;
+          border-radius: 32px 32px 0 0;
+        }
+        .tabrow {
+          gap: 10px;
+        }
+        .tab {
+          font-size: 16px;
+          padding: 13px 16px;
+        }
+        .program {
+          padding: 20px 16px;
+        }
+        .program h2 {
+          font-size: 16px;
+        }
+        .actions {
+          gap: 7px;
+        }
+        .actions .btn {
+          min-width: 0;
+          flex: 1;
+          padding: 11px 7px;
+          font-size: 12px;
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="panel-theme.css?v=20260829" />
+    <link rel="stylesheet" href="mg-role-theme.css?v=20260906" />
+    <link rel="stylesheet" href="tabs-modern.css?v=20260907" />
+  </head>
+  <body data-role="coach">
+    <script src="mg-role-theme.js?v=20260906"></script>
+    <div class="app">
+      <header class="top">
+        <button class="icon" id="back">‹</button>
+        <h1>لیست برنامه‌های من</h1>
+        <button class="icon" onclick="location.href = 'account.html'">
+          ☰
+        </button>
+      </header>
+      <main class="shell">
+        <div class="create">
+          <span>برنامه‌ی جدیدی بسازید</span
+          ><button class="btn green" id="new">＋ ساخت برنامه جدید</button>
+        </div>
+        <section class="tabs">
+          <div class="tabrow">
+            <button class="tab active" data-type="training">
+              لیست برنامه تمرینی</button
+            ><button class="tab" data-type="food">لیست برنامه غذایی</button>
+          </div>
+          <input
+            id="search"
+            class="search"
+            placeholder="نام برنامه مورد نظر را جست‌وجو کنید"
+          />
+        </section>
+        <section id="list" class="list"></section>
+        <a class="back" href="coach-dashboard.html?demo=coach"
+          >بازگشت به پنل مربی</a
+        >
+      </main>
+    </div>
+    <script src="mg-api.js?v=20260911"></script>
+    <script src="tabs-modern.js?v=20260907"></script>
+    <script>
+      const params = new URLSearchParams(location.search);
+      if (params.get("demo") !== "coach" && !localStorage.getItem("mg_session"))
+        location.href = "account.html";
+      let type = "training";
+      const seed = {
+        training: [
+          ["برنامه تمرینی سه ماهه اول پایین تنه", "۱۳۹۸/۰۳/۲۰"],
+          ["برنامه تمرینی قدرتی بانوان", "۱۴۰۳/۰۸/۰۱"],
+          ["برنامه تمرینی چربی‌سوزی حرفه‌ای", "۱۴۰۳/۰۷/۱۵"],
+        ],
+        food: [
+          ["برنامه غذایی افزایش حجم", "۱۴۰۳/۰۸/۰۴"],
+          ["برنامه غذایی کاهش وزن", "۱۴۰۳/۰۷/۲۸"],
+        ],
+      };
+      let items =
+        JSON.parse(localStorage.getItem("mg_coach_programs") || "null") || seed;
+      const list = document.querySelector("#list"),
+        search = document.querySelector("#search");
+      function render() {
+        const q = search.value.trim();
+        const rows = (items[type] || []).filter((x) => x[0].includes(q));
+        list.innerHTML = rows.length
+          ? rows
+              .map(
+                (x, i) =>
+                  `<article class="program"><div class="program-head"><h2>${x[0]}</h2><span class="date">${x[1]}</span></div><div class="actions"><button class="btn coral" data-action="delete" data-i="${i}">حذف برنامه</button><button class="btn yellow" data-action="edit" data-i="${i}">اصلاح برنامه</button><button class="btn green" data-action="send" data-i="${i}">✈ ارسال برنامه</button></div></article>`,
+              )
+              .join("")
+          : '<div class="empty">برنامه‌ای با این عنوان پیدا نشد.</div>';
+        list.querySelectorAll("[data-action]").forEach(
+          (b) =>
+            (b.onclick = () => {
+              const i = +b.dataset.i,
+                action = b.dataset.action;
+              if (action === "delete" && confirm("این برنامه حذف شود؟")) {
+                items[type].splice(i, 1);
+                save();
+                render();
+              }
+              if (action === "edit") {
+                const n = prompt("نام جدید برنامه", items[type][i][0]);
+                if (n) {
+                  items[type][i][0] = n;
+                  save();
+                  render();
+                }
+              }
+              if (action === "send")
+                alert("برنامه برای انتخاب ورزشکار ارسال شد.");
+            }),
+        );
+      }
+      function save() {
+        localStorage.setItem("mg_coach_programs", JSON.stringify(items));
+      }
+      document.querySelectorAll(".tab").forEach(
+        (b) =>
+          (b.onclick = () => {
+            type = b.dataset.type;
+            document
+              .querySelectorAll(".tab")
+              .forEach((x) => x.classList.toggle("active", x === b));
+            search.value = "";
+            render();
+          }),
+      );
+      search.oninput = render;
+      document.querySelector("#new").onclick = () => {
+        const n = prompt(
+          "نام برنامه جدید را وارد کنید",
+          type === "training" ? "برنامه تمرینی جدید" : "برنامه غذایی جدید",
+        );
+        if (n) {
+          items[type].unshift([n, new Date().toLocaleDateString("fa-IR")]);
+          save();
+          render();
+        }
+      };
+      document.querySelector("#back").onclick = () =>
+        (location.href = "coach-dashboard.html?demo=coach");
+      render();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>درخواست برنامه تمرینی | MG FitClub</title>
+    <style>
+      :root {
+        --p: #6f55a8;
+        --green: #29c878;
+        --yellow: #f7ca55;
+        --ink: #655b92;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #ddd;
+        font-family: Tahoma, "Segoe UI", sans-serif;
+        color: var(--ink);
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+      }
+      .modal {
+        width: min(92vw, 540px);
+        background: #fff;
+        border-radius: 48px;
+        padding: 38px 34px 40px;
+        position: relative;
+        box-shadow: 0 18px 45px #30215422;
+      }
+      .close {
+        position: absolute;
+        top: 42px;
+        left: 36px;
+        width: 64px;
+        height: 64px;
+        border: 0;
+        border-radius: 50%;
+        background: var(--yellow);
+        color: #fff;
+        font-size: 38px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .modal h1 {
+        font-size: 27px;
+        text-align: center;
+        margin: 10px 0 42px;
+      }
+      .subtitle {
+        color: #aaa;
+        text-align: center;
+        font-size: 18px;
+        margin-bottom: 26px;
+      }
+      .goal {
+        width: 100%;
+        height: 86px;
+        border: 2px solid #e6e3e8;
+        border-radius: 20px;
+        padding: 15px 18px;
+        font: inherit;
+        color: var(--ink);
+        font-size: 17px;
+        resize: none;
+        outline: none;
+      }
+      .goal::placeholder {
+        color: #bbb;
+      }
+      .fields {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 22px;
+        margin: 38px 0 34px;
+      }
+      .field {
+        text-align: center;
+      }
+      .counter {
+        height: 138px;
+        border: 2px solid #d8d6da;
+        border-radius: 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        padding: 7px 4px;
+        color: #aaa;
+      }
+      .counter button {
+        border: 0;
+        background: none;
+        color: #bbb;
+        font-size: 25px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .counter strong {
+        font-size: 23px;
+        font-weight: 400;
+        color: #8c8794;
+      }
+      .counter small {
+        font-size: 13px;
+        color: #aaa;
+      }
+      .field label {
+        display: block;
+        margin-top: 9px;
+        font-size: 14px;
+      }
+      .submit {
+        display: block;
+        margin: auto;
+        border: 0;
+        background: var(--green);
+        color: #fff;
+        border-radius: 20px;
+        padding: 17px 38px;
+        font: inherit;
+        font-size: 20px;
+        box-shadow: 0 8px 16px #29c87844;
+        cursor: pointer;
+      }
+      .message {
+        text-align: center;
+        margin-top: 20px;
+        min-height: 22px;
+        color: var(--green);
+        font-size: 14px;
+      }
+      @media (max-width: 520px) {
+        .modal {
+          padding: 31px 20px 32px;
+          border-radius: 38px;
+        }
+        .close {
+          top: 31px;
+          left: 24px;
+          width: 56px;
+          height: 56px;
+        }
+        .modal h1 {
+          font-size: 22px;
+          margin-bottom: 34px;
+        }
+        .subtitle {
+          font-size: 16px;
+        }
+        .fields {
+          gap: 9px;
+          margin-top: 30px;
+        }
+        .counter {
+          height: 125px;
+        }
+        .counter strong {
+          font-size: 19px;
+        }
+        .field label {
+          font-size: 12px;
+        }
+        .submit {
+          font-size: 18px;
+          padding: 15px 30px;
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="panel-theme.css?v=20260829" />
+    <link rel="stylesheet" href="tabs-modern.css?v=20260907" />
+  </head>
+  <body>
+    <main class="modal">
+      <button class="close" id="close">×</button>
+      <h1>ارسال درخواست برنامه تمرینی</h1>
+      <p class="subtitle">هدف برنامه تمرینی خود را بنویسید</p>
+      <textarea
+        id="goal"
+        class="goal"
+        placeholder="برای مثال (کاهش وزن)"
+      ></textarea>
+      <section class="fields">
+        <div class="field">
+          <div class="counter">
+            <button data-key="height" data-step="1">⌃</button
+            ><strong id="height">۱۷۰</strong><small>cm</small
+            ><button data-key="height" data-step="-1">⌄</button>
+          </div>
+          <label>قد</label>
+        </div>
+        <div class="field">
+          <div class="counter">
+            <button data-key="weight" data-step="1">⌃</button
+            ><strong id="weight">۷۰</strong><small>Kg</small
+            ><button data-key="weight" data-step="-1">⌄</button>
+          </div>
+          <label>وزن</label>
+        </div>
+        <div class="field">
+          <div class="counter">
+            <button data-key="waist" data-step="1">⌃</button
+            ><strong id="waist">۸۵</strong><small>cm</small
+            ><button data-key="waist" data-step="-1">⌄</button>
+          </div>
+          <label>دور شکم</label>
+        </div>
+        <div class="field">
+          <div class="counter">
+            <button data-key="blood" data-step="1">⌃</button
+            ><strong id="blood">A+</strong><small>گروه</small
+            ><button data-key="blood" data-step="-1">⌄</button>
+          </div>
+          <label>گروه خونی</label>
+        </div>
+      </section>
+      <button class="submit" id="submit">ارسال درخواست</button>
+      <div id="message" class="message"></div>
+    </main>
+    <script src="mg-api.js?v=20260911"></script>
+    <script>
+      const p = new URLSearchParams(location.search);
+      const liveSession =
+        p.get("demo") !== "athlete" && Boolean(localStorage.getItem("mg_session"));
+      if (!liveSession && p.get("demo") !== "athlete")
+        location.href = "account.html";
+      const vals = { height: 170, weight: 70, waist: 85, blood: 0 },
+        blood = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+        fa = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+      document.querySelectorAll("[data-key]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            const k = b.dataset.key,
+              step = +b.dataset.step;
+            if (k === "blood")
+              vals.blood = (vals.blood + step + blood.length) % blood.length;
+            else vals[k] = Math.max(1, vals[k] + step);
+            document.querySelector("#" + k).textContent =
+              k === "blood" ? blood[vals[k]] : fa(vals[k]);
+          }),
+      );
+      submit.onclick = async () => {
+        if (liveSession) {
+          try {
+            const planData = await MGApi.trainingPlans();
+            const plan = planData.plans && planData.plans[0];
+            if (!plan) throw new Error("برنامه تمرینی فعالی برای ثبت درخواست وجود ندارد.");
+            await MGApi.createTrainingRequest({
+              planId: plan.id,
+              goal: goal.value.trim() || "هدف مشخص نشده",
+              heightCm: vals.height,
+              weightKg: vals.weight,
+              notes: "ثبت درخواست از فرم ارزیابی ورزشکار",
+              idempotencyKey:
+                sessionStorage.getItem("mg_training_request_key") ||
+                (() => {
+                  const key = crypto.randomUUID();
+                  sessionStorage.setItem("mg_training_request_key", key);
+                  return key;
+                })(),
+            });
+            sessionStorage.removeItem("mg_training_request_key");
+            message.textContent = "درخواست شما با موفقیت برای مربی ارسال شد.";
+            submit.disabled = true;
+            submit.style.opacity = ".7";
+          } catch (error) {
+            if (error.status === 401) location.href = "account.html";
+            else message.textContent = error.message || "ثبت درخواست انجام نشد.";
+          }
+          return;
+        }
+        const req = {
+          goal: goal.value.trim() || "هدف مشخص نشده",
+          height: vals.height,
+          weight: vals.weight,
+          waist: vals.waist,
+          blood: blood[vals.blood],
+          createdAt: new Date().toISOString(),
+          status: "در انتظار بررسی مربی",
+        };
+        const arr = JSON.parse(
+          localStorage.getItem("mg_training_requests") || "[]",
+        );
+        arr.push(req);
+        localStorage.setItem("mg_training_requests", JSON.stringify(arr));
+        message.textContent = "درخواست شما برای مربی ارسال شد.";
+        submit.disabled = true;
+        submit.style.opacity = ".7";
+      };
+      close.onclick = () =>
+        (location.href = liveSession
+          ? "dashboard.html"
+          : "dashboard.html?demo=athlete");
+    </script>
+    <script src="tabs-modern.js?v=20260907"></script>
+  </body>
+</html>

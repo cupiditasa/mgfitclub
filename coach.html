@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ساخت برنامه تمرینی | MG FitClub</title>
+    <style>
+      :root {
+        --p: #7040e8;
+        --bg: #f7f7fb;
+        --text: #514b72;
+        --muted: #96919f;
+        --green: #25c978;
+        --yellow: #f4c84f;
+        --red: #ff635d;
+        --line: #eeeaf2;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--p);
+        color: var(--text);
+        font-family: "B Esfehan", Tahoma, sans-serif;
+      }
+      .wrap {
+        max-width: 1000px;
+        margin: auto;
+      }
+      .hero {
+        color: #fff;
+        padding: 22px 24px 70px;
+        background: linear-gradient(135deg, #6335db, #8b48f0);
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+      }
+      .icon {
+        border: 0;
+        background: #ffffff22;
+        color: #fff;
+        font-size: 30px;
+      }
+      .hero h1 {
+        margin: 25px 0 0;
+        font-size: 30px;
+      }
+      .content {
+        margin: -35px auto 30px;
+        padding: 20px;
+        background: #fff;
+        border-radius: 32px 32px 0 0;
+        min-height: 700px;
+      }
+      .week {
+        display: flex;
+        justify-content: space-around;
+        gap: 8px;
+        overflow: auto;
+        padding: 12px 0;
+      }
+      .day {
+        min-width: 57px;
+        padding: 10px 7px;
+        border: 0;
+        background: #fff;
+        color: var(--muted);
+        font: inherit;
+      }
+      .day.active {
+        color: var(--p);
+        font-weight: bold;
+        border-bottom: 3px solid var(--p);
+      }
+      .timer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        padding: 18px;
+      }
+      .time {
+        padding: 12px 13px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        text-align: center;
+      }
+      .time b {
+        display: block;
+        font-size: 22px;
+      }
+      .switch {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 12px 0;
+      }
+      .toggle {
+        width: 45px;
+        height: 24px;
+        border-radius: 20px;
+        border: 0;
+        background: #ddd;
+        position: relative;
+      }
+      .toggle.on {
+        background: var(--green);
+      }
+      .toggle:after {
+        content: "";
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        top: 3px;
+        right: 4px;
+        border-radius: 50%;
+        background: #fff;
+      }
+      .toggle.on:after {
+        right: 23px;
+      }
+      .exercise-wrap {
+        margin: 18px -20px;
+        padding: 20px;
+        background: var(--p);
+        border-radius: 25px 25px 0 0;
+      }
+      .exercise-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #fff;
+      }
+      .btn {
+        padding: 11px 16px;
+        border: 0;
+        border-radius: 11px;
+        background: var(--green);
+        color: #fff;
+        font: inherit;
+        cursor: pointer;
+      }
+      .btn.yellow {
+        background: var(--yellow);
+      }
+      .btn.red {
+        background: var(--red);
+      }
+      .exercise {
+        position: relative;
+        margin: 13px 0;
+        padding: 18px;
+        background: #fff;
+        border-radius: 16px;
+      }
+      .exercise h3 {
+        margin: 0;
+      }
+      .pill {
+        display: inline-block;
+        margin: 8px 4px 0 0;
+        padding: 4px 8px;
+        border-radius: 15px;
+        background: #ffe9e7;
+        color: var(--red);
+        font-size: 12px;
+      }
+      .stats {
+        display: flex;
+        gap: 15px;
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .rest {
+        margin: 10px auto;
+        color: #fff;
+        text-align: center;
+      }
+      .rest span {
+        display: inline-grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 2px dashed #fff;
+        font-size: 20px;
+      }
+      .add {
+        width: 100%;
+        margin-top: 4px;
+        background: var(--yellow);
+        color: #513e00;
+      }
+      .back {
+        display: inline-block;
+        margin-top: 18px;
+        padding: 11px 16px;
+        border-radius: 10px;
+        background: #fff;
+        color: var(--p);
+        text-decoration: none;
+      }
+      @media (max-width: 600px) {
+        .content {
+          padding: 15px;
+        }
+        .week {
+          justify-content: flex-start;
+        }
+        .exercise-wrap {
+          margin-left: -15px;
+          margin-right: -15px;
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="panel-theme.css?v=20260829" />
+    <link rel="stylesheet" href="mg-role-theme.css?v=20260906" />
+    <link rel="stylesheet" href="tabs-modern.css?v=20260907" />
+  </head>
+  <body data-role="coach">
+    <script src="mg-role-theme.js?v=20260906"></script>
+    <script src="mg-api.js?v=20260911"></script>
+    <header class="hero">
+      <div class="wrap">
+        <div class="top">
+          <button
+            class="icon"
+            onclick="location.href = 'coach-dashboard.html?demo=coach'"
+          >
+            ‹</button
+          ><button class="icon" onclick="location.href = 'account.html'">
+            ☰
+          </button>
+        </div>
+        <h1>ساخت برنامه تمرینی</h1>
+        <p>طراحی برنامه اختصاصی برای ورزشکار</p>
+      </div>
+    </header>
+    <main class="wrap content">
+      <div class="week">
+        <button class="day">شنبه</button><button class="day">یکشنبه</button
+        ><button class="day active">دوشنبه</button
+        ><button class="day">سه‌شنبه</button
+        ><button class="day">چهارشنبه</button
+        ><button class="day">پنجشنبه</button><button class="day">جمعه</button>
+      </div>
+      <div class="timer">
+        <div class="time"><b>۲</b><small>ساعت</small></div>
+        <div class="time"><b>۲۲</b><small>دقیقه</small></div>
+        <div class="time"><b>۵۹</b><small>ثانیه</small></div>
+        <span style="font-size: 45px; color: var(--p)">◴</span>
+      </div>
+      <div class="switch">
+        <span>برنامه فعال</span
+        ><button
+          class="toggle on"
+          onclick="this.classList.toggle('on')"
+        ></button>
+      </div>
+      <div class="exercise-wrap">
+        <div class="exercise-head">
+          <h2>تمرین‌های ایجاد شده</h2>
+          <button class="btn yellow" onclick="addExercise()">
+            ＋ تمرین جدید
+          </button>
+        </div>
+        <div id="exercises">
+          <article class="exercise">
+            <h3>پشت پا</h3>
+            <span class="pill">240 ثانیه</span>
+            <div class="stats">
+              <span>ست: ۳</span><span>تکرار: ۱۰</span
+              ><span>استراحت بین ست: ۶۰ ثانیه</span>
+            </div>
+          </article>
+          <div class="rest">
+            <span>۱۲</span><br /><small>دقیقه استراحت بین تمرین‌ها</small>
+          </div>
+          <article class="exercise">
+            <h3>جفت پا</h3>
+            <span class="pill">150 ثانیه</span>
+            <div class="stats">
+              <span>ست: ۴</span><span>تکرار: ۱۵</span
+              ><span>استراحت بین ست: ۳۰ ثانیه</span>
+            </div>
+          </article>
+          <div class="rest">
+            <span>۶۰</span><br /><small>ثانیه تا تمرین بعدی</small>
+          </div>
+        </div>
+      </div>
+      <a class="back" href="coach-transactions.html?demo=coach"
+        >مشاهده تراکنش‌ها</a
+      ><a class="back" href="coach-programs.html?demo=coach">مدیریت برنامه‌ها</a
+      ><a class="back" href="workout-view.html?demo=coach&from=coach"
+        >بازگشت به پنل مربی</a
+      >
+    </main>
+    <script src="tabs-modern.js?v=20260907"></script>
+    <script>
+      const q = new URLSearchParams(location.search).get("demo");
+      if (q !== "coach" && !localStorage.getItem("mg_session"))
+        location.href = "account.html";
+      function addExercise() {
+        const name = prompt("نام تمرین را وارد کنید", "تمرین جدید");
+        if (!name) return;
+        const el = document.createElement("article");
+        el.className = "exercise";
+        el.innerHTML = `<h3>${name}</h3><span class="pill">۱۵۰ ثانیه</span><div class="stats"><span>ست: ۳</span><span>تکرار: ۱۲</span><span>استراحت: ۳۰ ثانیه</span></div>`;
+        exercises.appendChild(el);
+      }
+    </script>
+  </body>
+</html>
