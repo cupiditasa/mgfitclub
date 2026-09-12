@@ -4,6 +4,9 @@ const USER_STATUSES = new Set(["active", "blocked", "pending"]);
 const REQUEST_STATUSES = new Set(["submitted", "assigned", "in_progress", "completed", "rejected"]);
 const ENTRY_STATUSES = new Set(["pending", "approved", "rejected", "exited"]);
 const PROGRAM_KINDS = new Set(["training", "food"]);
+const API_VERSION = "20260912-sms-template-1";
+const SMS_VERIFY_TEMPLATE_ID = 791767;
+const SMS_VERIFY_ENDPOINT = "https://api.sms.ir/v1/send/verify";
 
 const response = (data, status, headers) =>
   new Response(JSON.stringify(data), {
@@ -108,24 +111,36 @@ async function issueSession(env, user) {
 }
 async function sendSms(env, mobile, code) {
   const key = String(env.SMS_API_KEY || "").trim();
-  const templateId = Number(env.SMS_TEMPLATE_ID || "791767");
-  if (!key || !Number.isInteger(templateId) || templateId <= 0)
+  const templateId = Number(env.SMS_TEMPLATE_ID || SMS_VERIFY_TEMPLATE_ID);
+  // Login codes must use the approved MG template, never a custom/bulk sender.
+  // SMS.ir chooses the verification service line; SMS_LINE_NUMBER is not used.
+  if (!key || templateId !== SMS_VERIFY_TEMPLATE_ID)
     return { sent: false, reason: "sms_provider_not_configured" };
-  const result = await fetch("https://api.sms.ir/v1/send/verify", {
-    method: "POST",
-    headers: { "X-API-KEY": key, "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({
-      Mobile: normalizePhone(mobile),
-      TemplateId: templateId,
-      Parameters: [{ name: "CODE", value: String(code) }],
-    }),
-  });
-  const data = await result.json().catch(() => ({}));
-  return {
-    sent: result.ok && data.status === 1,
-    providerStatus: data.status,
-    messageId: data.data?.messageId || null,
-  };
+  try {
+    const result = await fetch(SMS_VERIFY_ENDPOINT, {
+      method: "POST",
+      headers: { "X-API-KEY": key, "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        Mobile: normalizePhone(mobile),
+        TemplateId: SMS_VERIFY_TEMPLATE_ID,
+        Parameters: [{ name: "CODE", value: String(code) }],
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const data = await result.json().catch(() => ({}));
+    const providerStatus = Number(data?.status);
+    const messageId = Number(data?.data?.messageId);
+    const validMessageId = Number.isSafeInteger(messageId) && messageId > 0;
+    return {
+      // Provider acceptance is not a handset delivery receipt.
+      sent: result.ok && providerStatus === 1 && validMessageId,
+      providerStatus: Number.isInteger(providerStatus) ? providerStatus : null,
+      messageId: validMessageId ? messageId : null,
+    };
+  } catch {
+    // Do not retry via a different line: a timed-out request may be queued.
+    return { sent: false, reason: "sms_provider_unavailable" };
+  }
 }
 async function dashboard(user, env) {
   if (hasRole(user, "athlete")) {
@@ -190,7 +205,12 @@ async function handle(request, env) {
   const headers = cors(request, env);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
   const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
-  if (path === "/health" && request.method === "GET") return response({ ok: true, service: "mg-fitclub-api", version: "20260911" }, 200, headers);
+  if (path === "/health" && request.method === "GET") return response({
+    ok: true,
+    service: "mg-fitclub-api",
+    version: API_VERSION,
+    otp: { provider: "sms.ir", method: "verify", templateId: SMS_VERIFY_TEMPLATE_ID, parameter: "CODE" },
+  }, 200, headers);
   if (path === "/api/plans/training" && request.method === "GET") {
     const result = await env.DB.prepare("SELECT * FROM training_plans WHERE is_active=1 ORDER BY price").all();
     return response({ plans: result.results }, 200, headers);
@@ -216,7 +236,17 @@ async function handle(request, env) {
       ? await sendSms(env, target, code)
       : { sent: false, reason: "email_provider_not_configured" };
     await env.DB.prepare("UPDATE login_challenges SET delivery_status=? WHERE id=?").bind(sent.sent ? "sent" : "failed", challengeId).run();
-    await audit(env, user?.id, "auth_code_requested", "login_challenge", challengeId, { channel: phone ? "phone" : "email", sent: sent.sent });
+    await audit(env, user?.id, "auth_code_requested", "login_challenge", challengeId, {
+      channel: phone ? "phone" : "email",
+      sent: sent.sent,
+      ...(phone ? {
+        smsMethod: "verify",
+        templateId: SMS_VERIFY_TEMPLATE_ID,
+        providerStatus: sent.providerStatus ?? null,
+        messageId: sent.messageId ?? null,
+        failureReason: sent.sent ? null : sent.reason || "sms_provider_rejected",
+      } : {}),
+    });
     if (!sent.sent) return errorResponse("code_delivery_failed", 503, headers);
     return response({ ok: true, delivery: "sent", challengeId, ...(env.DEV_MODE === "true" ? { devCode: code } : {}) }, 202, headers);
   }
