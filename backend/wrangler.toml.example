@@ -1,0 +1,14 @@
+name = "mg-fitclub-api"
+main = "worker.js"
+compatibility_date = "2026-09-12"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mg-fitclub-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+# Keep secrets in Cloudflare, never in this file:
+# wrangler secret put OTP_SECRET
+# wrangler secret put SMS_API_KEY
+# wrangler secret put SMS_LINE_NUMBER
+# wrangler secret put SMS_TEMPLATE_ID
