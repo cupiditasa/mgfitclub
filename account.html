@@ -13,7 +13,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="apple-touch-icon" href="assets/brand/mg-mark-acid.webp" />
     <link rel="stylesheet" href="preview-notice.css?v=20260912" />
-    <script src="mg-api.js?v=20260911"></script>
+    <script src="mg-api.js?v=20260919-access"></script>
     <script src="preview-notice.js?v=20260912" defer></script>
     <title>ورود | MG FitClub</title>
     <style>
@@ -236,6 +236,12 @@
           پشتیبان فنی
         </button>
       </div>
+      <p id="approvalNotice" role="alert" hidden style="color:#e6d891;line-height:1.9;border:1px solid #726c36;padding:12px;border-radius:12px">
+        فقط کاربران باشگاه می‌توانند ثبت‌نام کنند. درخواست شما پس از تأیید شماره برای مدیریت ارسال خواهد شد؛ پس از تأیید مدیر دسترسی شما باز می‌شود.
+      </p>
+      <label id="clubLabel" hidden>باشگاه شما
+        <select id="clubChoice" class="field"><option value="">انتخاب باشگاه</option></select>
+      </label>
       <input
         id="target"
         class="field"
@@ -261,6 +267,7 @@
           roles = $("roles"),
           roleToggle = $("roleToggle");
         let sent = false,
+          busy = false,
           challengeId = "",
           selected = "athlete";
         const names = {
@@ -292,6 +299,7 @@
           };
         roleToggle.onclick = () => roles.classList.toggle("open");
         roles.onclick = (e) => {
+          if (busy || sent) return;
           const b = e.target.closest("[data-role]");
           if (!b) return;
           selected = b.dataset.role;
@@ -300,41 +308,45 @@
             .forEach((x) => x.classList.toggle("active", x === b));
           roleToggle.textContent = "انتخاب نقش: " + names[selected];
           roles.classList.remove("open");
+          const needsApproval = ["coach", "secretary"].includes(selected);
+          $("approvalNotice").hidden = !needsApproval;
+          $("clubLabel").hidden = !needsApproval;
+          if (needsApproval) loadClubs();
+        };
+        const loadClubs = async () => {
+          try {
+            const data = await window.MGApi.request("/api/clubs");
+            $("clubChoice").replaceChildren(new Option("انتخاب باشگاه", ""), ...data.clubs.map(c => new Option(c.name, c.id)));
+            if (!data.clubs.length) set("هنوز باشگاهی ثبت نشده؛ ابتدا پشتیبانی باید حساب باشگاه را بسازد.");
+          } catch (_) { set("دریافت باشگاه‌ها ممکن نشد؛ نقش را دوباره انتخاب کنید."); }
         };
         const login = async () => {
+          if (busy) return;
+          if (localStorage.getItem("mg_session")) return restore();
           const v = target.value.trim();
           if (!v) return set("شماره موبایل یا ایمیل را وارد کنید.");
+          busy = true;
+          action.disabled = true;
           try {
             if (!sent) {
-              if (v === "admin") {
-                sent = true;
-                code.style.display = "block";
-                action.textContent = "ورود";
-                set("کد تست را وارد کنید؛ هر کد عددی ۱ تا ۵ رقمی مثل 12345");
-                return;
-              }
+              if (["coach", "secretary"].includes(selected) && !$("clubChoice").value)
+                return set("باشگاه خود را انتخاب کنید.");
               const d = await req(
                 "/api/auth/request-code",
                 Object.assign(
                   v.includes("@") ? { email: v } : { phone: v },
-                  { role: selected },
+                  { role: selected, clubId: $("clubChoice").value },
                 ),
               );
               sent = true;
+              target.readOnly = true;
+              roleToggle.disabled = true;
+              $("clubChoice").disabled = true;
               challengeId = d.challengeId || "";
               code.style.display = "block";
               action.textContent = "ورود";
-              set(d.devCode ? "کد آزمایشی: " + d.devCode : "کد ارسال شد.");
+              set("کد ارسال شد." + (d.notice ? " " + d.notice : ""));
             } else {
-              const entered = code.value
-                .trim()
-                .replace(/[۰-۹]/g, (n) => "۰۱۲۳۴۵۶۷۸۹".indexOf(n));
-              if (v === "admin" && /^[0-9]{1,5}$/.test(entered)) {
-                localStorage.setItem("mg_demo_role", selected);
-                localStorage.setItem("mg_demo_code", entered);
-                location.href = routes[selected] + "?demo=" + selected;
-                return;
-              }
               const d = await req(
                 "/api/auth/verify-code",
                 Object.assign(v.includes("@") ? { email: v } : { phone: v }, {
@@ -349,10 +361,35 @@
               location.href = routes[actualRole] || routes.athlete;
             }
           } catch (e) {
-            set(e.message);
+            set(window.MGApi.errorMessage(e));
+          } finally {
+            busy = false;
+            action.disabled = false;
+          }
+        };
+        const restore = async () => {
+          if (busy) return;
+          busy = true;
+          action.disabled = true;
+          set("در حال بررسی ورود قبلی…");
+          try {
+            const user = await window.MGApi.restoreSession();
+            if (user) {
+              location.replace(routes[user.role] || routes.athlete);
+              return;
+            }
+            action.textContent = "دریافت کد ورود";
+            set("برای ورود، شماره موبایل یا ایمیل را وارد کنید.");
+          } catch (error) {
+            action.textContent = "تلاش دوباره برای ورود";
+            set("بررسی حساب ممکن نشد. اتصال اینترنت را بررسی و دوباره تلاش کنید؛ ورود قبلی شما حفظ شده است.");
+          } finally {
+            busy = false;
+            action.disabled = false;
           }
         };
         action.onclick = login;
+        if (localStorage.getItem("mg_session")) restore();
         [target, code].forEach(
           (x) =>
             (x.onkeydown = (e) => {

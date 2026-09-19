@@ -109,11 +109,15 @@
     let startX = 0;
     let startScroll = 0;
     track.addEventListener("pointerdown", (event) => {
+      track.dataset.suppressClick = "false";
+      if (event.pointerType !== "mouse" || event.button !== 0) return;
       dragging = true; startX = event.clientX; startScroll = track.scrollLeft;
-      track.setPointerCapture?.(event.pointerId); track.classList.add("is-dragging");
     });
     track.addEventListener("pointermove", (event) => {
       if (!dragging) return;
+      if (Math.abs(event.clientX - startX) < 8) return;
+      track.dataset.suppressClick = "true";
+      track.setPointerCapture?.(event.pointerId); track.classList.add("is-dragging");
       track.scrollLeft = startScroll - (event.clientX - startX) * 1.25;
     });
     ["pointerup", "pointercancel", "pointerleave"].forEach((name) => track.addEventListener(name, () => {
@@ -121,7 +125,7 @@
     }));
     track.addEventListener("scroll", () => {
       const max = Math.max(1, track.scrollWidth - track.clientWidth);
-      progress?.style.setProperty("--story-progress", `${track.scrollLeft / max}`);
+      progress?.style.setProperty("--story-progress", `${Math.min(1, Math.abs(track.scrollLeft) / max)}`);
     }, { passive: true });
     cards.forEach((card) => card.addEventListener("pointermove", (event) => {
       const rect = card.getBoundingClientRect();

@@ -7,6 +7,7 @@
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
     <title>داشبورد ورزشکار | MG FitClub</title>
+    <style id="mg-access-cloak">body{visibility:hidden}</style>
     <style>
       @font-face {
         font-family: "B Esfehan";
@@ -1960,14 +1961,7 @@
               نام و نام خانوادگی، شماره موبایل و اطلاعات حساب خود را ویرایش
               کنید.
             </p>
-            <div class="form-row">
-              <input
-                value="محمد کاشانی"
-                aria-label="نام و نام خانوادگی"
-              /><button onclick="alert('مشخصات کاربری ذخیره شد.')">
-                ذخیره
-              </button>
-            </div>
+            <a href="access-center.html#profile">ویرایش نام، نام خانوادگی و عکس پروفایل</a>
           </div>
         </section>
       </main>
@@ -2002,7 +1996,7 @@
       </nav>
       <button class="logout" onclick="logout()">↪ خروج از حساب</button>
     </aside>
-    <script src="mg-api.js?v=20260911"></script>
+    <script src="mg-api.js?v=20260919-access"></script>
     <script>
       const q = new URLSearchParams(location.search).get("demo");
       if (q !== "athlete" && !localStorage.getItem("mg_session"))
@@ -2139,7 +2133,7 @@
         }
       }
       hydrateAthleteDashboard();
-      function sendChat() {
+      async function sendChat() {
         const v = chatInput.value.trim();
         if (!v) return;
         if (q !== "athlete" && localStorage.getItem("mg_session")) {

@@ -2,6 +2,10 @@
 
 Cloudflare Worker + D1 API for login, roles, dashboards and training requests.
 
+## جریان جدید تأیید نقش‌ها و باشگاه
+
+برای انتشار نسخه `20260919-club-access-1` حتماً راهنمای [CLUB-ACCESS-DEPLOYMENT.md](CLUB-ACCESS-DEPLOYMENT.md) را بخوانید. مهاجرت `003-club-access.sql` باید پیش از Worker اجرا شود و فایل‌های فرانت‌اند هم‌زمان به‌روز شوند. بخش انتشار پیامک پایین این فایل، سابقه نسخه قبلی است.
+
 ## Required bindings and secrets
 
 - `DB`: D1 database binding.

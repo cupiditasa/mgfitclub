@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>پنل مدیریت | MG FitClub</title>
+    <style id="mg-access-cloak">body{visibility:hidden}</style>
     <style>
       :root {
         --purple: #7040e8;
@@ -405,7 +406,7 @@
       </div>
     </div>
     <script src="tabs-modern.js?v=20260907"></script>
-    <script src="mg-api.js?v=20260911"></script>
+    <script src="mg-api.js?v=20260919-access"></script>
     <script>
       const q = new URLSearchParams(location.search).get("demo");
       if (q !== "manager" && !localStorage.getItem("mg_session"))
@@ -433,11 +434,14 @@
           { name: "الهام موسوی", specialty: "فیتنس و اصلاحی", status: "معلق" },
         ];
       let messageTarget = "";
+      function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+      }
       function cardAthlete(x) {
-        return `<article class="person"><div class="person-head"><div class="avatar">${x.name.slice(0, 1)}</div><h3>${x.name}</h3><span class="status">${x.status}</span></div><div class="details"><div class="detail"><span>تاریخ عضویت:</span><strong>${x.join}</strong></div><div class="detail"><span>مدت زمان باقی‌مانده عضویت:</span><strong>${x.days}</strong></div><div class="detail"><span>تاریخ آخرین حضور در باشگاه:</span><strong>${x.last}</strong></div></div><div class="person-actions"><button class="btn red" onclick="report('${x.name}')">ریپورت ورزشکار به پشتیبانی</button><button class="btn purple" onclick="alert('لیست کامل ورود و خروج ${x.name} نمایش داده شد.')">لیست کامل ورود و خروج</button><button class="btn" onclick="openMessage('${x.name}')">ارسال پیام</button></div></article>`;
+        return `<article class="person"><div class="person-head"><div class="avatar">${escapeHtml(x.name.slice(0, 1))}</div><h3>${escapeHtml(x.name)}</h3><span class="status">${escapeHtml(x.status)}</span></div><div class="details"><div class="detail"><span>تاریخ عضویت:</span><strong>${escapeHtml(x.join)}</strong></div><div class="detail"><span>مدت زمان باقی‌مانده عضویت:</span><strong>${escapeHtml(x.days)}</strong></div><div class="detail"><span>تاریخ آخرین حضور در باشگاه:</span><strong>${escapeHtml(x.last)}</strong></div></div><div class="person-actions"><button class="btn red" onclick="report(this.closest('.person').querySelector('h3').textContent)">ریپورت ورزشکار به پشتیبانی</button><button class="btn purple" onclick="alert('این بخش در دست تکمیل است.')">لیست کامل ورود و خروج</button><button class="btn" onclick="openMessage(this.closest('.person').querySelector('h3').textContent)">ارسال پیام</button></div></article>`;
       }
       function cardCoach(x, i) {
-        return `<article class="person"><div class="person-head"><div class="avatar">${x.name.slice(0, 1)}</div><h3>${x.name}</h3><span class="status ${x.status === "فعال" ? "" : "off"}">${x.status}</span></div><div class="details"><div class="detail"><span>تخصص:</span><strong>${x.specialty}</strong></div></div><div class="person-actions"><button class="btn" onclick="coaches[${i}].status='فعال';renderCoaches()">فعال</button><button class="btn purple" onclick="coaches[${i}].status='معلق';renderCoaches()">معلق</button><button class="btn red" onclick="coaches[${i}].status='حذف‌شده';renderCoaches()">حذف</button></div></article>`;
+        return `<article class="person"><div class="person-head"><div class="avatar">${escapeHtml(x.name.slice(0, 1))}</div><h3>${escapeHtml(x.name)}</h3><span class="status ${x.status === "فعال" ? "" : "off"}">${escapeHtml(x.status)}</span></div><div class="details"><div class="detail"><span>تخصص:</span><strong>${escapeHtml(x.specialty)}</strong></div></div><div class="person-actions"><a class="btn" href="access-center.html#approvals">بررسی درخواست‌های دسترسی</a></div></article>`;
       }
       function renderAthletes() {
         const term = athleteSearch.value.trim();
@@ -527,7 +531,7 @@
               id: user.id,
               name: user.full_name || user.phone || user.email || "مربی",
               specialty: "مربی MG FitClub",
-              status: user.status === "active" ? "فعال" : "معلق",
+              status: user.access_state !== "approved" ? "در انتظار تأیید" : user.status === "active" ? "فعال" : "معلق",
             }));
           athletes.splice(0, athletes.length, ...liveAthletes);
           coaches.splice(0, coaches.length, ...liveCoaches);
@@ -548,7 +552,7 @@
     <script>
       function upgradedCoachCard(x, i) {
         const active = x.status === "فعال";
-        return `<article class="person"><div class="person-head"><div class="avatar">${x.name.slice(0, 1)}</div><h3>${x.name}</h3><span class="status ${active ? "" : "off"}">${x.status}</span></div><div class="details"><div class="detail"><span>تخصص:</span><strong>${x.specialty}</strong></div><div class="detail"><span>آخرین حضور در باشگاه:</span><strong>${x.last || "امروز، ۲۰:۲۶"}</strong></div><div class="detail"><span>تعداد ورود و خروج مربی:</span><strong>${x.visits || "۹۵"} بار</strong></div></div><div class="person-actions"><button class="btn red" onclick="reportCoach('${x.name}')">ریپورت مربی به پشتیبانی</button><button class="btn purple" onclick="alert('لیست کامل ورود و خروج ${x.name} نمایش داده شد.')">لیست کامل ورود و خروج</button><button class="btn" onclick="openMessage('${x.name}')">ارسال پیام</button><button class="btn ${active ? "" : "purple"}" onclick="coaches[${i}].status='فعال';renderCoaches()">فعال</button><button class="btn purple" onclick="coaches[${i}].status='معلق';renderCoaches()">معلق</button><button class="btn red" onclick="coaches[${i}].status='حذف‌شده';renderCoaches()">حذف</button></div></article>`;
+        return `<article class="person"><div class="person-head"><div class="avatar">${escapeHtml(x.name.slice(0, 1))}</div><h3>${escapeHtml(x.name)}</h3><span class="status ${active ? "" : "off"}">${escapeHtml(x.status)}</span></div><div class="details"><div class="detail"><span>تخصص:</span><strong>${escapeHtml(x.specialty)}</strong></div><div class="detail"><span>آخرین حضور در باشگاه:</span><strong>${escapeHtml(x.last || "—")}</strong></div><div class="detail"><span>تعداد ورود و خروج مربی:</span><strong>${escapeHtml(x.visits || "—")} بار</strong></div></div><div class="person-actions"><button class="btn red" onclick="reportCoach(this.closest('.person').querySelector('h3').textContent)">ریپورت مربی به پشتیبانی</button><button class="btn purple" onclick="alert('این بخش در دست تکمیل است.')">لیست کامل ورود و خروج</button><button class="btn" onclick="openMessage(this.closest('.person').querySelector('h3').textContent)">ارسال پیام</button><a class="btn" href="access-center.html#approvals">بررسی درخواست‌های دسترسی</a></div></article>`;
       }
       function renderCoaches() {
         const term = coachSearch.value.trim();
