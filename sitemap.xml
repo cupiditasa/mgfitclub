@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+  <url>
+    <loc>https://mgfitclub.ir/</loc>
+  </url>
+  <url>
+    <loc>https://mgfitclub.ir/mg-journal.html</loc>
+  </url>
+  <url>
+    <loc>https://mgfitclub.ir/app.html</loc>
+  </url>
+  <url>
+    <loc>https://mgfitclub.ir/videos/functional-wellbeing.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://mgfitclub.ir/assets/images/journal-service-1.webp</video:thumbnail_loc>
+      <video:title>فانکشنال و حال خوب | مجله MG FitClub</video:title>
+      <video:description>یک ساعت برای خودت؛ فاصله‌ای از شلوغی روز. حرکت، فرصتی برای توجه به خودت؛ تماشای فیلم و روایت کامل در مجله باشگاه بانوان MG شیراز.</video:description>
+      <video:content_loc>https://mgfitclub.ir/assets/media/service-1.mp4</video:content_loc>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://mgfitclub.ir/videos/healthy-nutrition.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://mgfitclub.ir/assets/images/journal-service-3.webp</video:thumbnail_loc>
+      <video:title>تغذیه سالم و رشد عضلات | مجله MG FitClub</video:title>
+      <video:description>انتخاب‌های کوچک، بخشی از مسیر پیشرفت تو هستند. تغذیه، همراه تمرین؛ تماشای فیلم و روایت کامل در مجله باشگاه بانوان MG شیراز.</video:description>
+      <video:content_loc>https://mgfitclub.ir/assets/media/service-3.mp4</video:content_loc>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://mgfitclub.ir/videos/mg-lifestyle.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://mgfitclub.ir/assets/images/journal-service-4.webp</video:thumbnail_loc>
+      <video:title>MG؛ فراتر از باشگاه، یک سبک زندگی | مجله MG FitClub</video:title>
+      <video:description>همه‌چیز دست تو نیست؛ قدم بعدی می‌تواند انتخاب تو باشد. EMS، کراس‌فیت و پیلاتس؛ مسیر خودت را پیدا کن؛ تماشای فیلم و روایت کامل در مجله باشگاه بانوان MG شیراز.</video:description>
+      <video:content_loc>https://mgfitclub.ir/assets/media/service-4.mp4</video:content_loc>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://mgfitclub.ir/videos/samin-ekhtaraei.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://mgfitclub.ir/assets/images/journal-samin-ekhtaraei.webp</video:thumbnail_loc>
+      <video:title>ثمین اختراعی | مربی بدنسازی و فیزیولوژی ورزشی | MG FitClub شیراز</video:title>
+      <video:description>ثمین اختراعی، مربی بدنسازی و فیزیولوژی ورزشی در باشگاه بانوان MG FitClub شیراز</video:description>
+      <video:content_loc>https://mgfitclub.ir/assets/media/samin-ekhtaraei.mp4</video:content_loc>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://mgfitclub.ir/videos/strength-confidence.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://mgfitclub.ir/assets/images/journal-service-2.webp</video:thumbnail_loc>
+      <video:title>قدرت، انضباط و اعتمادبه‌نفس | مجله MG FitClub</video:title>
+      <video:description>قدرت، از قولی که به خودت می‌دهی شروع می‌شود. معیار تو، خودِ دیروزت است؛ تماشای فیلم و روایت کامل در مجله باشگاه بانوان MG شیراز.</video:description>
+      <video:content_loc>https://mgfitclub.ir/assets/media/service-2.mp4</video:content_loc>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://mgfitclub.ir/videos/tarlan-shaybani.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://mgfitclub.ir/assets/images/journal-tarlan-shaybani.webp</video:thumbnail_loc>
+      <video:title>طرلان شیبانی | مربی فیتنس و بدنسازی بانوان | MG FitClub شیراز</video:title>
+      <video:description>طرلان شیبانی، مربی فیتنس و بدنسازی بانوان در باشگاه بانوان MG FitClub شیراز</video:description>
+      <video:content_loc>https://mgfitclub.ir/assets/media/tarlan-shaybani.mp4</video:content_loc>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://mgfitclub.ir/videos/yasamin-dosri.html</loc>
+    <video:video>
+      <video:thumbnail_loc>https://mgfitclub.ir/assets/images/journal-yasamin-dosri.webp</video:thumbnail_loc>
+      <video:title>یاسمین دوس‌ری | مربی تخصصی بدنسازی و فیتنس | MG FitClub شیراز</video:title>
+      <video:description>یاسمین دوس‌ری، مربی تخصصی بدنسازی و فیتنس در باشگاه بانوان MG FitClub شیراز</video:description>
+      <video:content_loc>https://mgfitclub.ir/assets/media/yasamin-dosri.mp4</video:content_loc>
+    </video:video>
+  </url>
+</urlset>

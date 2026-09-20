@@ -13,6 +13,9 @@ test('app is a permanent guide, while the PWA still starts at login',()=>{
   assert.equal(JSON.parse(read('manifest.webmanifest')).start_url,'account.html?source=pwa');
   for(const match of html.matchAll(/(?:href|src)="([^"]+)"/g)){
     if(match[1].startsWith('#'))continue;
+    if(match[1].startsWith('https://mgfitclub.ir/')){
+      assert.ok(fs.existsSync(new URL(new URL(match[1]).pathname.slice(1),root)),match[1]);continue;
+    }
     assert.ok(fs.existsSync(new URL(match[1].split('?')[0],root)),match[1]);
   }
   for(const asset of ['app-install.js','app-install.css'])assert.ok(read('sw.js').includes(asset));

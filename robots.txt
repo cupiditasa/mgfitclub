@@ -1,0 +1,15 @@
+# Public pages remain crawlable. Private HTML uses noindex, not robots blocking.
+User-agent: *
+Allow: /
+Disallow: /backend/
+Disallow: /docs/
+Disallow: /api/
+
+# ChatGPT search crawler; not a separate site-registration service.
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /backend/
+Disallow: /docs/
+Disallow: /api/
+
+Sitemap: https://mgfitclub.ir/sitemap.xml

@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20260920-menu-browser-fix";
+const CACHE_NAME = "mg-fitclub-v20260920-seo";
 const APP_SHELL = [
   "./",
   "./account.html",
