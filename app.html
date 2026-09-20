@@ -10,7 +10,11 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="stylesheet" href="preview-notice.css?v=20260912" />
     <script src="preview-notice.js?v=20260912" defer></script>
-    <title>MG FitClub App</title>
+    <title>نصب اپلیکیشن | MG FitClub</title>
+    <meta name="description" content="راهنمای نصب اپلیکیشن وب MG FitClub روی اندروید و آیفون و افزودن میان‌بر ورود به حساب باشگاه.">
+    <link rel="icon" href="assets/brand/mg-mark-acid.webp">
+    <link rel="stylesheet" href="app-install.css?v=20260920">
+    <script src="app-install.js?v=20260920" defer></script>
     <style>
       html,
       body {
@@ -20,29 +24,22 @@
         color: #f5f7f1;
         font-family: Tahoma, sans-serif;
       }
-      main {
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        text-align: center;
-      }
       a {
         color: #c6ff3f;
       }
     </style>
   </head>
-  <body data-preview-app>
-    <main>
-      <p>
-        در حال انتقال به صفحه ورود…<br /><a href="account.html?source=pwa"
-          >ورود به MG FitClub</a
-        >
-      </p>
-    </main>
-    <script>
-      window.__MG_PREVIEW_NOTICE_ON_CLOSE = () => {
-        location.replace("account.html?source=pwa");
-      };
-    </script>
+  <body>
+    <a class="skip" href="#app-main">رفتن به راهنمای نصب</a>
+    <header><a class="brand" href="index.html"><img src="assets/brand/mg-mark-acid.webp" alt="" width="38" height="38"><span dir="ltr">MG FITCLUB / APP</span></a><nav aria-label="منوی صفحه"><a href="index.html">صفحه اصلی</a><a href="mg-journal.html">مجله</a><a href="account.html?source=pwa">ورود به حساب ↖</a></nav></header>
+    <main id="app-main">
+    <section class="hero"><div><p class="eyebrow" dir="ltr">YOUR CLUB. ONE TAP AWAY.</p><h1>MG، همیشه<br><em>یک لمس نزدیک‌تر.</em></h1><p class="lead">باشگاهت را به صفحهٔ اصلی گوشی بیاور. بدون دانلود فایل APK؛ همان حساب، همان پنل، با دسترسی سریع‌تر.</p><div class="actions"><button id="install-app" type="button" hidden>نصب اپلیکیشن MG ↓</button><a class="primary" href="#install-guide">راهنمای نصب روی گوشی ↓</a><a class="secondary" href="account.html?source=pwa">ورود به نسخهٔ وب ↖</a></div><p id="install-status" class="status" role="status" aria-live="polite">دستگاهت را انتخاب کن و راهنمای کوتاه زیر را دنبال کن.</p></div><div class="visual" aria-hidden="true"><div class="icon"><img src="assets/brand/mg-mark-acid.webp" alt=""></div><p dir="ltr">MG / ALWAYS WITH YOU</p></div></section>
+    <section class="guide" id="install-guide"><p class="eyebrow">نصب، در چند قدم</p><h2>گوشی تو کدام است؟</h2><div class="platforms"><a href="#android-guide">Android · اندروید</a><a href="#ios-guide">iPhone · آیفون</a></div><div class="grid">
+    <article class="guide-card" id="android-guide"><h3>نصب روی اندروید</h3><ol><li><strong>سایت را در Chrome باز کن.</strong><p>اگر از اینستاگرام یا پیام‌رسان وارد شده‌ای، ابتدا لینک را در مرورگر اصلی گوشی باز کن.</p></li><li><strong>گزینهٔ نصب را انتخاب کن.</strong><p>اگر دکمهٔ «نصب اپلیکیشن MG» بالای صفحه ظاهر شد، روی آن بزن؛ در غیر این صورت منوی سه‌نقطهٔ Chrome را باز کن و «نصب برنامه» (Install app) یا «افزودن به صفحه اصلی» (Add to Home screen) را پیدا کن.</p></li><li><strong>تأیید کن و MG را باز کن.</strong><p>پس از تأیید مرورگر، آیکن به گوشی اضافه می‌شود. از آیکن MG وارد حساب خودت شو.</p></li></ol></article>
+    <article class="guide-card" id="ios-guide"><h3>نصب روی آیفون</h3><ol><li><strong>صفحهٔ ورود را در Safari باز کن.</strong><p>برای داشتن میان‌بر مستقیم ورود، ابتدا <a href="account.html?source=pwa">صفحهٔ ورود MG</a> را در Safari باز کن.</p></li><li><strong>منوی اشتراک‌گذاری را باز کن.</strong><p>روی Share (نماد مربع و فلش رو به بالا) بزن، سپس «افزودن به صفحه اصلی» (Add to Home Screen) را انتخاب کن. ممکن است لازم باشد فهرست را پایین ببری یا گزینه‌ها را ویرایش کنی.</p></li><li><strong>افزودن را تأیید کن.</strong><p>اگر گزینهٔ «باز کردن به‌صورت برنامهٔ وب» (Open as Web App) نمایش داده شد، آن را روشن کن؛ سپس Add را بزن. آیکن MG روی صفحهٔ اصلی قرار می‌گیرد.</p></li></ol></article></div>
+    <aside class="hint"><strong>دکمهٔ نصب را نمی‌بینی؟</strong><p>این دکمه تنها وقتی مرورگر امکان نصب را ارائه کند نمایش داده می‌شود. از راهنمای دستی بالا استفاده کن؛ اگر برنامه قبلاً نصب شده، آن را از صفحهٔ اصلی گوشی باز کن. ظاهر و نام گزینه‌ها ممکن است با نسخهٔ مرورگر متفاوت باشد.</p></aside></section>
+    <section class="faq"><h2>قبل از شروع</h2><details><summary>این اپلیکیشن با سایت چه فرقی دارد؟</summary><p>نسخهٔ PWA همان خدمات سایت را با آیکن روی صفحهٔ اصلی و در مرورگرهای سازگار در پنجرهٔ مستقل باز می‌کند؛ حساب جداگانه لازم نیست.</p></details><details><summary>بعد از نصب از کجا شروع می‌کنم؟</summary><p>مسیر شروع اپلیکیشن، صفحهٔ ورود است. اگر نشست معتبرت در همان محیط ذخیره شده باشد به پنل می‌روی؛ ممکن است در اولین اجرای نسخهٔ نصب‌شده دوباره به کد پیامکی نیاز داشته باشی.</p></details><details><summary>بدون اینترنت هم کار می‌کند؟</summary><p>برای دریافت کد ورود، اطلاعات حساب، پیام‌ها و ثبت درخواست‌ها اینترنت لازم است. ذخیره‌شدن بعضی صفحات به معنی آفلاین‌بودن تمام امکانات نیست.</p></details><details><summary>روی کامپیوتر هم قابل استفاده است؟</summary><p>همیشه می‌توانی نسخهٔ وب را باز کنی. اگر مرورگر دسکتاپ امکان نصب ارائه کند، دکمهٔ نصب همین صفحه یا آیکن نصب در نوار آدرس در دسترس خواهد بود.</p></details></section>
+    <section class="closing"><h2>آماده‌ای وارد شوی؟</h2><a class="primary" href="account.html?source=pwa">ورود به MG FitClub ↖</a></section>
+    </main><footer><a href="index.html">→ بازگشت به صفحه اصلی</a><span dir="ltr">MG FITCLUB / WEB APP</span></footer>
   </body>
 </html>

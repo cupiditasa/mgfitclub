@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20260920-poster-gallery";
+const CACHE_NAME = "mg-fitclub-v20260920-app-guide";
 const APP_SHELL = [
   "./",
   "./account.html",
@@ -8,6 +8,8 @@ const APP_SHELL = [
   "./access-center.js?v=20260919",
   "./access-center.css?v=20260919",
   "./app.html",
+  "./app-install.css?v=20260920",
+  "./app-install.js?v=20260920",
   "./preview-notice.css",
   "./preview-notice.js",
   "./mg-journal.html",
