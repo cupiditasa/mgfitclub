@@ -319,6 +319,8 @@ img {
 
 .menu {
   position: fixed;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   z-index: 90;
   inset: 0;
   padding: 110px var(--pad) 2rem;
@@ -341,6 +343,7 @@ img {
 .menu nav {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 
 .menu nav a {

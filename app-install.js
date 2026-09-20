@@ -3,6 +3,16 @@
   const install = document.getElementById('install-app');
   const status = document.getElementById('install-status');
   const standalone = window.matchMedia('(display-mode: standalone)');
+  // Detection only tailors instructions; installation always uses browser capability.
+  const ua = navigator.userAgent || '';
+  const hint = document.getElementById('browser-hint');
+  if (hint && /Firefox\/|FxiOS\//.test(ua)) {
+    hint.textContent = /Android/.test(ua)
+      ? 'در فایرفاکس اندروید، از منوی خود مرورگر برای نصب یا افزودن به صفحهٔ اصلی استفاده کن؛ مراحل زیر را دنبال کن.'
+      : /iPhone|iPad|iPod|FxiOS/.test(ua)
+        ? 'در فایرفاکس آیفون، اگر افزودن به صفحهٔ اصلی در دسترس نیست، صفحهٔ ورود را در Safari باز کن.'
+        : 'در فایرفاکس این دستگاه، منوی مرورگر را برای افزودن سایت بررسی کن؛ دکمهٔ نصب داخل سایت فقط با پشتیبانی مرورگر ظاهر می‌شود.';
+  }
   let pending = null;
   const installed = () => standalone.matches || navigator.standalone === true;
   const showInstalled = () => {

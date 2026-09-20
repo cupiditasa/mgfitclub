@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20260920-app-guide";
+const CACHE_NAME = "mg-fitclub-v20260920-menu-browser-fix";
 const APP_SHELL = [
   "./",
   "./account.html",
@@ -9,12 +9,12 @@ const APP_SHELL = [
   "./access-center.css?v=20260919",
   "./app.html",
   "./app-install.css?v=20260920",
-  "./app-install.js?v=20260920",
+  "./app-install.js?v=20260920-browsers",
   "./preview-notice.css",
   "./preview-notice.js",
   "./mg-journal.html",
   "./journal.css?v=20260919",
-  "./journal-layout.css?v=20260919",
+  "./journal-layout.css?v=20260920-menu",
   "./journal-player.js?v=20260920",
   "./journal-gallery.css?v=20260920",
   "./journal-gallery.js?v=20260920",

@@ -46,6 +46,7 @@ test("journal links, posters, IDs and accessible navigation targets resolve", ()
   }
   assert.match(html, /class="journal-back" href="index.html"/);
   assert.match(html, /aria-controls="journal-menu" aria-expanded="false"/);
+  assert.match(read("journal-layout.css"), /\.journal-menu\{[^}]*inset:0 auto 0 0/);
   assert.match(html, /<dialog class="story-modal" aria-labelledby="story-modal-title"/);
   assert.equal((html.match(/class="poster-card"/g) || []).length, 4);
   new vm.Script(playerSource);
