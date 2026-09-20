@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20260919-journal";
+const CACHE_NAME = "mg-fitclub-v20260920-poster-gallery";
 const APP_SHELL = [
   "./",
   "./account.html",
@@ -13,7 +13,13 @@ const APP_SHELL = [
   "./mg-journal.html",
   "./journal.css?v=20260919",
   "./journal-layout.css?v=20260919",
-  "./journal-player.js?v=20260919",
+  "./journal-player.js?v=20260920",
+  "./journal-gallery.css?v=20260920",
+  "./journal-gallery.js?v=20260920",
+  "./videos/functional-wellbeing.html",
+  "./videos/strength-confidence.html",
+  "./videos/healthy-nutrition.html",
+  "./videos/mg-lifestyle.html",
   "./journal-motion.js?v=20260919",
   "./dashboard.html",
   "./coach-dashboard.html",

@@ -9,8 +9,10 @@
 <meta name="theme-color" content="#080a08">
 <link rel="stylesheet" href="journal.css?v=20260919">
 <link rel="stylesheet" href="journal-layout.css?v=20260919">
-<script src="journal-player.js?v=20260919" defer>
+<script src="journal-player.js?v=20260920" defer>
 </script>
+<link rel="stylesheet" href="journal-gallery.css?v=20260920">
+<script src="journal-gallery.js?v=20260920" defer></script>
 <script src="journal-motion.js?v=20260919" defer>
 </script>
 </head>
@@ -185,118 +187,15 @@
 <a href="videos/samin-ekhtaraei.html">معرفی ثمین اختراعی ↗</a>
 </nav>
 </section>
-<section class="service-films" id="service-films" aria-labelledby="films-title">
-  <div class="exp-kicker">
-<span>03</span>
-<p>خدمات، از نزدیک</p>
-</div>
-  <div class="films-heading">
-<h2 id="films-title">فقط نخوان.<br>
-<em>تجربه‌اش را ببین.</em>
-</h2>
-<p>چهار قاب از تمرین و همراهی در MG.<br>فیلم را انتخاب کن و با مسیر خودت آشنا شو.</p>
-</div>
-  <div class="service-cinema">
-    <div class="film-stage">
-      <div class="film-stage-top">
-<span>
-<i aria-hidden="true">
-</i> MG / IN MOTION</span>
-<span id="film-counter" dir="ltr">01 / 04</span>
-</div>
-      <div class="film-screen">
-<video id="service-player" controls playsinline preload="none" poster="assets/images/journal-service-1.webp" aria-labelledby="film-title-1">
-<source src="assets/media/service-1.mp4" type="video/mp4">مرورگر شما پخش ویدیو را پشتیبانی نمی‌کند.</video>
-</div>
-      <div class="film-stage-bottom">
-<span>باشگاه بانوان MG · شیراز</span>
-<span dir="ltr">PORTRAIT SERIES</span>
-</div>
-      <p class="film-error" id="film-error" role="status" hidden>پخش ویدیو ممکن نشد. اتصال اینترنت را بررسی کن. <a id="film-direct" href="assets/media/service-1.mp4">باز کردن فایل ویدیو</a>
-</p>
-    </div>
-    <div class="film-editorial">
-      <p class="film-overline">تماشای خدمات MG <span aria-hidden="true">↙</span>
-</p>
-      <div class="film-copy-stack" aria-live="polite" aria-atomic="true">
-<article class="film-copy" data-film-copy="0">
-<span class="film-category">شناخت یک روش تمرین</span>
-<h3 id="film-title-1">تمرین با دستگاه <em>EMS</em>
-</h3>
-<p>با شیوه تمرین EMS در باشگاه MG آشنا شو؛ از آماده‌سازی تا همراهی مربی در هر حرکت.</p>
-</article>
-<article class="film-copy" data-film-copy="1" hidden>
-<span class="film-category">قدرت در حرکت‌های روزمره</span>
-<h3 id="film-title-2">تمرینات <em>فانکشنال</em>
-</h3>
-<p>تمرینات فانکشنال با تمرکز بر قدرت، تعادل و حرکت‌های واقعی؛ برای بدنی آماده‌تر و زندگی پرانرژی‌تر.</p>
-</article>
-<article class="film-copy" data-film-copy="2" hidden>
-<span class="film-category">شناخت، پیش از شروع</span>
-<h3 id="film-title-3">آنالیز ترکیب <em>بدن</em>
-</h3>
-<p>با شناخت دقیق‌تر از ترکیب بدن، مسیر تمرینی و تغذیه‌ای متناسب با هدف خودت را شروع کن.</p>
-</article>
-<article class="film-copy" data-film-copy="3" hidden>
-<span class="film-category">همراهی برای ادامه مسیر</span>
-<h3 id="film-title-4">مسیر اختصاصی <em>MG</em>
-</h3>
-<p>مربی تخصصی، برنامه‌ریزی اصولی و همراهی مستمر؛ همه‌چیز برای اینکه سبک زندگی سالم را ادامه بدهی.</p>
-</article>
-</div>
-      <div class="film-playlist-heading">
-<span>برای دیدن، انتخاب کن</span>
-<span>۴ فیلم کوتاه</span>
-</div>
-      <div class="film-playlist" role="group" aria-label="انتخاب فیلم خدمات">
-<button class="film-choice is-active" type="button" aria-pressed="true" aria-controls="service-player" data-film="0" data-src="assets/media/service-1.mp4" data-poster="assets/images/journal-service-1.webp">
-<img src="assets/images/journal-service-1.webp" width="45" height="80" loading="lazy" alt="">
-<span class="film-choice-copy">
-<small>فیلم ۰1</small>
-<strong>تمرین EMS</strong>
-<span>۲۲ ثانیه</span>
-</span>
-<span class="film-choice-arrow" aria-hidden="true">↗</span>
-</button>
-<button class="film-choice" type="button" aria-pressed="false" aria-controls="service-player" data-film="1" data-src="assets/media/service-2.mp4" data-poster="assets/images/journal-service-2.webp">
-<img src="assets/images/journal-service-2.webp" width="45" height="80" loading="lazy" alt="">
-<span class="film-choice-copy">
-<small>فیلم ۰2</small>
-<strong>فانکشنال</strong>
-<span>۴۰ ثانیه</span>
-</span>
-<span class="film-choice-arrow" aria-hidden="true">↗</span>
-</button>
-<button class="film-choice" type="button" aria-pressed="false" aria-controls="service-player" data-film="2" data-src="assets/media/service-3.mp4" data-poster="assets/images/journal-service-3.webp">
-<img src="assets/images/journal-service-3.webp" width="45" height="80" loading="lazy" alt="">
-<span class="film-choice-copy">
-<small>فیلم ۰3</small>
-<strong>آنالیز ترکیب بدن</strong>
-<span>۳۵ ثانیه</span>
-</span>
-<span class="film-choice-arrow" aria-hidden="true">↗</span>
-</button>
-<button class="film-choice" type="button" aria-pressed="false" aria-controls="service-player" data-film="3" data-src="assets/media/service-4.mp4" data-poster="assets/images/journal-service-4.webp">
-<img src="assets/images/journal-service-4.webp" width="45" height="80" loading="lazy" alt="">
-<span class="film-choice-copy">
-<small>فیلم ۰4</small>
-<strong>مسیر اختصاصی MG</strong>
-<span>۲۷ ثانیه</span>
-</span>
-<span class="film-choice-arrow" aria-hidden="true">↗</span>
-</button>
-</div>
-      <div class="film-footer">
-<p>قدم بعدی، آشنایی از نزدیک است.</p>
-<a href="index.html#register">درخواست بازدید <span aria-hidden="true">↗</span>
-</a>
-</div>
-      <noscript>
-<p>برای انتخاب فیلم‌ها جاوااسکریپت را فعال کنید، یا فایل‌ها را مستقیم باز کنید:</p>
-<a href="assets/media/service-2.mp4">فانکشنال</a> · <a href="assets/media/service-3.mp4">آنالیز ترکیب بدن</a> · <a href="assets/media/service-4.mp4">مسیر اختصاصی MG</a>
-</noscript>
-    </div>
-  </div>
+<section class="service-films poster-gallery" id="service-films" aria-labelledby="films-title">
+<div class="exp-kicker"><span>03</span><p>MG در حرکت</p></div>
+<div class="films-heading"><h2 id="films-title">مسیرت را<br><em>انتخاب کن.</em></h2><p>تمرین، تغذیه و انگیزه؛ هر فیلم یک داستان.<br>پوستر را انتخاب کن و وارد داستانش شو.</p></div>
+<div class="poster-toolbar"><div class="poster-filters" role="group" aria-label="موضوع فیلم‌ها" hidden><button type="button" data-poster-filter="همه" aria-pressed="true">همه</button><button type="button" data-poster-filter="تمرین" aria-pressed="false">تمرین</button><button type="button" data-poster-filter="انگیزه" aria-pressed="false">انگیزه</button><button type="button" data-poster-filter="تغذیه" aria-pressed="false">تغذیه</button><button type="button" data-poster-filter="سبک زندگی" aria-pressed="false">سبک زندگی</button></div><div class="poster-arrows" hidden><button type="button" data-poster-direction="1" aria-label="پوسترهای سمت راست" aria-controls="poster-track">→</button><button type="button" data-poster-direction="-1" aria-label="پوسترهای سمت چپ" aria-controls="poster-track">←</button></div></div>
+<div class="poster-track" id="poster-track" tabindex="0" role="region" aria-label="گالری فیلم‌ها؛ برای مرور به چپ و راست بروید"><a class="poster-card" href="videos/functional-wellbeing.html" data-category="تمرین"><div class="poster-art"><img src="assets/images/journal-service-1.webp" width="360" height="640" loading="lazy" alt="نمایی از فانکشنال و حال خوب"><span class="poster-time" dir="ltr">00:22</span><span class="poster-open" aria-hidden="true">↖</span></div><div class="poster-copy"><small>تمرین</small><h3>فانکشنال و حال خوب</h3><p>یک ساعت برای خودت؛ فاصله‌ای از شلوغی روز.</p><span>تماشا و بیشتر ↖</span></div></a>
+<a class="poster-card" href="videos/strength-confidence.html" data-category="انگیزه"><div class="poster-art"><img src="assets/images/journal-service-2.webp" width="360" height="640" loading="lazy" alt="نمایی از قدرت، انضباط و اعتمادبه‌نفس"><span class="poster-time" dir="ltr">00:40</span><span class="poster-open" aria-hidden="true">↖</span></div><div class="poster-copy"><small>انگیزه</small><h3>قدرت، انضباط و اعتمادبه‌نفس</h3><p>قدرت، از قولی که به خودت می‌دهی شروع می‌شود.</p><span>تماشا و بیشتر ↖</span></div></a>
+<a class="poster-card" href="videos/healthy-nutrition.html" data-category="تغذیه"><div class="poster-art"><img src="assets/images/journal-service-3.webp" width="360" height="640" loading="lazy" alt="نمایی از تغذیه سالم و رشد عضلات"><span class="poster-time" dir="ltr">00:35</span><span class="poster-open" aria-hidden="true">↖</span></div><div class="poster-copy"><small>تغذیه</small><h3>تغذیه سالم و رشد عضلات</h3><p>انتخاب‌های کوچک، بخشی از مسیر پیشرفت تو هستند.</p><span>تماشا و بیشتر ↖</span></div></a>
+<a class="poster-card" href="videos/mg-lifestyle.html" data-category="سبک زندگی"><div class="poster-art"><img src="assets/images/journal-service-4.webp" width="360" height="640" loading="lazy" alt="نمایی از MG؛ فراتر از باشگاه، یک سبک زندگی"><span class="poster-time" dir="ltr">00:27</span><span class="poster-open" aria-hidden="true">↖</span></div><div class="poster-copy"><small>سبک زندگی</small><h3>MG؛ فراتر از باشگاه، یک سبک زندگی</h3><p>همه‌چیز دست تو نیست؛ قدم بعدی می‌تواند انتخاب تو باشد.</p><span>تماشا و بیشتر ↖</span></div></a></div>
+<div class="poster-bottom"><span id="poster-count" role="status">۴ فیلم</span><span>برای مرور، ورق بزن · برای تماشا، انتخاب کن</span></div>
 </section>
 <section class="exp-final">
 <canvas class="cta-canvas" aria-hidden="true">

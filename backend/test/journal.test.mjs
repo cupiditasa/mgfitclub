@@ -13,7 +13,7 @@ test("journal retains all seven films, service copy and coach links; book sectio
   assert.ok(!/mg-book|book-bg\.mp4|mg-book-mobile/.test(html + read("journal.css") + read("journal-layout.css")));
   assert.ok(html.indexOf('id="mg-stories"') < html.indexOf('id="service-films"'));
   assert.ok(html.indexOf('id="service-films"') < html.indexOf('class="exp-final"'));
-  for (let i = 1; i <= 4; i++) assert.ok(html.includes(`assets/media/service-${i}.mp4`));
+  for (let i = 1; i <= 4; i++) assert.ok(html.includes(`assets/images/journal-service-${i}.webp`));
   for (const story of stories) {
     assert.ok(story.text.length > 80);
     assert.ok(fs.existsSync(new URL(story.src, root)));
@@ -21,7 +21,14 @@ test("journal retains all seven films, service copy and coach links; book sectio
     assert.ok(fs.existsSync(new URL(story.url, root)));
   }
   assert.equal(stories.length, 3);
-  for (const text of ["با شیوه تمرین EMS", "تمرینات فانکشنال با تمرکز", "با شناخت دقیق‌تر از ترکیب بدن", "مربی تخصصی، برنامه‌ریزی اصولی"]) assert.ok(html.includes(text));
+  const topics = ["فانکشنال و حال خوب", "قدرت، انضباط و اعتمادبه‌نفس", "تغذیه سالم و رشد عضلات", "MG؛ فراتر از باشگاه، یک سبک زندگی"];
+  const choices = [...html.matchAll(/<a class="poster-card"[\s\S]*?<\/a>/g)].map(m => m[0]);
+  for (let i = 0; i < topics.length; i++) {
+    const choice = choices[i];
+    assert.ok(choice?.includes(`assets/images/journal-service-${i + 1}.webp`));
+    assert.ok(choice?.includes(topics[i]));
+  }
+  assert.ok(!html.includes('id="service-player"'));
   assert.ok(!/<video[^>]*autoplay/i.test(html));
   assert.match(read("journal-layout.css"), /object-fit:contain/);
   assert.match(read("journal-layout.css"), /aspect-ratio:9\/16/);
@@ -40,7 +47,7 @@ test("journal links, posters, IDs and accessible navigation targets resolve", ()
   assert.match(html, /class="journal-back" href="index.html"/);
   assert.match(html, /aria-controls="journal-menu" aria-expanded="false"/);
   assert.match(html, /<dialog class="story-modal" aria-labelledby="story-modal-title"/);
-  assert.equal((html.match(/class="film-choice(?: is-active)?"/g) || []).length, 4);
+  assert.equal((html.match(/class="poster-card"/g) || []).length, 4);
   new vm.Script(playerSource);
   new vm.Script(read("journal-motion.js"));
 });
@@ -90,20 +97,8 @@ function fixture({ reduced = false, hover = false, saveData = false, referrer = 
   return { document, window, selectors, byId, menuClose, choices, copies, cards, videos, history, videoSource };
 }
 
-test("service selection keeps video/text/count in sync and never autoplays on entry", () => {
-  const f = fixture(); assert.ok(f.videos.every(v => v.playCalls === 0));
-  f.choices[2].emit("click");
-  assert.equal(f.byId["service-player"].src, "assets/media/service-3.mp4");
-  assert.equal(f.byId["service-player"].poster, "assets/images/journal-service-3.webp");
-  assert.equal(f.byId["film-counter"].textContent, "03 / 04");
-  assert.equal(f.byId["service-player"].attrs["aria-labelledby"], "film-title-3");
-  assert.deepEqual(f.copies.map(c => c.hidden), [true, true, false, true]);
-  assert.deepEqual(f.choices.map(c => c.attrs["aria-pressed"]), ["false", "false", "true", "false"]);
-  f.byId["service-player"].currentTime = 10; f.byId["service-player"].emit("timeupdate");
-  assert.equal(f.choices[2].style.values["--film-progress"], "0.5");
-  f.byId["service-player"].emit("error"); assert.equal(f.byId["film-error"].hidden, false);
-  assert.equal(f.byId["film-direct"].href, "assets/media/service-3.mp4");
-  f.choices[1].emit("click"); assert.equal(f.byId["film-error"].hidden, true);
+test("journal does not autoplay on entry", () => {
+  assert.ok(fixture().videos.every(v => v.playCalls === 0));
 });
 
 test("menu closes accessibly and the back link uses history only for a same-site origin", () => {
@@ -124,7 +119,7 @@ test("menu closes accessibly and the back link uses history only for a same-site
 });
 
 test("coach modal pauses services, restores focus and does not open after a rail drag", () => {
-  const f = fixture(); f.choices[1].emit("click"); f.cards[0].emit("click");
+  const f = fixture(); f.cards[0].emit("click");
   assert.equal(f.selectors[".story-modal"].open, true);
   assert.equal(f.byId["service-player"].paused, true);
   assert.equal(f.selectors[".modal-video"].src, stories[0].src);

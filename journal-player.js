@@ -5,7 +5,6 @@
   const menu = document.getElementById("journal-menu");
   const toggle = document.querySelector(".journal-menu-toggle");
   const modal = document.querySelector(".story-modal");
-  const serviceVideo = document.getElementById("service-player");
   const modalVideo = document.querySelector(".modal-video");
   const videos = [...document.querySelectorAll("video")];
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -39,43 +38,6 @@
     } catch (_) { /* A direct visit follows the real index.html fallback link. */ }
   });
 
-  const choices = [...document.querySelectorAll(".film-choice")];
-  const copies = [...document.querySelectorAll(".film-copy")];
-  const counter = document.getElementById("film-counter");
-  const filmError = document.getElementById("film-error");
-  const direct = document.getElementById("film-direct");
-  let currentFilm = 0;
-  function selectFilm(index) {
-    const choice = choices[index];
-    if (!choice || !serviceVideo) return;
-    pauseOthers();
-    if (index !== currentFilm) {
-      serviceVideo.src = choice.dataset.src;
-      serviceVideo.poster = choice.dataset.poster;
-      serviceVideo.setAttribute("aria-labelledby", "film-title-" + (index + 1));
-      serviceVideo.load();
-    }
-    currentFilm = index;
-    choices.forEach((item, i) => {
-      item.classList.toggle("is-active", i === index);
-      item.setAttribute("aria-pressed", String(i === index));
-      item.style.setProperty("--film-progress", "0");
-    });
-    copies.forEach((copy, i) => { copy.hidden = i !== index; });
-    counter.textContent = String(index + 1).padStart(2, "0") + " / " + String(choices.length).padStart(2, "0");
-    direct.href = choice.dataset.src;
-    filmError.hidden = true;
-    play(serviceVideo);
-  }
-  choices.forEach((choice, index) => choice.addEventListener("click", () => selectFilm(index)));
-  serviceVideo?.addEventListener("timeupdate", () => {
-    const ratio = Number.isFinite(serviceVideo.duration) && serviceVideo.duration > 0 ? serviceVideo.currentTime / serviceVideo.duration : 0;
-    choices[currentFilm]?.style.setProperty("--film-progress", String(Math.min(1, Math.max(0, ratio))));
-  });
-  serviceVideo?.addEventListener("error", () => { filmError.hidden = false; });
-  serviceVideo?.querySelector("source")?.addEventListener("error", () => { filmError.hidden = false; });
-  serviceVideo?.addEventListener("loadeddata", () => { filmError.hidden = true; });
-
   const stories = JSON.parse(document.getElementById("journal-story-data")?.textContent || "[]");
   const cards = [...document.querySelectorAll(".story-card")];
   const track = document.querySelector(".story-track");
@@ -105,7 +67,7 @@
       openStory(index, card);
     });
     if (canPreview) {
-      card.addEventListener("pointerenter", () => { if (!modal.open && !menu.open && serviceVideo.paused) play(video); });
+      card.addEventListener("pointerenter", () => { if (!modal.open && !menu.open) play(video); });
       card.addEventListener("pointerleave", () => video.pause());
     }
   });
