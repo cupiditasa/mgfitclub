@@ -1,0 +1,17 @@
+# Runtime data and credentials must never be published.
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+node_modules/
+.wrangler/
+**/.wrangler/
+attendance-bridge/.test/
+.test/
+*.mgp
+*.mgenc
+*.tmp
+**/settings.mgp
+**/identity-job.mgp
+**/mg-pilot-status-*.json
+**/capture-*.json

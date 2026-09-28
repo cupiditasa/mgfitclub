@@ -10,7 +10,7 @@
     #mg-access-lock p{line-height:2;font-size:14px}
     #mg-access-lock button,#mg-access-lock a{display:inline-block;font:inherit;margin:6px;padding:12px;border-radius:12px;background:#c6ff3f;color:#142008;border:0;text-decoration:none;cursor:pointer}
     #mg-access-lock a.secondary{background:#ffffff10;color:#edf4e7;border:1px solid #ffffff30}
-    .mg-account-link{position:fixed;left:14px;bottom:16px;z-index:99999;background:#162015e8;color:#d4ff8d;border:1px solid #8ba95a;padding:10px 14px;border-radius:30px;font:12px Tahoma;text-decoration:none;backdrop-filter:blur(12px)}
+    .mg-account-link,.mg-device-link{position:fixed;left:14px;bottom:16px;z-index:99999;background:#162015e8;color:#d4ff8d;border:1px solid #8ba95a;padding:10px 14px;border-radius:30px;font:12px Tahoma;text-decoration:none;backdrop-filter:blur(12px)}
   `;
   document.head.appendChild(style);
   const hidden = new Map();
@@ -61,6 +61,17 @@
       unlock();
       document.body.dataset.role = user.role;
       window.MGCurrentUser = user;
+      let deviceLink = document.querySelector('.mg-device-link');
+      if (!deviceLink) {
+        deviceLink = document.createElement('a'); deviceLink.href = 'device-verification.html'; deviceLink.className = 'mg-device-link';
+        deviceLink.style.cssText = 'bottom:72px;max-width:calc(100vw - 56px);font-size:12px';
+        deviceLink.textContent = 'تأیید دستگاه تردد'; document.body.appendChild(deviceLink);
+      }
+      Promise.resolve().then(() => MGApi.request('/api/device-verification/me', typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? {signal:AbortSignal.timeout(10000)} : {})).then(data => {
+        const verified=data.registrations.filter(r=>r.state==='verified');
+        deviceLink.textContent=(verified.length?'✓ ':data.registrations.some(r=>r.state==='pending')?'⏳ ':'')+'تأیید دستگاه تردد';
+        deviceLink.title=verified.length?'تأییدشده در: '+verified.map(r=>r.clubName).join('، '):'بررسی وضعیت و ثبت درخواست';
+      }).catch(()=>{deviceLink.textContent='تأیید دستگاه تردد';deviceLink.title='وضعیت قابل دریافت نیست؛ برای بررسی باز کنید.'});
       if (!center && page !== "support.html" && !document.querySelector(".mg-account-link")) {
         const link = document.createElement("a"); link.href = "access-center.html"; link.className = "mg-account-link";
         link.textContent = user.role === "manager" ? "کاربران و درخواست‌های تأیید" : "مشخصات و نقش من"; document.body.appendChild(link);

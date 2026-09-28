@@ -1,4 +1,6 @@
 /* MG FitClub API. D1 is the source of truth; secrets are Worker bindings. */
+import { handleAttendancePilot } from './attendance-pilot.js';
+import { handleDeviceVerification, deviceStatesForUsers } from './device-verification.js';
 const ROLES = new Set(["athlete", "coach", "manager", "admin", "secretary", "support"]);
 const USER_STATUSES = new Set(["active", "blocked", "pending"]);
 const REQUEST_STATUSES = new Set(["submitted", "assigned", "in_progress", "completed", "rejected"]);
@@ -275,6 +277,10 @@ async function handle(request, env) {
   const headers = cors(request, env);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
   const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
+  const device = await handleDeviceVerification(request, env, {path,headers,response,errorResponse,jsonBody,hash,currentUser,userById,hasRole,makeId,token});
+  if (device) return device;
+  const pilot = await handleAttendancePilot(request, env, {path,headers,response,errorResponse,jsonBody,hash,currentUser,userById,hasRole,normalizePhone,validPhone,makeId,token});
+  if (pilot) return pilot;
   if (path === "/health" && request.method === "GET") return response({
     ok: true,
     service: "mg-fitclub-api",
@@ -626,7 +632,7 @@ async function handle(request, env) {
     const page = Math.max(1, Math.min(100000, Number(new URL(request.url).searchParams.get("page")) || 1));
     const result = await env.DB.prepare("SELECT u.id,u.full_name,u.phone,u.email,u.status,u.created_at,COALESCE(a.role,ur.role,u.role) AS role,COALESCE(a.state,CASE WHEN COALESCE(ur.role,u.role)='athlete' THEN 'approved' ELSE 'pending' END) AS access_state,c.name AS club_name FROM users u LEFT JOIN account_access a ON a.user_id=u.id LEFT JOIN user_roles ur ON ur.user_id=u.id LEFT JOIN clubs c ON c.id=a.club_id ORDER BY u.created_at DESC,u.id LIMIT 100 OFFSET ?").bind((Math.floor(page) - 1) * 100).all();
     const total = (await env.DB.prepare("SELECT COUNT(*) AS count FROM users").first()).count;
-    return response({ users: result.results, total, page: Math.floor(page), pageSize: 100 }, 200, headers);
+    return response({ users: await deviceStatesForUsers(env,user,hasRole,result.results), total, page: Math.floor(page), pageSize: 100 }, 200, headers);
   }
   const userMatch = path.match(/^\/api\/admin\/users\/([^/]+)$/);
   if (userMatch && request.method === "PATCH") {

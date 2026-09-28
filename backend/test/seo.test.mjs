@@ -35,7 +35,7 @@ test('video sitemap entries use real accessible assets and no invented publicati
   assert.ok(!sitemap.includes('publication_date'));assert.ok(!sitemap.includes('lastmod'));
 });
 test('private pages explicitly noindex but remain crawlable so the directive can be read',()=>{
-  const files=fs.readdirSync(root).filter(f=>f.endsWith('.html')&&!publicFiles.includes(f));assert.ok(files.length>=16);
+  const files=fs.readdirSync(root).filter(f=>f.endsWith('.html')&&!publicFiles.includes(f)&&!/^google[a-f0-9]+\.html$/.test(f));assert.ok(files.length>=16);
   for(const file of files){const html=read(file);assert.match(html,/<meta name="robots" content="noindex, follow">/);assert.ok(!urls.includes(base+file));}
   const robots=read('robots.txt');assert.ok(robots.includes('Sitemap: '+base+'sitemap.xml'));
   const groups=robots.split(/User-agent: /).slice(1);assert.equal(groups.length,2);

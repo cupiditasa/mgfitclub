@@ -26,6 +26,7 @@
       if (name === "users") await usersTab(card);
       if (name === "approvals") await approvalsTab(card);
       if (name === "clubs") await clubsTab(card);
+      if (name === "attendance") await attendanceTab(card);
       if (version === tabVersion) { panel.replaceChildren(card); history.replaceState(null, "", "#" + name); }
     } catch (e) { if (version === tabVersion) { panel.replaceChildren(button("تلاش دوباره", () => choose(name))); report(MGApi.errorMessage(e), true); } }
   }
@@ -37,10 +38,12 @@
     const back = el("a", "بازگشت به داشبورد"); back.href = routes[user.role] || "dashboard.html";
     const out = button("خروج", () => run(out, async () => { try { await MGApi.logout(); } finally { location.replace("account.html"); } }));
     links.append(back, out); header.append(title, links);
+    const device = el('a', 'تأیید دستگاه تردد'); device.href = 'device-verification.html'; links.append(device);
     nav = el("nav", undefined, "access-tabs"); nav.setAttribute("aria-label", "بخش‌های حساب");
     const tabs = [];
     if (user.role === "support") tabs.push(["clubs", "باشگاه‌ها و شماره‌های ورود"], ["users", "تمام کاربران"]);
     if (user.role === "manager" && user.access_state === "approved") tabs.push(["approvals", "درخواست‌های تأیید"], ["users", "کاربران ثبت‌نام‌شده"]);
+    if (["support", "manager"].includes(user.role) && user.access_state === "approved") tabs.push(["attendance", "تأیید حضور آزمایشی"]);
     if (user.role !== "manager") tabs.push(["profile", "مشخصات و تصویر من"]);
     if (!["manager", "support"].includes(user.role)) tabs.push(["role", "تغییر رول کاربری"]);
     panel = el("div");
@@ -48,6 +51,27 @@
     app.replaceChildren(header, nav, status, panel);
     if (!tabs.length) { panel.append(el("p", "حساب مدیریت باید توسط پشتیبانی به باشگاه متصل شود.")); return; }
     const wanted = location.hash.slice(1); choose(tabs.some(t => t[0] === wanted) ? wanted : tabs[0][0]);
+  }
+  async function attendanceTab(card) {
+    card.append(el("h2", "بررسی حضور آزمایشی"), el("p", "ثبت دستگاه به‌تنهایی تأیید ورود نیست. تنها پس از اطمینان از ورود واقعی همان شخص تأیید کنید. تأیید مدیر و پشتیبان روی یک حضور، مصرف دوباره ایجاد نمی‌کند؛ حداکثر یک جلسه در روز.", "access-warning"));
+    card.append(button("تازه‌سازی", () => choose("attendance")));
+    const data = await api("/api/attendance-pilot/review");
+    if (!data.observations.length) card.append(el("p", "حضوری برای بررسی دریافت نشده است. ابتدا رکورد عضو آزمایشی را از نرم‌افزار رابط ارسال کنید."));
+    for (const item of data.observations) {
+      const row = el("section", undefined, "access-card");
+      row.append(el("h3", item.name || "نام ثبت نشده"), el("p", "شماره: " + (item.phone || "—") + " | شناسهٔ دستگاه: " + item.memberId), el("p", "زمان دستگاه: " + item.event.deviceWallTime), el("p", "کد تردد خام: " + item.event.punchCode + " | کد شناسایی خام: " + item.event.verificationCode), el("p", "وضعیت: " + (states[item.status] || item.status)));
+      if (item.status === "pending") for (const decision of ["approve", "reject"]) {
+        const b = button(decision === "approve" ? "تأیید ورود و مصرف جلسه" : "رد این رکورد", () => run(b, async () => {
+          if (!window.confirm(decision === "approve" ? "از ورود واقعی همین شخص در این زمان مطمئن هستید؟ تأیید شما درخواست مصرف یک جلسه را ثبت می‌کند." : "این رکورد برای مصرف جلسه رد شود؟")) return;
+          const result = await api("/api/attendance-pilot/review/" + encodeURIComponent(item.id), "POST", { decision, confirmedAdmission: decision === "approve" });
+          await choose("attendance");
+          report(result.alreadyReviewed ? "این رکورد قبلاً بررسی شده است؛ وضعیت تازه شد." : result.trial ? "ثبت شد؛ ماندهٔ قطعی: " + result.trial.remainingSessions + " جلسه" : "نتیجهٔ بررسی ثبت شد.");
+        }), decision === "approve" ? "primary" : "danger");
+        row.append(b);
+      }
+      card.append(row);
+    }
+    card.append(el("small", "حداکثر ۲۰۰ رکورد اخیر نمایش داده می‌شود. این بخش فقط برای پایلوت است، نه حسابداری جیم پالس."));
   }
   async function profileTab(card) {
     const data = await api("/api/me/profile");
@@ -101,9 +125,11 @@
     const data = await api("/api/admin/users?page=" + page);
     card.append(el("h2", "تمام کاربران ثبت‌نام‌شده"), el("p", "تعداد کل: " + data.total + " | صفحه " + data.page, "access-muted"));
     const wrap = el("div", undefined, "access-table-wrap"), table = el("table"), head = el("tr");
-    ["نام", "شماره / ایمیل", "نقش", "باشگاه", "تأیید دسترسی", "حساب"].forEach(s => head.append(el("th", s))); table.append(head);
+    ["نام", "شماره / ایمیل", "نقش", "باشگاه", "تأیید دسترسی", "حساب", "دستگاه تردد"].forEach(s => head.append(el("th", s))); table.append(head);
     for (const u of data.users) {
-      const row = el("tr"); [u.full_name || "ثبت نشده", u.phone || u.email || "حساب مشترک باشگاه", roles[u.role] || u.role, u.club_name || "—", states[u.access_state] || u.access_state, states[u.status] || u.status].forEach(s => row.append(el("td", s))); table.append(row);
+      const deviceStates={unregistered:'ثبت نشده',pending:'در انتظار تأیید',verified:'✓ تأیید شده'};
+      const deviceText=!u.device_registrations?'سرویس فعال نیست':u.device_registrations.length?u.device_registrations.map(r=>r.clubName+': '+deviceStates[r.state]).join('، '):current.role==='manager'?'ثبت نشده در باشگاه شما':'ثبت نشده';
+      const row = el("tr"); [u.full_name || "ثبت نشده", u.phone || u.email || "حساب مشترک باشگاه", roles[u.role] || u.role, u.club_name || "—", states[u.access_state] || u.access_state, states[u.status] || u.status,deviceText].forEach(s => row.append(el("td", s))); table.append(row);
     }
     wrap.append(table); card.append(wrap);
     const prev = button("صفحه قبل", () => { page--; choose("users"); }), next = button("صفحه بعد", () => { page++; choose("users"); });

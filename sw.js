@@ -1,11 +1,13 @@
-const CACHE_NAME = "mg-fitclub-v20260920-seo";
+const CACHE_NAME = "mg-fitclub-v20260928-device-verification";
 const APP_SHELL = [
   "./",
   "./account.html",
   "./mg-api.js?v=20260919-access",
-  "./access-control.js?v=20260919",
+  "./access-control.js?v=20260928-device",
+  "./device-verification.html",
+  "./device-verification.js?v=20260928",
   "./access-center.html",
-  "./access-center.js?v=20260919",
+  "./access-center.js?v=20260928-pilot-review",
   "./access-center.css?v=20260919",
   "./app.html",
   "./app-install.css?v=20260920",
