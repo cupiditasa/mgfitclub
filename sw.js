@@ -1,5 +1,8 @@
-const CACHE_NAME = "mg-fitclub-v20261005-bridge";
+const CACHE_NAME = "mg-fitclub-v20261005-workouts";
 const APP_SHELL = [
+  "./workouts.js?v=20261005",
+  "./workout-domain.js",
+  "./workouts.css?v=20261005",
   "./",
   "./account.html",
   "./mg-api.js?v=20260919-access",

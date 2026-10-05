@@ -27,6 +27,10 @@
       if (name === "approvals") await approvalsTab(card);
       if (name === "clubs") await clubsTab(card);
       if (name === "attendance") await attendanceTab(card);
+      if (name === "workout-log") {
+        card.append(el("h2", "لیست برنامه‌های تمرینی ارسال‌شده توسط مربیان باشگاه"), el("p", "هر ارسال، نسخه مستقل برنامه در زمان ارسال را نگه می‌دارد."));
+        const link = el("a", "مشاهده گزارش برنامه‌های ارسالی"); link.href = "workout-log.html"; card.append(link);
+      }
       if (name === "bridge") {
         card.append(el("h2", "رابط واحد و مدیریت تردد MG"), el("p", "دانلود رابط ویندوز، اتصال باشگاه و بررسی حضورها در یک صفحه."));
         const link = el("a", "باز کردن مدیریت تردد و دانلود رابط"); link.href = "club-attendance.html"; card.append(link);
@@ -45,6 +49,7 @@
     const device = el('a', 'تأیید دستگاه تردد'); device.href = 'device-verification.html'; links.append(device);
     nav = el("nav", undefined, "access-tabs"); nav.setAttribute("aria-label", "بخش‌های حساب");
     const tabs = [];
+    if (["support", "manager"].includes(user.role) && user.access_state === "approved") tabs.push(["workout-log", "برنامه‌های ارسالی مربیان"]);
     if (["support", "manager", "secretary"].includes(user.role) && user.access_state === "approved") tabs.push(["bridge", "تردد و دانلود رابط MG"]);
     if (user.role === "support") tabs.push(["clubs", "باشگاه‌ها و شماره‌های ورود"], ["users", "تمام کاربران"]);
     if (user.role === "manager" && user.access_state === "approved") tabs.push(["approvals", "درخواست‌های تأیید"], ["users", "کاربران ثبت‌نام‌شده"]);
