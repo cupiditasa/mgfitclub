@@ -129,7 +129,7 @@
   const page = location.pathname?.split("/").pop();
   if (page && page !== "account.html") {
     const guard = document.createElement("script");
-    guard.src = "access-control.js?v=20260928-device";
+    guard.src = "access-control.js?v=20261005-bridge";
     guard.onerror = () => {
       document.getElementById("mg-access-cloak")?.remove();
       document.body.replaceChildren(document.createTextNode("بررسی دسترسی ممکن نشد؛ اتصال اینترنت را بررسی و صفحه را دوباره بارگذاری کنید."));

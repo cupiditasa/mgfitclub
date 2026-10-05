@@ -6,6 +6,10 @@ export async function deviceStatesForUsers(env,user,hasRole,users) {
   if(!users.length)return users;
   const rows=await env.DB.prepare(`SELECT r.user_id,r.state,c.name AS club_name FROM device_registrations r JOIN clubs c ON c.id=r.club_id
     WHERE r.user_id IN (${users.map(()=>'?').join(',')}) AND (?=1 OR c.manager_user_id=?)`).bind(...users.map(u=>u.id),hasRole(user,'support')?1:0,user.id).all();
+  if(env.MG_BRIDGE_ENABLED==='true'){
+    const unified=await env.DB.prepare(`SELECT m.user_id,'verified' AS state,c.name AS club_name FROM mg_bridge_members m JOIN mg_bridges b ON b.id=m.bridge_id JOIN clubs c ON c.id=b.club_id WHERE b.revoked_at IS NULL AND m.user_id IN (${users.map(()=>'?').join(',')}) AND (?=1 OR c.manager_user_id=?)`).bind(...users.map(u=>u.id),hasRole(user,'support')?1:0,user.id).all();
+    rows.results.push(...unified.results);
+  }
   return users.map(u=>({...u,device_registrations:rows.results.filter(r=>r.user_id===u.id).map(r=>({state:r.state,clubName:r.club_name}))}));
 }
 export function validateDeviceObservation(body,claim,serial,now=Date.now()) {

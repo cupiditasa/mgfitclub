@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20260928-device-verification";
+const CACHE_NAME = "mg-fitclub-v20261005-bridge";
 const APP_SHELL = [
   "./",
   "./account.html",

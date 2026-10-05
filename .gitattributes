@@ -1,0 +1,3 @@
+# Preserve exact bytes covered by the MG release signature.
+downloads/mg-bridge/** -text
+attendance-bridge/web-agent/** -text
