@@ -64,24 +64,28 @@ export async function handleWorkouts(request,env,c){
   if(template[2]==='archive'&&request.method==='POST'){await db.batch([db.prepare('UPDATE workout_templates SET archived=1,updated_at=? WHERE id=? AND coach_id=?').bind(now,t.id,user.id),audit('workout_archived',t.id,{})]);return out({ok:true})}
   if(template[2]==='send'&&request.method==='POST'){
    const b=await payload();if(!keyOK(b.requestKey)||!Number.isInteger(b.revision))fail('invalid_send');
-   const phone=normalizePhone(b.phone||''),recipient=await db.prepare('SELECT id FROM users WHERE phone=?').bind(phone).first();if(!recipient)fail('athlete_not_found',404);
+   let recipient,serviceRequest=null,club;
+   if(b.requestId){serviceRequest=await db.prepare("SELECT * FROM coach_service_requests WHERE id=? AND coach_id=? AND kind='workout' AND status='approved'").bind(String(b.requestId),user.id).first();if(!serviceRequest||serviceRequest.club_id!==user.club_id)fail('approved_request_required',409);recipient={id:serviceRequest.athlete_id};club={id:serviceRequest.club_id}}
+   else {const phone=normalizePhone(b.phone||'');recipient=await db.prepare('SELECT id FROM users WHERE phone=?').bind(phone).first();if(!recipient)fail('athlete_not_found',404)}
    const prior=await db.prepare('SELECT id,template_id,revision,athlete_id FROM workout_deliveries WHERE coach_id=? AND request_key=?').bind(user.id,b.requestKey).first();
    if(prior){if(prior.template_id!==t.id||prior.revision!==b.revision||prior.athlete_id!==recipient.id)fail('request_key_conflict',409);return out({id:prior.id,duplicate:true})}
    if(t.archived||t.revision!==b.revision)fail('revision_conflict',409);
    const athlete=await userById(env,recipient.id);if(athlete?.status!=='active'||athlete.access_state!=='approved'||!hasRole(athlete,'athlete'))fail('athlete_required',409);
-   const club=await db.prepare("SELECT c.id FROM clubs c JOIN account_access a ON a.club_id=c.id WHERE a.user_id=? AND a.role='coach' AND a.state='approved'").bind(user.id).first();if(!club)fail('coach_club_required',409);
+   club=club||await db.prepare("SELECT c.id FROM clubs c JOIN account_access a ON a.club_id=c.id WHERE a.user_id=? AND a.role='coach' AND a.state='approved'").bind(user.id).first();if(!club)fail('coach_club_required',409);
    if(athlete.club_id&&athlete.club_id!==club.id)fail('athlete_other_club',403);
    const id=makeId('delivery'),coachName=user.full_name||'مربی',athleteName=athlete.full_name||'ورزشکار';
    const inserted=await db.batch([
     db.prepare('INSERT INTO workout_deliveries(id,template_id,revision,coach_id,athlete_id,club_id,title,snapshot_json,coach_name,athlete_name,sent_at,request_key) SELECT ?,id,revision,coach_id,?,?,title,body_json,?,?,?,? FROM workout_templates WHERE id=? AND coach_id=? AND revision=? AND archived=0 ON CONFLICT(coach_id,request_key) DO NOTHING').bind(id,athlete.id,club.id,coachName,athleteName,now,b.requestKey,t.id,user.id,b.revision),
-    db.prepare("INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,metadata_json) SELECT ?,?,'workout_sent','workout_delivery',?,? WHERE EXISTS(SELECT 1 FROM workout_deliveries WHERE id=?)").bind(makeId('audit'),user.id,id,JSON.stringify({clubId:club.id,athleteId:athlete.id,revision:t.revision}),id)
+    db.prepare("INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,metadata_json) SELECT ?,?,'workout_sent','workout_delivery',?,? WHERE EXISTS(SELECT 1 FROM workout_deliveries WHERE id=?)").bind(makeId('audit'),user.id,id,JSON.stringify({clubId:club.id,athleteId:athlete.id,revision:t.revision}),id),
+    db.prepare("UPDATE coach_service_requests SET status='completed',completed_at=?,updated_at=? WHERE id=? AND coach_id=? AND kind='workout' AND status='approved' AND EXISTS(SELECT 1 FROM workout_deliveries WHERE coach_id=? AND request_key=? AND athlete_id=?)").bind(now,now,b.requestId||'',user.id,user.id,b.requestKey,athlete.id),
+    db.prepare("INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,metadata_json) SELECT ?,?,'coach_request_completed','coach_service_request',id,? FROM coach_service_requests WHERE id=? AND status='completed'").bind(makeId('audit'),user.id,JSON.stringify({kind:'workout',deliveryId:id}),b.requestId||'')
    ]);
    const sent=await db.prepare('SELECT id,template_id,revision,athlete_id FROM workout_deliveries WHERE coach_id=? AND request_key=?').bind(user.id,b.requestKey).first();if(!sent)fail('revision_conflict',409);if(sent.template_id!==t.id||sent.revision!==b.revision||sent.athlete_id!==athlete.id)fail('request_key_conflict',409);return out({id:sent.id,duplicate:sent.id!==id},inserted[0].meta.changes?201:200);
   }
  }
  if(path==='/api/workouts/deliveries'&&request.method==='GET'){
   const page=Math.max(1,Math.min(10000,Math.floor(Number(new URL(request.url).searchParams.get('page'))||1)));
-  const rows=(await db.prepare("SELECT 'training' AS kind,d.id,d.title,d.revision,d.coach_name,d.athlete_name,d.sent_at,c.name AS club_name FROM workout_deliveries d JOIN clubs c ON c.id=d.club_id WHERE (?=1 OR d.athlete_id=? OR d.coach_id=? OR c.manager_user_id=?) UNION ALL SELECT 'nutrition' AS kind,d.id,d.title,d.revision,d.coach_name,d.athlete_name,d.sent_at,c.name AS club_name FROM nutrition_deliveries d JOIN clubs c ON c.id=d.club_id WHERE (?=1 OR d.athlete_id=? OR d.coach_id=? OR c.manager_user_id=?) ORDER BY sent_at DESC,id LIMIT 101 OFFSET ?").bind(support?1:0,user.id,coach?user.id:'',hasRole(user,'manager')?user.id:'',support?1:0,user.id,coach?user.id:'',hasRole(user,'manager')?user.id:'',(page-1)*100).all()).results;return out({deliveries:rows.slice(0,100),hasMore:rows.length>100,page});
+  const rows=(await db.prepare("SELECT 'training' AS kind,d.id,d.title,d.revision,d.coach_name,d.athlete_name,d.sent_at,c.name AS club_name FROM workout_deliveries d JOIN clubs c ON c.id=d.club_id WHERE (?=1 OR d.athlete_id=? OR d.coach_id=? OR c.manager_user_id=?) UNION ALL SELECT 'nutrition' AS kind,d.id,d.title,d.revision,d.coach_name,d.athlete_name,d.sent_at,c.name AS club_name FROM nutrition_deliveries d JOIN clubs c ON c.id=d.club_id WHERE (?=1 OR d.athlete_id=? OR d.coach_id=? OR c.manager_user_id=?) ORDER BY 7 DESC,2 LIMIT 101 OFFSET ?").bind(support?1:0,user.id,coach?user.id:'',hasRole(user,'manager')?user.id:'',support?1:0,user.id,coach?user.id:'',hasRole(user,'manager')?user.id:'',(page-1)*100).all()).results;return out({deliveries:rows.slice(0,100),hasMore:rows.length>100,page});
  }
  const delivered=path.match(/^\/api\/workouts\/deliveries\/([A-Za-z0-9_-]+)$/);
  if(delivered&&request.method==='GET'){

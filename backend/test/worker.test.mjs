@@ -285,7 +285,7 @@ test("health and role-aware test login", async () => {
   const { env } = envFactory();
   const health = await call(env, "/health");
   assert.equal(health.status, 200);
-  assert.equal(health.body.version, "20260919-club-access-1");
+  assert.equal(health.body.version, "20261005-coach-marketplace-1");
   assert.deepEqual(health.body.otp, { provider: "sms.ir", method: "verify", templateId: 791767, parameter: "CODE" });
   const login = await call(env, "/api/auth/test-login", {
     method: "POST",

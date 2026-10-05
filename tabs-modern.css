@@ -298,14 +298,15 @@ body.rail-expanded .tabs-modern-rail {
     text-align: right;
     white-space: normal;
     overflow-wrap: anywhere;
-    font-size: 11px;
+    font-size: 13px;
   }
   body.tabs-modern-page .tx > span {
     min-width: 0;
   }
   body.tabs-modern-page .tab,
   body.tabs-modern-page .tabs button {
-    font-size: 12px !important;
+    min-height: 46px;
+    font-size: 14px !important;
     padding-inline: 12px !important;
   }
   .tabs-modern-rail {
@@ -321,9 +322,9 @@ body.rail-expanded .tabs-modern-rail {
   }
   .tabs-modern-rail button,
   .tabs-modern-rail a {
-    width: 42px;
-    height: 42px;
-    flex-basis: 42px;
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
   }
   .rail-expanded .tabs-modern-rail {
     width: calc(100% - 16px);

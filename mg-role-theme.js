@@ -1,6 +1,7 @@
 (() => {
   const b = document.body;
   if (!b) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches || navigator.connection?.saveData) return;
   const v = document.createElement("video");
   v.className = "role-bg";
   v.autoplay = true;

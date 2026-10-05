@@ -31,6 +31,8 @@ body {
   background: var(--ink);
   font-family: "B Esfehan", Tahoma, sans-serif;
 }
+.market-shortcut { margin: 12px auto; text-align: center; }
+.market-shortcut a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; border-radius: 14px; background: rgba(198,255,63,.12); color: var(--role-accent,#c6ff3f); text-decoration: none; }
 
 body.is-locked {
   overflow: hidden;

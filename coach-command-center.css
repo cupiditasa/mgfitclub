@@ -313,6 +313,15 @@
     font-size: 9px;
   }
 }
+@media (max-width: 720px) {
+  .coach-app .coach-orbit {height:auto;min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:10px;margin-inline:auto}
+  .coach-app .coach-orbit:before,.coach-app .coach-orbit:after {display:none}
+  .coach-app .coach-orbit-node,.coach-app .coach-orbit-center {position:relative!important;inset:auto!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;animation:none!important;width:auto;height:auto;min-width:0;min-height:104px;border-radius:18px;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px}
+  .coach-app .coach-orbit-center {grid-column:1/-1;min-height:92px}
+  .coach-app .coach-orbit-node b,.coach-app .coach-orbit-center b {font-size:14px;line-height:1.5}
+  .coach-app .coach-orbit-node small,.coach-app .coach-orbit-center small {font-size:12px;line-height:1.45}
+  .coach-app .coach-orbit-node i {font-size:22px;margin:0}
+}
 @media (max-width: 460px) {
   .coach-briefing {
     padding: 18px 14px 86px;
@@ -361,6 +370,11 @@
     animation: none;
   }
 }
+@media (max-width: 460px) {
+  .coach-app .coach-orbit-node,.coach-app .coach-orbit-center {width:auto;height:auto;min-height:96px;padding:10px;border-radius:16px}
+  .coach-app .coach-orbit-node b,.coach-app .coach-orbit-center b {font-size:14px}
+  .coach-app .coach-orbit-node small,.coach-app .coach-orbit-center small {font-size:12px}
+}
 .coach-app {
   max-width: none;
   width: 100%;
@@ -369,6 +383,7 @@
   background: transparent !important;
   background-color: transparent !important;
 }
+body > a[href="coach-offerings.html"],body > a[href="coach-requests.html"] {display:none}
 .coach-app .hero {
   background: transparent !important;
   border-bottom: 1px solid #c6ff3f22;

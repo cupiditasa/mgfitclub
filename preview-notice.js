@@ -3,6 +3,7 @@
 
   const init = () => {
     if (document.querySelector(".mg-preview-notice")) return;
+    try { if (sessionStorage.getItem("mg_preview_notice_seen") === "1") return; } catch {}
 
     const backdrop = document.createElement("div");
     backdrop.className = "mg-preview-notice";
@@ -29,6 +30,7 @@
     const close = () => {
       if (closed) return;
       closed = true;
+      try { sessionStorage.setItem("mg_preview_notice_seen", "1"); } catch {}
       backdrop.classList.remove("is-visible");
       backdrop.setAttribute("aria-hidden", "true");
       document.documentElement.classList.remove("mg-preview-lock");

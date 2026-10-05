@@ -173,9 +173,11 @@
         border-color: rgba(198, 255, 63, 0.3);
       }
       @media (max-width: 600px) {
+        body { padding: 16px; }
         .card {
-          width: min(94vw, 520px);
-          padding: 24px 20px;
+          width: 100%;
+          max-width: 520px;
+          padding: 22px 18px;
         }
         .login-video-overlay {
           background: linear-gradient(
@@ -243,19 +245,23 @@
       <label id="clubLabel" hidden>باشگاه شما
         <select id="clubChoice" class="field"><option value="">انتخاب باشگاه</option></select>
       </label>
-      <input
+      <label for="target">شمارهٔ موبایل یا ایمیل</label><input
         id="target"
         class="field"
+        type="text"
+        aria-label="شمارهٔ موبایل یا ایمیل"
         placeholder="شماره موبایل یا ایمیل"
         autocomplete="username"
-      /><input
+      /><label for="code">کد ورود</label><input
         id="code"
         class="field"
+        type="text"
+        aria-label="کد ورود"
         placeholder="کد ورود"
         inputmode="numeric"
         autocomplete="one-time-code"
       /><button id="action" class="button" type="button">دریافت کد ورود</button>
-      <p id="status"></p>
+      <p id="status" role="status" aria-live="polite"></p>
     </main>
     <script>
       (() => {
