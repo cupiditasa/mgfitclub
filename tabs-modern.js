@@ -34,7 +34,7 @@
     athlete: [
       ["dashboard.html?demo=athlete", "⌂", "داشبورد"],
       ["workout-view.html?demo=athlete", "◈", "تمرین"],
-      ["food-plan-view.html?demo=athlete", "◌", "تغذیه"],
+      ["nutrition-view.html", "◌", "تغذیه"],
       ["education.html?demo=athlete", "▤", "آموزش"],
     ],
   };

@@ -28,7 +28,7 @@
       if (name === "clubs") await clubsTab(card);
       if (name === "attendance") await attendanceTab(card);
       if (name === "workout-log") {
-        card.append(el("h2", "لیست برنامه‌های تمرینی ارسال‌شده توسط مربیان باشگاه"), el("p", "هر ارسال، نسخه مستقل برنامه در زمان ارسال را نگه می‌دارد."));
+        card.append(el("h2", "گزارش برنامه‌های تمرینی و غذایی ارسال‌شده توسط مربیان باشگاه"), el("p", "هر ارسال، نسخه مستقل برنامه در زمان ارسال را نگه می‌دارد."));
         const link = el("a", "مشاهده گزارش برنامه‌های ارسالی"); link.href = "workout-log.html"; card.append(link);
       }
       if (name === "bridge") {

@@ -1,5 +1,10 @@
-const CACHE_NAME = "mg-fitclub-v20261005-workouts";
+const CACHE_NAME = "mg-fitclub-v20261005-nutrition";
 const APP_SHELL = [
+  "./nutrition.html",
+  "./nutrition-builder.html",
+  "./nutrition-view.html",
+  "./nutrition.js?v=20261005",
+  "./nutrition.css?v=20261005",
   "./workouts.js?v=20261005",
   "./workout-domain.js",
   "./workouts.css?v=20261005",

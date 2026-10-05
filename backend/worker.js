@@ -2,6 +2,7 @@
 import { handleAttendancePilot } from './attendance-pilot.js';
 import { handleMgBridge } from './mg-bridge.js';
 import { handleWorkouts } from './workouts.js';
+import { handleNutrition } from './nutrition.js';
 import { handleDeviceVerification, deviceStatesForUsers } from './device-verification.js';
 const ROLES = new Set(["athlete", "coach", "manager", "admin", "secretary", "support"]);
 const USER_STATUSES = new Set(["active", "blocked", "pending"]);
@@ -279,6 +280,8 @@ async function handle(request, env) {
   const headers = cors(request, env);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
   const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
+  const nutrition = await handleNutrition(request, env, {path,headers,response,errorResponse,jsonBody,hash,currentUser,userById,hasRole,makeId,normalizePhone});
+  if (nutrition) return nutrition;
   const workout = await handleWorkouts(request, env, {path,headers,response,errorResponse,jsonBody,hash,currentUser,userById,hasRole,makeId,normalizePhone});
   if (workout) return workout;
   const mgBridge = await handleMgBridge(request, env, {path,headers,response,errorResponse,jsonBody,hash,currentUser,userById,hasRole,makeId,token,normalizePhone});

@@ -81,12 +81,16 @@ export async function handleWorkouts(request,env,c){
  }
  if(path==='/api/workouts/deliveries'&&request.method==='GET'){
   const page=Math.max(1,Math.min(10000,Math.floor(Number(new URL(request.url).searchParams.get('page'))||1)));
-  const rows=(await db.prepare('SELECT d.id,d.title,d.revision,d.coach_name,d.athlete_name,d.sent_at,c.name AS club_name FROM workout_deliveries d JOIN clubs c ON c.id=d.club_id WHERE (?=1 OR d.athlete_id=? OR d.coach_id=? OR c.manager_user_id=?) ORDER BY d.sent_at DESC,d.id LIMIT 101 OFFSET ?').bind(support?1:0,user.id,coach?user.id:'',hasRole(user,'manager')?user.id:'',(page-1)*100).all()).results;return out({deliveries:rows.slice(0,100),hasMore:rows.length>100,page});
+  const rows=(await db.prepare("SELECT 'training' AS kind,d.id,d.title,d.revision,d.coach_name,d.athlete_name,d.sent_at,c.name AS club_name FROM workout_deliveries d JOIN clubs c ON c.id=d.club_id WHERE (?=1 OR d.athlete_id=? OR d.coach_id=? OR c.manager_user_id=?) UNION ALL SELECT 'nutrition' AS kind,d.id,d.title,d.revision,d.coach_name,d.athlete_name,d.sent_at,c.name AS club_name FROM nutrition_deliveries d JOIN clubs c ON c.id=d.club_id WHERE (?=1 OR d.athlete_id=? OR d.coach_id=? OR c.manager_user_id=?) ORDER BY sent_at DESC,id LIMIT 101 OFFSET ?").bind(support?1:0,user.id,coach?user.id:'',hasRole(user,'manager')?user.id:'',support?1:0,user.id,coach?user.id:'',hasRole(user,'manager')?user.id:'',(page-1)*100).all()).results;return out({deliveries:rows.slice(0,100),hasMore:rows.length>100,page});
  }
  const delivered=path.match(/^\/api\/workouts\/deliveries\/([A-Za-z0-9_-]+)$/);
  if(delivered&&request.method==='GET'){
+  if(delivered[1].startsWith('food_delivery_')){
+   const d=await db.prepare('SELECT d.*,c.manager_user_id FROM nutrition_deliveries d JOIN clubs c ON c.id=d.club_id WHERE d.id=?').bind(delivered[1]).first();if(!d||!(support||d.athlete_id===user.id||coach&&d.coach_id===user.id||hasRole(user,'manager')&&d.manager_user_id===user.id))fail('delivery_not_found',404);
+   return out({id:d.id,kind:'nutrition',title:d.title,revision:d.revision,coachName:d.coach_name,athleteName:d.athlete_name,sentAt:d.sent_at,program:JSON.parse(d.snapshot_json),readOnly:true});
+  }
   const d=await db.prepare('SELECT d.*,c.manager_user_id FROM workout_deliveries d JOIN clubs c ON c.id=d.club_id WHERE d.id=?').bind(delivered[1]).first();if(!d||!(support||d.athlete_id===user.id||coach&&d.coach_id===user.id||hasRole(user,'manager')&&d.manager_user_id===user.id))fail('delivery_not_found',404);
-  return out({id:d.id,title:d.title,revision:d.revision,coachName:d.coach_name,athleteName:d.athlete_name,sentAt:d.sent_at,program:JSON.parse(d.snapshot_json),readOnly:true});
+  return out({id:d.id,kind:'training',title:d.title,revision:d.revision,coachName:d.coach_name,athleteName:d.athlete_name,sentAt:d.sent_at,program:JSON.parse(d.snapshot_json),readOnly:true});
  }
  fail('not_found',404);
 }
