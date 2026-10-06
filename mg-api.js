@@ -14,7 +14,7 @@
   const API_BASE =
     window.MG_API_BASE ||
     document.documentElement.dataset.apiBase ||
-    "https://mg-fitclub-api.cupiditasa.workers.dev";
+    "https://api.mgfitclub.ir";
 
   const readJson = async (response) => {
     const data = await response.json().catch(() => ({}));

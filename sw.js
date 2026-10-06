@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261005-nutrition";
+const CACHE_NAME = "mg-fitclub-v20261006-api-domain";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -10,7 +10,7 @@ const APP_SHELL = [
   "./workouts.css?v=20261005",
   "./",
   "./account.html",
-  "./mg-api.js?v=20260919-access",
+  "./mg-api.js?v=20261006-api-domain",
   "./access-control.js?v=20260928-device",
   "./device-verification.html",
   "./device-verification.js?v=20260928",
