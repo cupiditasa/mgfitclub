@@ -8,7 +8,7 @@ const sitemap=read('sitemap.xml');
 const urls=[...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1]);
 const publicFiles=urls.map(url=>url===base?'index.html':url.slice(base.length));
 test('sitemap contains only unique canonical public pages with crawlable static content',()=>{
-  assert.equal(urls.length,10);assert.equal(new Set(urls).size,urls.length);
+  assert.equal(urls.length,11);assert.equal(new Set(urls).size,urls.length);
   for(const [i,file] of publicFiles.entries()){
     const html=read(file);
     assert.ok(urls[i].startsWith(base));assert.ok(!urls[i].includes('?'));
@@ -33,6 +33,18 @@ test('video sitemap entries use real accessible assets and no invented publicati
     assert.match(entry,/<video:title>[^<]+<\/video:title>/);assert.match(entry,/<video:description>[^<]+<\/video:description>/);
   }
   assert.ok(!sitemap.includes('publication_date'));assert.ok(!sitemap.includes('lastmod'));
+});
+test('membership page is discoverable from desktop/mobile navigation and package actions remain consultation-only',()=>{
+  const home=read('index.html'),html=read('membership.html');
+  assert.match(home,/<a href="membership\.html">پکیج‌های عضویت<\/a>/);
+  assert.match(home,/<a href="membership\.html"><span>۰۷<\/span> پکیج‌های عضویت<\/a>/);
+  assert.match(html,/<a href="index\.html">صفحه اصلی<\/a>/);
+  assert.equal([...html.matchAll(/data-package-label=/g)].length,20);
+  assert.equal([...html.matchAll(/<a\b[^>]*data-package-label=/g)].length,20);
+  assert.doesNotMatch(html,/<form\b|zarinpal|payment|checkout/i);
+  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]));
+  for(const [,fragment] of html.matchAll(/href="#([^"]+)"/g))assert.ok(ids.has(fragment),`missing membership anchor #${fragment}`);
+  for(const match of html.matchAll(/<a\b[^>]*target="_blank"[^>]*>/g))assert.match(match[0],/rel="[^"]*noopener/);
 });
 test('private pages explicitly noindex but remain crawlable so the directive can be read',()=>{
   const files=fs.readdirSync(root).filter(f=>f.endsWith('.html')&&!publicFiles.includes(f)&&!/^google[a-f0-9]+\.html$/.test(f));assert.ok(files.length>=16);
