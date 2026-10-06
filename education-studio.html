@@ -223,6 +223,9 @@ h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;back
 .badge.live i{width:6px;height:6px;border-radius:50%;background:var(--lime);box-shadow:0 0 0 3px rgba(201,242,79,.18);animation:pulse 2s infinite}
 .badge.step{color:var(--mint);border-color:rgba(127,232,201,.4);background:rgba(127,232,201,.08)}
 .badge.lvl{color:var(--amber);border-color:rgba(233,196,106,.38);background:rgba(233,196,106,.08)}
+button.badge{font:inherit;font-size:11px;cursor:pointer;white-space:nowrap}
+button.badge:hover{border-color:rgba(201,242,79,.55);color:var(--lime)}
+button.badge:disabled{opacity:.55;cursor:wait}
 /* ویوپورت */
 .stage-view{position:relative;height:clamp(440px,58vh,620px);margin:10px 6px 0;perspective:1200px}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
@@ -252,6 +255,12 @@ h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;back
 .mchip::after{content:"";position:absolute;top:100%;inset-inline-start:50%;transform:translateX(-50%);
   border:5px solid transparent;border-top-color:rgba(255,95,138,.55)}
 .mchip i{width:7px;height:7px;border-radius:50%;background:var(--rose);box-shadow:0 0 8px var(--rose);animation:pulse 1.6s infinite}
+.model-credit{padding:0 20px 2px;color:var(--dim);font-size:10px;line-height:1.8;text-align:center}
+.model-credit[hidden]{display:none}
+.model-credit a{color:var(--mint);text-decoration:underline;text-underline-offset:2px}
+.stage.anatomy-mode .counter,.stage.anatomy-mode .depthgauge,.stage.anatomy-mode .figtoggles,
+.stage.anatomy-mode .scrubrow,.stage.anatomy-mode .controlrow{display:none}
+.stage.anatomy-mode .stage-controls{padding-top:8px}
 /* راهنمای گام‌به‌گام (حرکات بدون انیمیشن) */
 .guide{position:absolute;inset:0;z-index:5;display:grid;place-items:center;padding:20px;background:radial-gradient(80% 80% at 50% 40%,rgba(8,20,25,.4),rgba(4,10,13,.72))}
 .gwrap{display:flex;align-items:center;gap:24px;justify-content:center;flex-wrap:wrap}
@@ -618,7 +627,7 @@ h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;back
     <article class="panel stage reveal" aria-labelledby="stageFa">
       <div class="stage-head">
         <div><span class="en" id="stageEn">BACK SQUAT</span><h2 id="stageFa" role="button" tabindex="0" title="برای ثبت تکرار ضربه بزن">اسکوات پشت (هالتر)</h2></div>
-        <div class="badges"><span class="badge lvl" id="stageLevel">مقدماتی</span><span class="badge live" id="modeBadge"><i></i>انیمیشن سه‌بعدی</span></div>
+        <div class="badges"><button class="badge step" id="anatomyModeBtn" type="button" aria-pressed="false" disabled>نمای آناتومی</button><span class="badge lvl" id="stageLevel">مقدماتی</span><span class="badge live" id="modeBadge"><i></i>انیمیشن سه‌بعدی</span></div>
       </div>
 
       <div class="stage-view">
@@ -651,6 +660,13 @@ h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;back
             <div class="gsteps" id="gsteps"></div>
           </div>
         </div>
+      </div>
+
+      <div class="model-credit" id="modelCredit" hidden>
+        مدل پایه: <a href="https://sketchfab.com/HEPL3D" target="_blank" rel="noopener noreferrer">HEPL3D</a>،
+        <a href="https://sketchfab.com/3d-models/tecg-284-dupont-william-anatomy-89661fe642014ded89da3edbcbe7e253" target="_blank" rel="noopener noreferrer">TECG_284_Dupont_william_Anatomy</a>
+        · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>
+        · مش بهینه و فشرده‌شده برای وب؛ نسخهٔ نمایشی حدود ۱٫۱ میلیون مثلث دارد.
       </div>
 
       <div class="stage-controls">
@@ -883,6 +899,14 @@ async function boot3D(){
   catch(e){ $('#viewFallback').classList.remove('hidden'); return; }
   try{ S3D=new Studio(THREE); HAS3D=true; window.S3D=S3D; window.__S3D_READY=true;
     try{
+      const [{GLTFLoader},{MeshoptDecoder}]=await Promise.all([
+        import('./assets/vendor/three/examples/jsm/loaders/GLTFLoader.js'),
+        import('./assets/vendor/three/examples/jsm/libs/meshopt_decoder.module.js')
+      ]);
+      S3D.setAnatomySupport(GLTFLoader,MeshoptDecoder);
+      $('#anatomyModeBtn').disabled=false;
+    }catch(e){console.warn('Optional anatomy model loader unavailable',e);}
+    try{
       const {RoomEnvironment}=await import('./assets/vendor/three/examples/jsm/environments/RoomEnvironment.js');
       const pmrem=new THREE.PMREMGenerator(S3D.renderer);
       S3D.scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;
@@ -933,6 +957,9 @@ class Studio{
     /* کاراکتر */
      this.raycaster=new THREE.Raycaster(); this.pointer=new THREE.Vector2();
      this.buildCharacter();
+    this.anatomyMode=false; this.anatomyContainer=new THREE.Group();
+    this.anatomyContainer.visible=false; this.scene.add(this.anatomyContainer);
+    this.anatomyMeshes=[]; this.anatomyPromise=null; this.anatomySelection=null;
     this.buildEquipment();
     /* برچسب عضله‌ها */
     this.labelBox=$('#muscleLabels'); this.chips=[];
@@ -940,6 +967,59 @@ class Studio{
     this._drag=null; this.bindControls();
     /* اندازه */
     this._ro=new ResizeObserver(()=>this.resize()); this._ro.observe(view); this.resize();
+  }
+  setAnatomySupport(GLTFLoader,MeshoptDecoder){this.GLTFLoader=GLTFLoader;this.MeshoptDecoder=MeshoptDecoder;}
+  async ensureAnatomy(){
+    if(this.anatomyPromise)return this.anatomyPromise;
+    if(!this.GLTFLoader||!this.MeshoptDecoder)throw new Error('Anatomy model decoder is unavailable');
+    this.anatomyPromise=(async()=>{
+      const loader=new this.GLTFLoader();
+      loader.setMeshoptDecoder(this.MeshoptDecoder);
+      const gltf=await loader.loadAsync('./assets/education/mg-male-anatomy.glb');
+      const model=gltf.scene;
+      const bounds=new this.T.Box3().setFromObject(model);
+      const size=bounds.getSize(new this.T.Vector3()),center=bounds.getCenter(new this.T.Vector3());
+      if(!Number.isFinite(size.y)||size.y<=0)throw new Error('Invalid anatomy model bounds');
+      const fit=2.16/size.y;
+      model.scale.setScalar(fit);
+      model.position.set(-center.x*fit,-bounds.min.y*fit,-center.z*fit);
+      let index=0;
+      model.traverse(object=>{
+        if(!object.isMesh)return;
+        object.castShadow=false; object.receiveShadow=false;
+        object.userData.mgAnatomyIndex=++index;
+        object.userData.mgBaseMaterial=object.material;
+        this.anatomyMeshes.push(object);
+      });
+      this.anatomyContainer.add(model);
+      return model;
+    })().catch(error=>{this.anatomyPromise=null;throw error;});
+    return this.anatomyPromise;
+  }
+  setAnatomyMode(active){
+    this.anatomyMode=Boolean(active);
+    this.root.visible=!this.anatomyMode;
+    this.anatomyContainer.visible=this.anatomyMode;
+    if(this.anatomyMode){
+      this.setEquip('none'); this.setView('front');
+    }else{
+      const d=byKey(key); this.setEquip(d.anim&&POSES[d.k]?POSES[d.k].eq:'none');
+      if(this.anatomySelection){this.anatomySelection.material=this.anatomySelection.userData.mgBaseMaterial;this.anatomySelection=null;}
+    }
+    $('.stage').classList.toggle('anatomy-mode',this.anatomyMode);
+    const button=$('#anatomyModeBtn');
+    button.setAttribute('aria-pressed',String(this.anatomyMode));
+    button.textContent=this.anatomyMode?'بازگشت به نمایش تمرین':'نمای آناتومی';
+    $('#modelCredit').hidden=!this.anatomyMode;
+    $('#stageLevel').hidden=this.anatomyMode;
+    $('#stageEn').textContent=this.anatomyMode?'STATIC MUSCLE ANATOMY':byKey(key).en.toUpperCase();
+    $('#stageFa').textContent=this.anatomyMode?'مدل آناتومی مردانه (نمای ثابت)':byKey(key).fa;
+    const badge=$('#modeBadge');
+    if(this.anatomyMode){badge.className='badge step';badge.textContent='مدل ثابت';}
+    else updateDetail();
+    $('#dragHint').textContent=this.anatomyMode?'برای چرخاندن مدل بکشید؛ لمس، قطعه را برجسته می‌کند':'لمس عضله برای دیدن حرکت · درگ برای چرخش';
+    $('#dragHint').classList.remove('off');
+    this.camGoal={yaw:0,pitch:.16,dist:4.05};
   }
   resize(){
     const w=this.view.clientWidth,h=this.view.clientHeight;
@@ -1640,11 +1720,22 @@ class Studio{
     $('#freeBtn').classList.toggle('on',v==='free');
   }
   pickMuscleAt(clientX,clientY){
-    if(!this.pickTargets?.length)return;
     const rect=this.canvas.getBoundingClientRect();
     if(!rect.width||!rect.height)return;
     this.pointer.set(((clientX-rect.left)/rect.width)*2-1,-((clientY-rect.top)/rect.height)*2+1);
     this.raycaster.setFromCamera(this.pointer,this.camera);
+    if(this.anatomyMode){
+      const hit=this.raycaster.intersectObjects(this.anatomyMeshes,false)[0];
+      if(!hit)return;
+      if(this.anatomySelection)this.anatomySelection.material=this.anatomySelection.userData.mgBaseMaterial;
+      const object=hit.object,base=object.userData.mgBaseMaterial;
+      const highlight=material=>{const m=material.clone();if(m.emissive){m.emissive.set(0x9acb37);m.emissiveIntensity=.62;}return m;};
+      object.material=Array.isArray(base)?base.map(highlight):highlight(base);
+      this.anatomySelection=object;
+      toast('قطعهٔ '+fa(object.userData.mgAnatomyIndex)+' از '+fa(this.anatomyMeshes.length)+' انتخاب شد؛ نام‌گذاری عضله‌ها جداگانه لازم است.');
+      return;
+    }
+    if(!this.pickTargets?.length)return;
     const hit=this.raycaster.intersectObjects(this.pickTargets,false).find(item=>item.object.userData.mgMuscleKey);
     if(!hit)return;
     const muscle=hit.object.userData.mgMuscleKey;
@@ -1715,9 +1806,12 @@ function muscleTargetsOf(d){
 }
 function updateDetail(){
   const d=byKey(key);
-  $('#stageFa').textContent=d.fa;$('#stageEn').textContent=d.en.toUpperCase();$('#stageLevel').textContent=d.level;
+  if(S3D&&S3D.anatomyMode){$('#stageFa').textContent='مدل آناتومی مردانه (نمای ثابت)';$('#stageEn').textContent='STATIC MUSCLE ANATOMY';}
+  else{$('#stageFa').textContent=d.fa;$('#stageEn').textContent=d.en.toUpperCase();}
+  $('#stageLevel').textContent=d.level;
   const badge=$('#modeBadge');badge.className='badge '+(d.anim?'live':'step');
   badge.innerHTML=d.anim?'<i></i>انیمیشن سه‌بعدی':'راهنمای گام‌به‌گام';
+  if(S3D&&S3D.anatomyMode){badge.className='badge step';badge.textContent='مدل ثابت';}
   $('#summary').textContent=d.summary;
   $('#fCat').textContent=d.cat;$('#fLevel').textContent=d.level;$('#fEquip').textContent=d.equip;
   $('#fSets').textContent=d.sets;$('#fTempo').textContent=d.tempo;$('#fRest').textContent=d.rest;
@@ -1735,7 +1829,7 @@ function updateDetail(){
   $('#gl').classList.toggle('hidden',false);
   const targets=muscleTargetsOf(d);
   S3D&&S3D.setMuscleTargets(d.anim?targets:[]);
-  S3D&&S3D.setEquip(d.anim&&POSES[d.k]?POSES[d.k].eq:'none');
+  S3D&&S3D.setEquip(S3D.anatomyMode?'none':(d.anim&&POSES[d.k]?POSES[d.k].eq:'none'));
   if(S3D&&d.anim){const YAW34={squat:-.6,deadlift:-.65,lunge:-.6,calf:-.45,curl:-.55,triceps:-.55,shoulderpress:-.25,pulldown:-.2};
     S3D.camGoal.yaw=YAW34[d.k]??0;
     $('#frontBtn').classList.toggle('on',!(YAW34[d.k]??0));$('#sideBtn').classList.remove('on');$('#freeBtn').classList.remove('on');}
@@ -1997,6 +2091,15 @@ $('#copyWeek').onclick=async()=>{
 
 /* ---------- راه‌اندازی ---------- */
 await boot3D();
+$('#anatomyModeBtn').addEventListener('click',async()=>{
+  if(!S3D)return;
+  const button=$('#anatomyModeBtn'),turnOn=!S3D.anatomyMode;
+  button.disabled=true;
+  if(turnOn)button.textContent='در حال بارگذاری مدل…';
+  try{if(turnOn)await S3D.ensureAnatomy();S3D.setAnatomyMode(turnOn);}
+  catch(error){console.error('Failed to load anatomy model',error);toast('مدل آناتومی بارگذاری نشد؛ اتصال یا فایل مدل را بررسی کنید.',true);}
+  finally{button.disabled=false;if(!S3D.anatomyMode)button.textContent='نمای آناتومی';}
+});
 select('squat',true);
 renderPlan();
 renderRails();
