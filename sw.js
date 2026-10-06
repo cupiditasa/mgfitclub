@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261006-api-domain";
+const CACHE_NAME = "mg-fitclub-v20261006-education";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -36,6 +36,8 @@ const APP_SHELL = [
   "./dashboard.html",
   "./coach-dashboard.html",
   "./admin-dashboard.html",
+  "./education.html",
+  "./education-studio.html",
   "./secretary.html",
   "./support.html",
   "./athlete-shared-theme.css",
@@ -46,6 +48,9 @@ const APP_SHELL = [
   "./assets/video/dashboard-bg-progressive.mp4",
   "./assets/video/dashboard-poster.jpg",
   "./assets/brand/mg-mark-acid.webp",
+  "./assets/education/mg-anatomy-character.png",
+  "./assets/vendor/three/three.module.js",
+  "./assets/vendor/three/examples/jsm/environments/RoomEnvironment.js",
 ];
 self.addEventListener("install", (event) => {
   event.waitUntil(

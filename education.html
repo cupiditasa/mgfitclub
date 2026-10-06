@@ -4,6 +4,23 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>آموزش‌ها | MG FitClub</title>
+    <meta name="robots" content="noindex, follow">
+    <style>html:not(.mg-education-redirected) body{visibility:hidden}</style>
+    <script>
+      (() => {
+        const params = new URLSearchParams(location.search);
+        let allowed = Boolean(params.get("demo"));
+        try {
+          allowed = allowed || Boolean(localStorage.getItem("mg_session"));
+        } catch (error) {}
+        if (!allowed) {
+          location.replace("account.html");
+          return;
+        }
+        document.documentElement.classList.add("mg-education-redirected");
+        location.replace("education-studio.html" + location.search);
+      })();
+    </script>
     <style id="mg-access-cloak">body{visibility:hidden}</style>
     <style>
       :root {
