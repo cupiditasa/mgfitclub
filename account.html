@@ -224,7 +224,7 @@
       <div class="brand">MG FITCLUB</div>
       <h1>ورود به حساب</h1>
       <p class="muted">
-        نقش خود را انتخاب کنید، سپس نام کاربری و کد ورود را وارد کنید.
+        نقش خود را انتخاب کنید، سپس شمارهٔ موبایل و کد ورود را وارد کنید.
       </p>
       <button id="roleToggle" class="button ghost" type="button">
         انتخاب نقش: ورزشکار
@@ -245,13 +245,17 @@
       <label id="clubLabel" hidden>باشگاه شما
         <select id="clubChoice" class="field"><option value="">انتخاب باشگاه</option></select>
       </label>
-      <label for="target">شمارهٔ موبایل یا ایمیل</label><input
+      <label for="target">شمارهٔ موبایل</label><input
         id="target"
         class="field"
-        type="text"
-        aria-label="شمارهٔ موبایل یا ایمیل"
-        placeholder="شماره موبایل یا ایمیل"
-        autocomplete="username"
+        type="tel"
+        inputmode="numeric"
+        dir="ltr"
+        maxlength="16"
+        aria-label="شمارهٔ موبایل"
+        placeholder="مثال: 09123456789"
+        autocomplete="tel"
+        enterkeyhint="next"
       /><label for="code">کد ورود</label><input
         id="code"
         class="field"
@@ -273,6 +277,15 @@
           status = $("status"),
           roles = $("roles"),
           roleToggle = $("roleToggle");
+        const persianDigits = "۰۱۲۳۴۵۶۷۸۹",
+          normalizePhone = (value) => {
+            let phone = String(value || "")
+              .replace(/[۰-۹]/g, (digit) => String(persianDigits.indexOf(digit)))
+              .replace(/[\s()-]/g, "");
+            if (phone.startsWith("+98")) phone = "0" + phone.slice(3);
+            if (phone.startsWith("0098")) phone = "0" + phone.slice(4);
+            return phone;
+          };
         let sent = false,
           busy = false,
           challengeId = "",
@@ -305,6 +318,9 @@
             return d;
           };
         roleToggle.onclick = () => roles.classList.toggle("open");
+        target.addEventListener("input", () => {
+          target.value = target.value.replace(/[^0-9۰-۹+()\s-]/g, "");
+        });
         roles.onclick = (e) => {
           if (busy || sent) return;
           const b = e.target.closest("[data-role]");
@@ -330,8 +346,10 @@
         const login = async () => {
           if (busy) return;
           if (localStorage.getItem("mg_session")) return restore();
-          const v = target.value.trim();
-          if (!v) return set("شماره موبایل یا ایمیل را وارد کنید.");
+          const phone = normalizePhone(target.value);
+          if (!/^09\d{9}$/.test(phone))
+            return set("شمارهٔ موبایل معتبر وارد کنید؛ مثال: 09123456789.");
+          target.value = phone;
           busy = true;
           action.disabled = true;
           try {
@@ -340,10 +358,7 @@
                 return set("باشگاه خود را انتخاب کنید.");
               const d = await req(
                 "/api/auth/request-code",
-                Object.assign(
-                  v.includes("@") ? { email: v } : { phone: v },
-                  { role: selected, clubId: $("clubChoice").value },
-                ),
+                { phone, role: selected, clubId: $("clubChoice").value },
               );
               sent = true;
               target.readOnly = true;
@@ -356,11 +371,12 @@
             } else {
               const d = await req(
                 "/api/auth/verify-code",
-                Object.assign(v.includes("@") ? { email: v } : { phone: v }, {
+                {
+                  phone,
                   code: code.value.trim(),
                   role: selected,
                   challengeId,
-                }),
+                },
               );
               localStorage.setItem("mg_session", d.token);
               const actualRole = d.user?.role || "athlete";
@@ -386,7 +402,7 @@
               return;
             }
             action.textContent = "دریافت کد ورود";
-            set("برای ورود، شماره موبایل یا ایمیل را وارد کنید.");
+            set("برای ورود، شمارهٔ موبایل خود را وارد کنید.");
           } catch (error) {
             action.textContent = "تلاش دوباره برای ورود";
             set("بررسی حساب ممکن نشد. اتصال اینترنت را بررسی و دوباره تلاش کنید؛ ورود قبلی شما حفظ شده است.");
