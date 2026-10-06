@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "ir.mgfitclub.app",
+        "sha256_cert_fingerprints": ["C8:53:3D:2A:62:DB:C7:29:69:D6:8C:75:FD:10:89:DC:3C:DF:76:92:F9:3A:A8:19:09:26:0B:A8:82:A3:16:A3"]
+      }
+    }]
