@@ -2,13 +2,24 @@ name = "mg-fitclub-api"
 main = "worker.js"
 compatibility_date = "2026-09-12"
 
+[triggers]
+crons = ["0 * * * *"]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "mg-fitclub-db"
 database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+[ai]
+binding = "AI"
 
 # Keep secrets in Cloudflare, never in this file:
 # wrangler secret put OTP_SECRET
 # wrangler secret put SMS_API_KEY
 # wrangler secret put SMS_LINE_NUMBER
 # wrangler secret put SMS_TEMPLATE_ID
+# Translation uses the Cloudflare Workers AI binding above; no API key required.
+# Instagram OAuth secrets (never commit their values):
+# wrangler secret put META_APP_SECRET
+# wrangler secret put NEWS_TOKEN_ENCRYPTION_KEY
+# Set META_APP_ID, META_INSTAGRAM_REDIRECT_URI, and META_GRAPH_API_VERSION as Worker vars.

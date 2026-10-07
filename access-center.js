@@ -27,6 +27,7 @@
       if (name === "approvals") await approvalsTab(card);
       if (name === "clubs") await clubsTab(card);
       if (name === "attendance") await attendanceTab(card);
+      if (name === "news") await newsTab(card);
       if (name === "workout-log") {
         card.append(el("h2", "گزارش برنامه‌های تمرینی و غذایی ارسال‌شده توسط مربیان باشگاه"), el("p", "هر ارسال، نسخه مستقل برنامه در زمان ارسال را نگه می‌دارد."));
         const link = el("a", "مشاهده گزارش برنامه‌های ارسالی"); link.href = "workout-log.html"; card.append(link);
@@ -49,6 +50,7 @@
     const device = el('a', 'تأیید دستگاه تردد'); device.href = 'device-verification.html'; links.append(device);
     nav = el("nav", undefined, "access-tabs"); nav.setAttribute("aria-label", "بخش‌های حساب");
     const tabs = [];
+    if (user.role === "support" && user.access_state === "approved") tabs.push(["news", "تنظیمات اخبار"]);
     if (["support", "manager"].includes(user.role) && user.access_state === "approved") tabs.push(["workout-log", "برنامه‌های ارسالی مربیان"]);
     if (["support", "manager", "secretary"].includes(user.role) && user.access_state === "approved") tabs.push(["bridge", "تردد و دانلود رابط MG"]);
     if (user.role === "support") tabs.push(["clubs", "باشگاه‌ها و شماره‌های ورود"], ["users", "تمام کاربران"]);
@@ -61,6 +63,52 @@
     app.replaceChildren(header, nav, status, panel);
     if (!tabs.length) { panel.append(el("p", "حساب مدیریت باید توسط پشتیبانی به باشگاه متصل شود.")); return; }
     const wanted = location.hash.slice(1); choose(tabs.some(t => t[0] === wanted) ? wanted : tabs[0][0]);
+  }
+  async function newsTab(card) {
+    const data = await api("/api/support/news/settings");
+    const settings = data.settings;
+    card.append(el("h2", "تنظیمات اخبار ورزشی"), el("p", "خبرها روی سرور و بدون نیاز به روشن‌بودن کامپیوتر باشگاه به‌روزرسانی می‌شوند. خلاصهٔ فارسی، نام ناشر و لینک منبع نمایش داده می‌شود."));
+    const active = el("input"); active.type = "checkbox"; active.checked = settings.enabled;
+    const activeLabel = el("label", "فعال بودن گردآوری خودکار خبرها"); activeLabel.append(active); card.append(activeLabel);
+    const intervalLabel = el("label", "فاصلهٔ بررسی منابع"), interval = el("select");
+    for (const hours of [2, 3, 4, 6, 12]) interval.add(new Option(`${hours} ساعت`, String(hours)));
+    interval.value = String(settings.intervalHours); intervalLabel.append(interval); card.append(intervalLabel);
+    card.append(el("p", `ترجمهٔ ماشینی: ${data.translation.configured ? "متصل" : "تنظیم نشده؛ خبرهای انگلیسی تا اتصال سرویس ترجمه منتشر نمی‌شوند."}`, data.translation.configured ? "access-tag" : "access-warning"));
+    let igEnabled = null, igRights = null;
+    const igStatus = data.instagram.connected ? `متصل به @${data.instagram.username}` : data.instagram.configured ? "حساب اینستاگرام هنوز متصل نشده" : "تنظیم App ID، App Secret، آدرس بازگشت OAuth، کلید رمزگذاری توکن و نسخهٔ Graph API لازم است";
+    card.append(el("p", `Instagram: ${igStatus}`, data.instagram.connected ? "access-tag" : "access-warning"));
+    if (data.instagram.canConnect && !data.instagram.connected) {
+      const connect = button("اتصال حساب حرفه‌ای Instagram", () => run(connect, async () => {
+        const result = await api("/api/support/news/instagram/connect", "POST", {});
+        if (!result.url) throw new Error("آدرس اتصال ساخته نشد.");
+        location.assign(result.url);
+      }), "primary");
+      card.append(connect);
+    }
+    if (data.instagram.connected) {
+      igEnabled = el("input"); igEnabled.type = "checkbox"; igEnabled.checked = settings.instagramAutoPublish;
+      const igLabel = el("label", "انتشار خودکار خبرهای جدید در اینستاگرام"); igLabel.append(igEnabled); card.append(igLabel);
+      igRights = el("input"); igRights.type = "checkbox"; igRights.checked = settings.instagramRightsConfirmed;
+      const rightsLabel = el("label", "تأیید می‌کنم مجوز استفاده و انتشار تصاویر خبرها را دارم."); rightsLabel.append(igRights); card.append(rightsLabel);
+      card.append(el("p", "فقط خبرهای دارای تصویر عمومی منتشر می‌شوند. تیتر و خلاصهٔ فارسی همراه با نام و پیوند منبع در کپشن می‌آید. اگر مجوز تصویر روشن نیست، انتشار خودکار را فعال نکنید.", "access-warning"));
+      const disconnect = button("قطع اتصال Instagram", () => run(disconnect, async () => {
+        await api("/api/support/news/instagram/disconnect", "POST", {});
+        await choose("news"); report("اتصال اینستاگرام قطع شد.");
+      }));
+      card.append(disconnect);
+    }
+    const last = settings.lastSyncAt ? new Date(settings.lastSyncAt * 1000).toLocaleString("fa-IR") : "هنوز اجرا نشده";
+    card.append(el("p", `آخرین همگام‌سازی: ${last} · وضعیت: ${settings.lastSyncStatus || "نامشخص"}`));
+    if (settings.lastSyncError) card.append(el("p", settings.lastSyncError, "access-warning"));
+    const save = button("ذخیرهٔ تنظیمات", () => run(save, async () => {
+      await api("/api/support/news/settings", "PATCH", { enabled: active.checked, intervalHours: Number(interval.value), instagramAutoPublish: !!igEnabled?.checked, instagramRightsConfirmed: !!igRights?.checked });
+      await choose("news"); report("تنظیمات خبر ذخیره شد.");
+    }), "primary");
+    const sync = button("همگام‌سازی همین حالا", () => run(sync, async () => {
+      const result = await api("/api/support/news/sync", "POST", {});
+      await choose("news"); report(`بررسی تمام شد؛ ${result.inserted || 0} خبر تازه ثبت شد.`);
+    }));
+    card.append(save, sync);
   }
   async function attendanceTab(card) {
     card.append(el("h2", "بررسی حضور آزمایشی"), el("p", "ثبت دستگاه به‌تنهایی تأیید ورود نیست. تنها پس از اطمینان از ورود واقعی همان شخص تأیید کنید. تأیید مدیر و پشتیبان روی یک حضور، مصرف دوباره ایجاد نمی‌کند؛ حداکثر یک جلسه در روز.", "access-warning"));

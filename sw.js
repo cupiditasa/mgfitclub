@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261006-education";
+const CACHE_NAME = "mg-fitclub-v20261006-news";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -23,6 +23,9 @@ const APP_SHELL = [
   "./preview-notice.css",
   "./preview-notice.js",
   "./mg-journal.html",
+  "./news.html",
+  "./news.css",
+  "./news.js",
   "./journal.css?v=20260919",
   "./journal-layout.css?v=20260920-menu",
   "./journal-player.js?v=20260920",

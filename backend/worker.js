@@ -4,6 +4,7 @@ import { handleMgBridge } from './mg-bridge.js';
 import { handleWorkouts } from './workouts.js';
 import { handleNutrition } from './nutrition.js';
 import { handleCoachMarket } from './coach-market.js';
+import { handleNews, handleNewsScheduled } from './news.js';
 import { handleDeviceVerification, deviceStatesForUsers } from './device-verification.js';
 const ROLES = new Set(["athlete", "coach", "manager", "admin", "secretary", "support"]);
 const USER_STATUSES = new Set(["active", "blocked", "pending"]);
@@ -281,6 +282,8 @@ async function handle(request, env) {
   const headers = cors(request, env);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
   const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
+  const news = await handleNews(request, env, {path,headers,response,errorResponse,jsonBody,currentUser,hasRole,makeId});
+  if (news) return news;
   const coachMarket = await handleCoachMarket(request, env, {path,headers,response,errorResponse,jsonBody,currentUser,hasRole,makeId});
   if (coachMarket) return coachMarket;
   const nutrition = await handleNutrition(request, env, {path,headers,response,errorResponse,jsonBody,hash,currentUser,userById,hasRole,makeId,normalizePhone});
@@ -676,5 +679,8 @@ export default {
       if (!error.status || error.status >= 500) console.error("MG FitClub API error", error);
       return response({ error: error.status ? error.message : "internal_error" }, error.status || 500, cors(request, env));
     }
+  },
+  async scheduled(controller, env, context) {
+    await handleNewsScheduled(controller, env, context);
   },
 };
