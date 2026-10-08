@@ -13,3 +13,4 @@ Disallow: /docs/
 Disallow: /api/
 
 Sitemap: https://mgfitclub.ir/sitemap.xml
+Sitemap: https://khabar.mgfitclub.ir/sitemap.xml

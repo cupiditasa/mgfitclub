@@ -1,3 +1,5 @@
+import { makeNewsSlug, newsArticleUrl, renderNewsArticle, renderNewsIndex, renderNewsSitemap, NEWS_PUBLIC_ORIGIN } from "./news-seo.js";
+
 const HOUR = 3600;
 const META_SCOPES = "instagram_business_basic,instagram_business_content_publish";
 const encodeBase64 = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes)));
@@ -97,7 +99,7 @@ export function parseNewsFeed(xml, source, now = Date.now()) {
     const linkTag = block.match(/<link\b[^>]*\/?\s*>/i)?.[0] || "";
     const sourceUrl = safeHttps(atom ? attr(linkTag, "href") : tag(block, "link"), source.host === "news.google.com" ? null : source.host);
     const title = cleanText(tag(block, "title"));
-    const summary = cleanText(tag(block, "description") || tag(block, "summary") || tag(block, "content:encoded"));
+    const summary = cleanText(tag(block, "content:encoded") || tag(block, "summary") || tag(block, "description"));
     if (!sourceUrl || !title || title.length > 400 || !summary) continue;
     const imageTag = block.match(/<(?:media:content|media:thumbnail|enclosure)\b[^>]*>/i)?.[0] || "";
     const imageUrl = safeHttps(attr(imageTag, "url"), source.host === "news.google.com" ? null : source.host);
@@ -107,19 +109,29 @@ export function parseNewsFeed(xml, source, now = Date.now()) {
     const publishedAt = Number.isFinite(published) ? Math.floor(published / 1000) : Math.floor(now / 1000);
     const nowSeconds = Math.floor(now / 1000);
     if (publishedAt > nowSeconds + 300 || publishedAt < nowSeconds - 3 * 86400) continue;
-    items.push({ sourceUrl, sourceName: cleanText(tag(block, "source")) || source.name, sourceKey: source.key, category: classify(`${title} ${summary}`, source.category), title, summary: summary.slice(0, 1200), imageUrl, publishedAt });
+    items.push({ sourceUrl, sourceName: cleanText(tag(block, "source")) || source.name, sourceKey: source.key, category: classify(`${title} ${summary}`, source.category), title, summary: summary.slice(0, 6000), imageUrl, publishedAt });
   }
   return items;
 }
 
 async function fetchText(url) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 10000);
+  const timer = setTimeout(() => controller.abort(), 20000);
   try {
-    const response = await fetch(url, { signal: controller.signal, redirect: "error", headers: { accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9" } });
+    const response = await fetch(url, {
+      signal: controller.signal, redirect: "follow",
+      headers: { accept: "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9", "accept-language": "fa-IR,fa;q=0.9,en-US;q=0.8,en;q=0.7", "user-agent": "MGFitClubNewsBot/1.0 (+https://mgfitclub.ir/news.html)" },
+    });
     if (!response.ok) throw new Error(`feed_http_${response.status}`);
     return await response.text();
   } finally { clearTimeout(timer); }
+}
+
+function feedErrorCode(error) {
+  if (error?.name === "AbortError" || error?.name === "TimeoutError") return "timeout";
+  const detail = error?.cause?.code || error?.cause?.name || "";
+  const message = `${error?.name || ""}_${error?.message || error || "unknown_error"}_${detail}`.replace(/https?:\/\/\S+/g, "url").replace(/[^a-zA-Z0-9_.:-]/g, "_");
+  return message.slice(0, 90) || "unknown_error";
 }
 
 export async function translateBatch(env, strings) {
@@ -158,9 +170,19 @@ export async function runNewsUpdate(env, { force = false } = {}) {
   if (!settings?.enabled && !force) return { skipped: true, reason: "disabled" };
   const current = Math.floor(Date.now() / 1000);
   if (!force && settings.last_sync_at && current - settings.last_sync_at < settings.interval_hours * HOUR) return { skipped: true, reason: "not_due" };
-  const settled = await Promise.allSettled(SOURCES.map(async (source) => parseNewsFeed(await fetchText(source.url), source)));
+  const feeds = await Promise.all(SOURCES.map(async (source) => {
+    try { return { source, items: parseNewsFeed(await fetchText(source.url), source), error: null }; }
+    catch (error) { return { source, items: [], error: feedErrorCode(error) }; }
+  }));
   const dedup = new Map();
-  for (const result of settled) if (result.status === "fulfilled") for (const item of result.value) dedup.set(item.sourceUrl, item);
+  for (const feed of feeds) for (const item of feed.items) dedup.set(item.sourceUrl, item);
+  const sourceFailures = feeds.filter((feed) => feed.error).map((feed) => ({ source: feed.source.key, error: feed.error }));
+  const sourceCount = feeds.length - sourceFailures.length;
+  if (sourceFailures.length) {
+    const log = JSON.stringify({ sourcesOk: sourceCount, failed: sourceFailures });
+    if (sourceCount) console.warn("[news] some RSS sources failed", log);
+    else console.error("[news] all RSS sources failed", log);
+  }
   const candidates = [...dedup.values()].sort((a, b) => b.publishedAt - a.publishedAt).slice(0, 80);
   let inserted = 0, translateFailures = 0;
   for (let offset = 0; offset < candidates.length; offset += 16) {
@@ -179,16 +201,17 @@ export async function runNewsUpdate(env, { force = false } = {}) {
       const item = batch[i], title = translated[i * 2], summary = translated[i * 2 + 1];
       if (!title || !summary) continue;
       const id = await storyId(item.sourceUrl);
-      const result = await db.prepare("INSERT OR IGNORE INTO news_items (id,source_url,source_key,source_name,category,title,original_title,summary,original_summary,image_url,published_at,created_at,instagram_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
-        .bind(id, item.sourceUrl, item.sourceKey, item.sourceName, item.category, title.slice(0, 400), item.title, summary.slice(0, 900), item.summary, item.imageUrl, item.publishedAt, current, settings?.instagram_auto_publish ? "pending" : "disabled").run();
+      const slug = makeNewsSlug(title.slice(0, 400), id);
+      const result = await db.prepare("INSERT OR IGNORE INTO news_items (id,source_url,source_key,source_name,category,title,original_title,summary,original_summary,image_url,published_at,created_at,instagram_status,slug,article_body) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        .bind(id, item.sourceUrl, item.sourceKey, item.sourceName, item.category, title.slice(0, 400), item.title, summary.slice(0, 900), item.summary, item.imageUrl, item.publishedAt, current, settings?.instagram_auto_publish ? "pending" : "disabled", slug, summary.slice(0, 6000)).run();
       inserted += Number(result.meta?.changes || 0);
     }
   }
-  const sourceCount = settled.filter((result) => result.status === "fulfilled").length;
   const status = sourceCount ? "ok" : "source_error";
-  const errorSummary = translateFailures ? `translation_skipped:${translateFailures}` : null;
+  const sourceErrorSummary = sourceFailures.length ? `${status}:${JSON.stringify(sourceFailures)}`.slice(0, 900) : null;
+  const errorSummary = [sourceErrorSummary, translateFailures ? `translation_skipped:${translateFailures}` : null].filter(Boolean).join(";").slice(0, 1000) || null;
   await db.prepare("UPDATE news_settings SET last_sync_at=?,last_sync_status=?,last_sync_error=?,updated_at=? WHERE id='global'").bind(current, status, errorSummary, current).run();
-  return { inserted, scanned: candidates.length, sourcesOk: sourceCount, translationSkipped: translateFailures };
+  return { inserted, scanned: candidates.length, sourcesOk: sourceCount, sourceFailures, translationSkipped: translateFailures };
 }
 
 async function getInstagramToken(env, connection) {
@@ -299,8 +322,11 @@ export async function handleNews(request, env, c) {
   const { path, headers, currentUser, hasRole, jsonBody, response, errorResponse, makeId } = c;
   if (path === "/api/support/news/instagram/callback" && request.method === "GET") return handleInstagramCallback(request, env);
   if (path === "/api/news" && request.method === "GET") {
-    const rows = (await env.DB.prepare("SELECT id,title,summary,source_name AS source,source_url AS sourceUrl,image_url AS image,category,published_at AS publishedAt,original_title AS originalTitle FROM news_items WHERE published_at>=? ORDER BY published_at DESC LIMIT 60").bind(Math.floor(Date.now() / 1000) - 7 * 86400).all()).results
-      .map((row) => ({ ...row, publishedAt: row.publishedAt * 1000, href: row.sourceUrl }));
+    const rows = (await env.DB.prepare("SELECT id,slug,title,summary,source_name AS source,source_url AS sourceUrl,image_url AS image,category,published_at AS publishedAt,original_title AS originalTitle FROM news_items WHERE published_at>=? ORDER BY published_at DESC,id DESC LIMIT 60").bind(Math.floor(Date.now() / 1000) - 7 * 86400).all()).results
+      .map((row) => {
+        const slug = row.slug || makeNewsSlug(row.title, row.id);
+        return { ...row, slug, publishedAt: row.publishedAt * 1000, articleUrl: newsArticleUrl({ slug }), href: row.sourceUrl };
+      });
     const settings = await env.DB.prepare("SELECT last_sync_at,last_sync_status,interval_hours FROM news_settings WHERE id='global'").first();
     const block = 4 * HOUR * 1000, end = Math.floor(Date.now() / block + 1) * block;
     const dueAt = settings?.last_sync_at ? (settings.last_sync_at + Number(settings.interval_hours || 4) * HOUR) * 1000 : Date.now();
@@ -362,6 +388,27 @@ export async function handleNews(request, env, c) {
     return response({ ok: true, ...result, instagram }, 200, headers);
   }
   return errorResponse("method_not_allowed", 405, headers);
+}
+
+export async function handleNewsSiteRequest(request, env) {
+  const url = new URL(request.url);
+  if (url.hostname.toLowerCase() !== new URL(NEWS_PUBLIC_ORIGIN).hostname || request.method !== "GET") return null;
+  const headers = { "content-type": "text/html; charset=utf-8", "x-content-type-options": "nosniff", "referrer-policy": "strict-origin-when-cross-origin" };
+  if (url.pathname === "/robots.txt") return new Response(`User-agent: *\nAllow: /\nSitemap: ${NEWS_PUBLIC_ORIGIN}/sitemap.xml\n`, { headers: { ...headers, "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" } });
+  if (url.pathname === "/sitemap.xml") {
+    const rows = (await env.DB.prepare("SELECT slug,published_at AS publishedAt FROM news_items WHERE slug<>'' ORDER BY published_at DESC LIMIT 5000").all()).results || [];
+    return new Response(renderNewsSitemap(rows), { headers: { ...headers, "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=900" } });
+  }
+  if (url.pathname === "/" || url.pathname === "") {
+    const rows = (await env.DB.prepare("SELECT slug,title,summary,source_name,image_url,category,published_at FROM news_items ORDER BY published_at DESC,id DESC LIMIT 60").all()).results || [];
+    return new Response(renderNewsIndex(rows), { headers: { ...headers, "cache-control": "public, max-age=300, stale-while-revalidate=3600" } });
+  }
+  let slug;
+  try { slug = decodeURIComponent(url.pathname.slice(1)); } catch { slug = ""; }
+  if (!slug || slug.includes("/") || slug.length > 180) return new Response("Not found", { status: 404, headers: { ...headers, "content-type": "text/plain; charset=utf-8", "x-robots-tag": "noindex" } });
+  const story = await env.DB.prepare("SELECT slug,title,summary,article_body AS article_body,source_name,source_url,image_url,category,original_title,published_at,created_at FROM news_items WHERE slug=? LIMIT 1").bind(slug).first();
+  if (!story) return new Response("Not found", { status: 404, headers: { ...headers, "content-type": "text/plain; charset=utf-8", "x-robots-tag": "noindex" } });
+  return new Response(renderNewsArticle(story), { headers: { ...headers, "cache-control": "public, max-age=300, stale-while-revalidate=3600" } });
 }
 
 export async function handleNewsScheduled(_controller, env, context) {

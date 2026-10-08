@@ -4,14 +4,14 @@ import { handleMgBridge } from './mg-bridge.js';
 import { handleWorkouts } from './workouts.js';
 import { handleNutrition } from './nutrition.js';
 import { handleCoachMarket } from './coach-market.js';
-import { handleNews, handleNewsScheduled } from './news.js';
+import { handleNews, handleNewsScheduled, handleNewsSiteRequest } from './news.js';
 import { handleDeviceVerification, deviceStatesForUsers } from './device-verification.js';
 const ROLES = new Set(["athlete", "coach", "manager", "admin", "secretary", "support"]);
 const USER_STATUSES = new Set(["active", "blocked", "pending"]);
 const REQUEST_STATUSES = new Set(["submitted", "assigned", "in_progress", "completed", "rejected"]);
 const ENTRY_STATUSES = new Set(["pending", "approved", "rejected", "exited"]);
 const PROGRAM_KINDS = new Set(["training", "food"]);
-const API_VERSION = "20261005-coach-marketplace-1";
+const API_VERSION = "20261008-news-seo-1";
 const SUPPORT_PHONE = "09174922677";
 const APPROVAL_NOTICE = "فقط کاربران باشگاه می‌توانند ثبت‌نام کنند. درخواست شما پس از تأیید شماره برای مدیریت ارسال خواهد شد؛ پس از تأیید مدیر، دسترسی شما باز می‌شود.";
 const SMS_VERIFY_TEMPLATE_ID = 791767;
@@ -281,6 +281,13 @@ async function createTrainingRequest(env, user, body, request) {
 async function handle(request, env) {
   const headers = cors(request, env);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
+  if (new URL(request.url).hostname.toLowerCase() === "khabar.mgfitclub.ir") {
+    try { return await handleNewsSiteRequest(request, env) || new Response("Not found", { status: 404 }); }
+    catch (error) {
+      console.error("MG FitClub news page error", String(error?.message || error).slice(0, 200));
+      return new Response("موقتاً امکان نمایش خبر وجود ندارد.", { status: 503, headers: { "content-type": "text/plain; charset=utf-8", "retry-after": "60", "x-robots-tag": "noindex" } });
+    }
+  }
   const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
   const news = await handleNews(request, env, {path,headers,response,errorResponse,jsonBody,currentUser,hasRole,makeId});
   if (news) return news;

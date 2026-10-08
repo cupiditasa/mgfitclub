@@ -89,7 +89,7 @@ function imageStyle(url) {
 
 function renderFeatured(story, window) {
   if (!story) return;
-  const href = story.sourceUrl || story.href || "#";
+  const href = story.articleUrl || story.sourceUrl || story.href || "#";
   featuredImage.style = imageStyle(story.image);
   setText("featured-cat", story.category || "بانوان");
   setText("featured-title", story.title);
@@ -104,7 +104,7 @@ function cardHtml(story) {
   const original = story.originalTitle && story.originalTitle !== story.title
     ? `<small class="card__original" dir="auto">عنوان اصلی: ${escapeHtml(story.originalTitle)}</small>` : "";
   return `
-    <a class="card" href="${escapeHtml(story.sourceUrl || story.href || "#")}" target="_blank" rel="noopener noreferrer" data-cat="${escapeHtml(story.category)}">
+    <a class="card" href="${escapeHtml(story.articleUrl || story.sourceUrl || story.href || "#")}" data-cat="${escapeHtml(story.category)}">
       <div class="card__media" style='${imageStyle(story.image)}'></div>
       <div class="card__body">
         <small>${escapeHtml(story.category)}</small>

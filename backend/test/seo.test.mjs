@@ -8,7 +8,7 @@ const sitemap=read('sitemap.xml');
 const urls=[...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1]);
 const publicFiles=urls.map(url=>url===base?'index.html':url.slice(base.length));
 test('sitemap contains only unique canonical public pages with crawlable static content',()=>{
-  assert.equal(urls.length,11);assert.equal(new Set(urls).size,urls.length);
+  assert.equal(urls.length,12);assert.equal(new Set(urls).size,urls.length);
   for(const [i,file] of publicFiles.entries()){
     const html=read(file);
     assert.ok(urls[i].startsWith(base));assert.ok(!urls[i].includes('?'));
