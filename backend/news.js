@@ -382,10 +382,37 @@ export async function handleNews(request, env, c) {
     return response({ ok: true }, 200, headers);
   }
   if (path === "/api/support/news/sync" && request.method === "POST") {
-    const result = await runNewsUpdate(env, { force: true });
-    const instagram = await publishPendingInstagram(env);
-    await env.DB.prepare("INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,metadata_json) VALUES (?,?,?,'news','global',?)").bind(makeId("audit"), user.id, "news_sync_requested", JSON.stringify(result)).run();
-    return response({ ok: true, ...result, instagram }, 200, headers);
+    const executionContext = c.executionContext;
+    if (typeof executionContext?.waitUntil !== "function") return errorResponse("news_sync_unavailable", 503, headers);
+    const now = Math.floor(Date.now() / 1000);
+    const reservation = await env.DB.prepare("UPDATE news_settings SET last_sync_status='running',last_sync_error=NULL,updated_at=? WHERE id='global' AND (last_sync_status<>'running' OR updated_at<?)")
+      .bind(now, now - 300).run();
+    if (Number(reservation.meta?.changes || 0) !== 1) return response({ ok: true, status: "running", alreadyRunning: true }, 202, headers);
+
+    const task = (async () => {
+      try {
+        const result = await runNewsUpdate(env, { force: true });
+        const instagram = await publishPendingInstagram(env);
+        try {
+          await env.DB.prepare("INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,metadata_json) VALUES (?,?,?,'news','global',?)")
+            .bind(makeId("audit"), user.id, "news_sync_requested", JSON.stringify({ ...result, instagram })).run();
+        } catch (error) {
+          console.warn("[news] sync audit write failed", feedErrorCode(error));
+        }
+      } catch (error) {
+        const failedAt = Math.floor(Date.now() / 1000);
+        const code = feedErrorCode(error);
+        console.error("[news] manual sync failed", code);
+        try {
+          await env.DB.prepare("UPDATE news_settings SET last_sync_at=?,last_sync_status='error',last_sync_error=?,updated_at=? WHERE id='global'")
+            .bind(failedAt, `sync_failed:${code}`.slice(0, 900), failedAt).run();
+        } catch (statusError) {
+          console.error("[news] failed to persist sync error", feedErrorCode(statusError));
+        }
+      }
+    })();
+    executionContext.waitUntil(task);
+    return response({ ok: true, status: "running", alreadyRunning: false }, 202, headers);
   }
   return errorResponse("method_not_allowed", 405, headers);
 }
@@ -412,8 +439,8 @@ export async function handleNewsSiteRequest(request, env) {
 }
 
 export async function handleNewsScheduled(_controller, env, context) {
-  const settings = await env.DB.prepare("SELECT enabled FROM news_settings WHERE id='global'").first();
-  if (settings?.enabled) context.waitUntil((async () => {
+  const settings = await env.DB.prepare("SELECT enabled,last_sync_status FROM news_settings WHERE id='global'").first();
+  if (settings?.enabled && settings.last_sync_status !== "running") context.waitUntil((async () => {
     await runNewsUpdate(env);
     await publishPendingInstagram(env);
   })());

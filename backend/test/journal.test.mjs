@@ -10,6 +10,8 @@ const playerSource = read("journal-player.js");
 const stories = JSON.parse(html.match(/<script type="application\/json" id="journal-story-data">([\s\S]*?)<\/script>/)[1]);
 
 test("journal retains all seven films, service copy and coach links; book section is removed", () => {
+  assert.ok(!html.includes("preview-notice"));
+  assert.ok(!read("journal-motion.js").includes("preview-notice"));
   assert.ok(!/mg-book|book-bg\.mp4|mg-book-mobile/.test(html + read("journal.css") + read("journal-layout.css")));
   assert.ok(html.indexOf('id="mg-stories"') < html.indexOf('id="service-films"'));
   assert.ok(html.indexOf('id="service-films"') < html.indexOf('class="exp-final"'));

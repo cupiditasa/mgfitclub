@@ -6,6 +6,8 @@ const root=fs.existsSync(new URL('../../current/app.html',import.meta.url))?new 
 const read=p=>fs.readFileSync(new URL(p,root),'utf8');
 test('app is a permanent guide, while the PWA still starts at login',()=>{
   const html=read('app.html');
+  assert.ok(!html.includes('preview-notice'));
+  assert.ok(!read('account.html').includes('preview-notice'));
   assert.ok(!html.includes('location.replace'));
   assert.ok(!html.includes('__MG_PREVIEW_NOTICE_ON_CLOSE'));
   assert.ok(html.includes('id="android-guide"')&&html.includes('id="ios-guide"'));

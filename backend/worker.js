@@ -11,7 +11,7 @@ const USER_STATUSES = new Set(["active", "blocked", "pending"]);
 const REQUEST_STATUSES = new Set(["submitted", "assigned", "in_progress", "completed", "rejected"]);
 const ENTRY_STATUSES = new Set(["pending", "approved", "rejected", "exited"]);
 const PROGRAM_KINDS = new Set(["training", "food"]);
-const API_VERSION = "20261008-news-seo-1";
+const API_VERSION = "20261008-news-sync-fontfix-1";
 const SUPPORT_PHONE = "09174922677";
 const APPROVAL_NOTICE = "فقط کاربران باشگاه می‌توانند ثبت‌نام کنند. درخواست شما پس از تأیید شماره برای مدیریت ارسال خواهد شد؛ پس از تأیید مدیر، دسترسی شما باز می‌شود.";
 const SMS_VERIFY_TEMPLATE_ID = 791767;
@@ -278,7 +278,7 @@ async function createTrainingRequest(env, user, body, request) {
   return response({ ok: true, requestId, orderId, status: "submitted" }, 201);
 }
 
-async function handle(request, env) {
+async function handle(request, env, executionContext) {
   const headers = cors(request, env);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers });
   if (new URL(request.url).hostname.toLowerCase() === "khabar.mgfitclub.ir") {
@@ -289,7 +289,7 @@ async function handle(request, env) {
     }
   }
   const path = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
-  const news = await handleNews(request, env, {path,headers,response,errorResponse,jsonBody,currentUser,hasRole,makeId});
+  const news = await handleNews(request, env, {path,headers,response,errorResponse,jsonBody,currentUser,hasRole,makeId,executionContext});
   if (news) return news;
   const coachMarket = await handleCoachMarket(request, env, {path,headers,response,errorResponse,jsonBody,currentUser,hasRole,makeId});
   if (coachMarket) return coachMarket;
@@ -679,9 +679,9 @@ async function handle(request, env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, executionContext) {
     try {
-      return await handle(request, env);
+      return await handle(request, env, executionContext);
     } catch (error) {
       if (!error.status || error.status >= 500) console.error("MG FitClub API error", error);
       return response({ error: error.status ? error.message : "internal_error" }, error.status || 500, cors(request, env));

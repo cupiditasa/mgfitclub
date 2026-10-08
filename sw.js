@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261006-news";
+const CACHE_NAME = "mg-fitclub-v20261008-news-sync-fontfix";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -20,8 +20,6 @@ const APP_SHELL = [
   "./app.html",
   "./app-install.css?v=20260920",
   "./app-install.js?v=20260920-browsers",
-  "./preview-notice.css",
-  "./preview-notice.js",
   "./mg-journal.html",
   "./news.html",
   "./news.css",
@@ -35,7 +33,7 @@ const APP_SHELL = [
   "./videos/strength-confidence.html",
   "./videos/healthy-nutrition.html",
   "./videos/mg-lifestyle.html",
-  "./journal-motion.js?v=20260919",
+  "./journal-motion.js?v=20261008-no-preview",
   "./dashboard.html",
   "./coach-dashboard.html",
   "./admin-dashboard.html",

@@ -212,20 +212,3 @@
     resizeCta(); burst(width * 0.5, height * 0.28, 28); requestAnimationFrame(drawCta);
   }
 })();
-
-// Shared preview notice used by the journal entry page as well as login/PWA.
-(() => {
-  const cssHref = "preview-notice.css?v=20260912";
-  const scriptSrc = "preview-notice.js?v=20260912";
-  if (!document.querySelector(`link[href^="preview-notice.css"]`)) {
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = cssHref;
-    document.head.appendChild(link);
-  }
-  if (!document.querySelector(`script[src^="preview-notice.js"]`)) {
-    const script = document.createElement("script");
-    script.src = scriptSrc;
-    document.body.appendChild(script);
-  }
-})();

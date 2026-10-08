@@ -2762,3 +2762,21 @@ body * {
   font-family: "B Esfehan", Tahoma, sans-serif !important;
   font-synthesis: none;
 }
+
+/* Keep display typography intact; use the cleaner Education Studio face for compact copy. */
+body.mg-home :is(
+  .nav a, .header__action, .menu p, .section-kicker, .hero__video-hint span,
+  .hero__video-hint b, .hero__eyebrow, .hero__statement p, .button,
+  .intro__headline p, .intro__keywords, .intro__manifesto > span, .intro__image--small figcaption span,
+  .proof span, .journey__copy p, .programs__list p, .motion-story__scrub b,
+  .motion-story__content > p, .motion-story__control, .gallery__open,
+  .gallery__item > span, .founder__years span, .founder__name span,
+  .founder__copy > p, .location__link, .location__contacts small,
+  .map--real figcaption span, .map--real figcaption b, .map > p,
+  .register__intro > p, .form label span, .form button, .form__status,
+  .footer__top p, .footer__line, .lightbox figcaption,
+  .gallery-modal__filters button, .mobile-cta
+) {
+  font-family: "Vazirmatn", Tahoma, "Segoe UI", sans-serif !important;
+  font-synthesis: none;
+}

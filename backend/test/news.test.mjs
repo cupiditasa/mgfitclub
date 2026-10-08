@@ -134,3 +134,46 @@ test('Instagram OAuth start stores only a hashed, expiring state and requests pu
   assert.ok(saved.expires_at > Math.floor(Date.now() / 1000));
   sql.close();
 });
+
+test('manual news sync starts in the background and prevents overlapping runs', async () => {
+  const sql = new DatabaseSync(':memory:');
+  for (const file of ['schema.sql', 'migrations/001-runtime.sql', 'migrations/003-club-access.sql', 'migrations/013-news.sql', 'migrations/014-news-instagram.sql', 'migrations/015-news-article-pages.sql']) {
+    sql.exec(fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8'));
+  }
+  sql.exec("INSERT INTO users(id,phone,full_name,role) VALUES ('support','09120000000','Support','admin'); INSERT INTO account_access(user_id,role,club_id,state) VALUES ('support','support',NULL,'approved');");
+  const DB = { prepare(query) { let args = []; return { bind(...values) { args = values; return this; }, first() { return sql.prepare(query).get(...args) || null; }, all() { return { results: sql.prepare(query).all(...args) }; }, run() { return { meta: { changes: Number(sql.prepare(query).run(...args).changes) } }; } }; } };
+  const env = { DB };
+  const user = { id: 'support', status: 'active', access_state: 'approved', role: 'support' };
+  const options = {
+    path: '/api/support/news/sync', headers: {}, currentUser: async () => user,
+    hasRole: (candidate, ...roles) => roles.includes(candidate.role), jsonBody: async () => ({}),
+    response: (body, status = 200) => new Response(JSON.stringify(body), { status }),
+    errorResponse: (error, status) => new Response(JSON.stringify({ error }), { status }),
+    makeId: (prefix) => `${prefix}_test`,
+  };
+  const tasks = [];
+  const executionContext = { waitUntil(promise) { tasks.push(promise); } };
+  const originalFetch = globalThis.fetch;
+  let releaseFetch;
+  const fetchGate = new Promise((resolve) => { releaseFetch = resolve; });
+  globalThis.fetch = async () => { await fetchGate; return new Response('<rss><channel></channel></rss>', { status: 200 }); };
+  try {
+    const first = await handleNews(new Request('https://api.mgfitclub.ir/api/support/news/sync', { method: 'POST' }), env, { ...options, executionContext });
+    assert.equal(first.status, 202);
+    assert.deepEqual(await first.json(), { ok: true, status: 'running', alreadyRunning: false });
+    assert.equal(sql.prepare("SELECT last_sync_status FROM news_settings WHERE id='global'").get().last_sync_status, 'running');
+    const duplicate = await handleNews(new Request('https://api.mgfitclub.ir/api/support/news/sync', { method: 'POST' }), env, { ...options, executionContext });
+    assert.equal(duplicate.status, 202);
+    assert.deepEqual(await duplicate.json(), { ok: true, status: 'running', alreadyRunning: true });
+    assert.equal(tasks.length, 1);
+    releaseFetch();
+    await tasks[0];
+    const completed = sql.prepare("SELECT last_sync_at,last_sync_status,last_sync_error FROM news_settings WHERE id='global'").get();
+    assert.ok(completed.last_sync_at > 0);
+    assert.equal(completed.last_sync_status, 'ok');
+    assert.equal(completed.last_sync_error, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+    sql.close();
+  }
+});

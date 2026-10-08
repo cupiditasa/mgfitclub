@@ -104,9 +104,30 @@
       await api("/api/support/news/settings", "PATCH", { enabled: active.checked, intervalHours: Number(interval.value), instagramAutoPublish: !!igEnabled?.checked, instagramRightsConfirmed: !!igRights?.checked });
       await choose("news"); report("تنظیمات خبر ذخیره شد.");
     }), "primary");
+    async function pollNewsSync(previousSyncAt, attempt = 0) {
+      if (attempt >= 40) {
+        report("همگام‌سازی هنوز در حال انجام است؛ چند لحظهٔ دیگر وضعیت را تازه کنید.", true);
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      const latest = await api("/api/support/news/settings");
+      const next = latest.settings;
+      if (next.lastSyncStatus !== "running") {
+        await choose("news");
+        report(next.lastSyncStatus === "ok"
+          ? "همگام‌سازی تمام شد؛ وضعیت و جزئیات بالا به‌روز شد."
+          : "همگام‌سازی پایان یافت اما بعضی منابع خطا داشتند؛ جزئیات وضعیت را بررسی کنید.", next.lastSyncStatus !== "ok");
+        return;
+      }
+      return pollNewsSync(previousSyncAt, attempt + 1);
+    }
     const sync = button("همگام‌سازی همین حالا", () => run(sync, async () => {
-      const result = await api("/api/support/news/sync", "POST", {});
-      await choose("news"); report(`بررسی تمام شد؛ ${result.inserted || 0} خبر تازه ثبت شد.`);
+      const started = await api("/api/support/news/sync", "POST", {});
+      await choose("news");
+      report(started.alreadyRunning
+        ? "همگام‌سازی دیگری در حال اجراست؛ وضعیت پس از پایان تازه می‌شود."
+        : "همگام‌سازی در پس‌زمینه آغاز شد؛ وضعیت به‌صورت خودکار تازه می‌شود.");
+      void pollNewsSync(settings.lastSyncAt).catch(() => report("همگام‌سازی آغاز شد، اما وضعیت نهایی از سرور دریافت نشد. برای بررسی دوباره صفحه را تازه کنید.", true));
     }));
     card.append(save, sync);
   }
