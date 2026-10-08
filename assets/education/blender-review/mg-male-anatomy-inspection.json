@@ -1,0 +1,177 @@
+{
+  "source": "assets/education/mg-male-anatomy.glb",
+  "mesh_object_count": 17,
+  "mesh_objects": [
+    {
+      "vertices": 38153,
+      "edges": 102550,
+      "polygons": 64136,
+      "dimensions": [
+        1.20988,
+        0.45205,
+        1.48463
+      ]
+    },
+    {
+      "vertices": 37229,
+      "edges": 104177,
+      "polygons": 66803,
+      "dimensions": [
+        0.61463,
+        0.45387,
+        1.54386
+      ]
+    },
+    {
+      "vertices": 37484,
+      "edges": 103657,
+      "polygons": 65936,
+      "dimensions": [
+        1.12511,
+        0.44749,
+        1.63778
+      ]
+    },
+    {
+      "vertices": 37880,
+      "edges": 102921,
+      "polygons": 64821,
+      "dimensions": [
+        1.08443,
+        0.43216,
+        1.21895
+      ]
+    },
+    {
+      "vertices": 37040,
+      "edges": 105378,
+      "polygons": 68128,
+      "dimensions": [
+        0.30218,
+        0.41128,
+        1.28727
+      ]
+    },
+    {
+      "vertices": 37583,
+      "edges": 103872,
+      "polygons": 66365,
+      "dimensions": [
+        1.0959,
+        0.48247,
+        1.60841
+      ]
+    },
+    {
+      "vertices": 37668,
+      "edges": 104611,
+      "polygons": 66898,
+      "dimensions": [
+        1.09537,
+        0.33237,
+        1.2197
+      ]
+    },
+    {
+      "vertices": 38490,
+      "edges": 102243,
+      "polygons": 64031,
+      "dimensions": [
+        0.99389,
+        0.47187,
+        2.80918
+      ]
+    },
+    {
+      "vertices": 38427,
+      "edges": 101457,
+      "polygons": 63476,
+      "dimensions": [
+        0.68522,
+        0.48486,
+        2.27874
+      ]
+    },
+    {
+      "vertices": 38247,
+      "edges": 102209,
+      "polygons": 64136,
+      "dimensions": [
+        1.30542,
+        0.48541,
+        2.46824
+      ]
+    },
+    {
+      "vertices": 37367,
+      "edges": 104569,
+      "polygons": 67110,
+      "dimensions": [
+        0.30779,
+        0.42479,
+        1.69561
+      ]
+    },
+    {
+      "vertices": 37087,
+      "edges": 104855,
+      "polygons": 67900,
+      "dimensions": [
+        0.83407,
+        0.42813,
+        1.7695
+      ]
+    },
+    {
+      "vertices": 36942,
+      "edges": 105604,
+      "polygons": 68494,
+      "dimensions": [
+        0.86185,
+        0.43571,
+        2.3222
+      ]
+    },
+    {
+      "vertices": 37861,
+      "edges": 102559,
+      "polygons": 64964,
+      "dimensions": [
+        0.97159,
+        0.47424,
+        2.58473
+      ]
+    },
+    {
+      "vertices": 36880,
+      "edges": 105540,
+      "polygons": 68646,
+      "dimensions": [
+        0.14936,
+        0.3299,
+        0.39174
+      ]
+    },
+    {
+      "vertices": 37251,
+      "edges": 105086,
+      "polygons": 67840,
+      "dimensions": [
+        1.09691,
+        0.33366,
+        1.32536
+      ]
+    },
+    {
+      "vertices": 29152,
+      "edges": 78076,
+      "polygons": 49370,
+      "dimensions": [
+        2.02549,
+        0.47695,
+        2.78278
+      ]
+    }
+  ],
+  "note": "Inspection-only copy. Source GLB was imported without mesh edits."
+}
