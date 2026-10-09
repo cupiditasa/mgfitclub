@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="fa" dir="rtl" data-mg-theme="modern-light">
   <head>
     <meta charset="utf-8" />
     <meta
@@ -7,6 +7,13 @@
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
     <title>داشبورد ورزشکار | MG FitClub</title>
+    <script>
+      try {
+        const savedDashboardTheme = localStorage.getItem("mg_dashboard_theme");
+        if (["modern-light", "classic", "modern-dark"].includes(savedDashboardTheme))
+          document.documentElement.dataset.mgTheme = savedDashboardTheme;
+      } catch {}
+    </script>
     <style id="mg-access-cloak">body{visibility:hidden}</style>
     <style>
       @font-face {
@@ -1786,16 +1793,465 @@
       font-synthesis: none;
     }
   </style>
+  <style id="dashboard-theme-selector">
+    html[data-mg-theme="modern-light"] { background: #f7f6fb !important; }
+    html[data-mg-theme="modern-dark"] { background: #111018 !important; }
+    body.mg-athlete-dashboard[data-mg-theme="modern-light"] {
+      --mg-page: #f7f6fb;
+      --mg-surface: #fff;
+      --mg-surface-soft: #f4f0fc;
+      --mg-text: #282139;
+      --mg-muted: #655f72;
+      --mg-border: #e7e2ef;
+      --mg-accent: #7040e8;
+      --mg-accent-soft: #f0eaff;
+      --mg-green: #168b59;
+      --mg-shadow: 0 12px 32px rgba(42, 28, 73, .08);
+      color-scheme: light;
+      color: var(--mg-text);
+      background: var(--mg-page) !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme="modern-dark"] {
+      --mg-page: #111018;
+      --mg-surface: #1b1823;
+      --mg-surface-soft: #24202f;
+      --mg-text: #f4f0fa;
+      --mg-muted: #c2b9d0;
+      --mg-border: #40384c;
+      --mg-accent: #b99aff;
+      --mg-accent-soft: #302744;
+      --mg-green: #baf45b;
+      --mg-shadow: 0 14px 36px rgba(0, 0, 0, .24);
+      color-scheme: dark;
+      color: var(--mg-text);
+      background: var(--mg-page) !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .dashboard-bg,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .dashboard-bg-overlay {
+      display: none !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .app {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding-right: var(--rail, 0px) !important;
+      background: transparent;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"].menu-expanded .app {
+      padding-right: 334px !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .topbar {
+      position: relative !important;
+      left: auto !important;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch !important;
+      justify-content: flex-start;
+      width: min(calc(100% - 32px), 1160px) !important;
+      height: auto !important;
+      min-height: 0;
+      margin: 0 auto !important;
+      padding: 24px 20px 8px !important;
+      overflow: visible !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      color: var(--mg-text) !important;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .topbar > div {
+      position: relative !important;
+      inset: auto !important;
+      z-index: 2;
+      width: auto !important;
+      text-align: right !important;
+      transform: none !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .topbar h1,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .section-head h2 {
+      color: var(--mg-text) !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .topbar p,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .section-head a,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .quick small,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .chat p,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .panel-card p,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .gallery-pane-head > div p {
+      color: var(--mg-muted) !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .topbar .hero-card {
+      position: relative !important;
+      inset: auto !important;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between !important;
+      width: 100% !important;
+      height: auto !important;
+      min-height: 164px;
+      margin: 18px 0 0 !important;
+      padding: 24px 28px !important;
+      transform: none !important;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.18) !important;
+      border-radius: 24px !important;
+      background: linear-gradient(115deg, #4f2caf, #7040e8 62%, #895df0) !important;
+      box-shadow: 0 16px 34px rgba(79,44,175,.18) !important;
+      color: #fff !important;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .topbar .hero-card::before { display: none !important; }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .topbar .hero-copy {
+      position: relative !important;
+      inset: auto !important;
+      width: auto !important;
+      transform: none !important;
+      text-align: right !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .hero-copy strong,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .hero-copy span {
+      color: #fff !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .topbar .hero-card .avatar {
+      position: relative !important;
+      inset: auto !important;
+      flex: 0 0 58px;
+      width: 58px;
+      height: 58px;
+      margin: 0 !important;
+      border: 2px solid rgba(255,255,255,.7) !important;
+      background: #c7ff58 !important;
+      color: #292139 !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .content {
+      position: relative;
+      padding: 12px 20px 40px !important;
+      color: var(--mg-text);
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane > .section-head {
+      height: auto;
+      min-height: 0;
+      justify-content: flex-start;
+      width: min(100%, 900px);
+      margin: 16px auto 13px !important;
+      text-align: right;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu {
+      position: relative !important;
+      left: auto !important;
+      display: grid !important;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      gap: 12px !important;
+      width: min(100%, 900px) !important;
+      height: auto !important;
+      margin: 0 auto !important;
+      padding: 0;
+      border: 0 !important;
+      border-radius: 0;
+      background: transparent !important;
+      box-shadow: none !important;
+      isolation: auto;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu::before,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu::after { display: none !important; }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu .quick {
+      position: relative !important;
+      inset: auto !important;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: auto !important;
+      height: auto !important;
+      min-height: 130px !important;
+      margin: 0 !important;
+      padding: 17px 10px !important;
+      transform: none !important;
+      border: 1px solid var(--mg-border) !important;
+      border-radius: 18px !important;
+      background: var(--mg-surface) !important;
+      box-shadow: var(--mg-shadow) !important;
+      color: var(--mg-text) !important;
+      text-align: center;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      animation: none !important;
+      transition: transform .16s ease, border-color .16s ease, background-color .16s ease;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu .quick:hover {
+      transform: translateY(-2px) !important;
+      border-color: var(--mg-accent) !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu .quick .qicon {
+      display: grid;
+      place-items: center;
+      width: 42px !important;
+      height: 42px !important;
+      margin: 0 auto 7px !important;
+      border: 0 !important;
+      border-radius: 14px !important;
+      background: var(--mg-accent-soft) !important;
+      color: var(--mg-accent) !important;
+      font-size: 21px !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu .quick h3 {
+      margin: 0 0 2px;
+      color: var(--mg-text) !important;
+      font-size: 14px !important;
+      line-height: 1.5;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu .quick small { font-size: 12px !important; }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu .quick-center {
+      border-color: var(--mg-accent) !important;
+      background: var(--mg-accent-soft) !important;
+      box-shadow: var(--mg-shadow) !important;
+      animation: none !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .chat {
+      position: relative !important;
+      left: auto !important;
+      display: flex !important;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      width: min(100%, 900px) !important;
+      height: auto !important;
+      min-height: 76px;
+      margin: 16px auto 0 !important;
+      padding: 16px !important;
+      transform: none !important;
+      border: 1px solid var(--mg-border) !important;
+      border-radius: 18px !important;
+      background: var(--mg-surface) !important;
+      box-shadow: var(--mg-shadow) !important;
+      color: var(--mg-text) !important;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .chat::before { display: none !important; }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .market-shortcut {
+      width: min(100%, 900px);
+      margin: 12px auto;
+      text-align: right;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .market-shortcut a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 9px 14px;
+      border: 1px solid var(--mg-border);
+      border-radius: 13px;
+      background: var(--mg-surface);
+      color: var(--mg-accent);
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .chat > div,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .chat > a {
+      position: relative !important;
+      inset: auto !important;
+      width: auto !important;
+      transform: none !important;
+      text-align: right !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .chat strong,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .panel-card h2 { color: var(--mg-text) !important; }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .chat a,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .form-row button {
+      min-height: 44px;
+      border: 0;
+      border-radius: 13px;
+      background: var(--mg-green) !important;
+      color: #fff !important;
+      box-shadow: none !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme="modern-dark"] #homePane .chat a,
+    body.mg-athlete-dashboard[data-mg-theme="modern-dark"] .form-row button { color: #1a2111 !important; }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .panel-card,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .chatPane .panel-card {
+      border: 1px solid var(--mg-border) !important;
+      border-radius: 18px;
+      background: var(--mg-surface) !important;
+      box-shadow: var(--mg-shadow) !important;
+      color: var(--mg-text) !important;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .primary,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .pane-back {
+      border: 1px solid var(--mg-border);
+      border-radius: 12px;
+      background: var(--mg-accent) !important;
+      color: #fff !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme="modern-dark"] .primary,
+    body.mg-athlete-dashboard[data-mg-theme="modern-dark"] .pane-back { color: #211735 !important; }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .form-row input {
+      border: 1px solid var(--mg-border) !important;
+      background: var(--mg-surface-soft) !important;
+      color: var(--mg-text) !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .gallery {
+      border-color: var(--mg-border) !important;
+      background: var(--mg-surface) !important;
+      box-shadow: var(--mg-shadow) !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .gallery-mode-controls button.active,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .gallery-mode-controls button:hover {
+      background: var(--mg-accent) !important;
+      color: #fff !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .drawer {
+      border: 1px solid var(--mg-border) !important;
+      background: var(--mg-surface) !important;
+      color: var(--mg-text) !important;
+      box-shadow: var(--mg-shadow) !important;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .drawer-head h2,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .close { color: var(--mg-accent) !important; }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .profile-card,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .drawer.open .profile-card {
+      border: 1px solid var(--mg-border) !important;
+      background: var(--mg-surface-soft) !important;
+      color: var(--mg-text) !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .profile-card .avatar {
+      border-color: var(--mg-border) !important;
+      background: var(--mg-accent-soft) !important;
+      color: var(--mg-accent) !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .menu button { color: var(--mg-text) !important; }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .menu button:hover,
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .menu button.active {
+      background: var(--mg-accent-soft) !important;
+      color: var(--mg-accent) !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .logout {
+      border: 1px solid var(--mg-border);
+      background: var(--mg-surface-soft) !important;
+      color: var(--mg-text) !important;
+    }
+    .theme-switcher {
+      display: none;
+      margin: 14px 0;
+      padding: 13px;
+      border: 1px solid var(--mg-border, rgba(198,255,63,.24));
+      border-radius: 16px;
+      background: var(--mg-surface-soft, rgba(18,25,15,.9));
+      color: var(--mg-text, #f5f7f1);
+    }
+    .drawer.open .theme-switcher { display: block; }
+    .theme-switcher-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:9px; }
+    .theme-switcher-head strong { font-size:13px; }
+    .theme-switcher-head span { color:var(--mg-muted, #bac5b3); font-size:11px; }
+    .theme-options { display:grid; gap:7px; }
+    .theme-option {
+      display:flex;
+      align-items:center;
+      gap:9px;
+      width:100%;
+      min-height:44px;
+      padding:7px 9px;
+      border:1px solid var(--mg-border, rgba(198,255,63,.2));
+      border-radius:12px;
+      background:var(--mg-surface, rgba(12,17,10,.82));
+      color:var(--mg-text, #f5f7f1);
+      text-align:right;
+      cursor:pointer;
+    }
+    .theme-option[aria-pressed="true"] { border-color:var(--mg-accent, #c6ff3f); box-shadow:inset 0 0 0 1px var(--mg-accent, #c6ff3f); }
+    .theme-swatch { display:flex; flex:0 0 34px; height:26px; overflow:hidden; border:1px solid #8884; border-radius:8px; }
+    .theme-swatch i { flex:1; }
+    .theme-swatch-light i:first-child { background:#f7f6fb; }
+    .theme-swatch-light i:last-child { background:#7040e8; }
+    .theme-swatch-classic i:first-child { background:#080a08; }
+    .theme-swatch-classic i:last-child { background:#c6ff3f; }
+    .theme-swatch-dark i:first-child { background:#111018; }
+    .theme-swatch-dark i:last-child { background:#b99aff; }
+    .theme-option-label { flex:1; }
+    .theme-option-label strong { display:block; font-size:12px; }
+    .theme-option-label small { display:block; color:var(--mg-muted, #bac5b3); font-size:10px; }
+    .theme-option-check { visibility:hidden; color:var(--mg-accent, #c6ff3f); font-size:15px; }
+    .theme-option[aria-pressed="true"] .theme-option-check { visibility:visible; }
+    .theme-option:focus-visible { outline:3px solid var(--mg-accent, #c6ff3f); outline-offset:2px; }
+    body.mg-athlete-dashboard[data-mg-theme="modern-light"] .theme-switcher { --mg-border:#e7e2ef; --mg-surface:#fff; --mg-surface-soft:#f4f0fc; --mg-text:#282139; --mg-muted:#655f72; --mg-accent:#7040e8; }
+    body.mg-athlete-dashboard[data-mg-theme="modern-dark"] .theme-switcher { --mg-border:#40384c; --mg-surface:#1b1823; --mg-surface-soft:#24202f; --mg-text:#f4f0fa; --mg-muted:#c2b9d0; --mg-accent:#b99aff; }
+    .modern-menu-trigger { display:none; }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .modern-menu-trigger {
+      position:fixed;
+      top:16px;
+      right:16px;
+      z-index:24;
+      display:grid;
+      place-items:center;
+      width:48px;
+      height:48px;
+      border:1px solid var(--mg-border) !important;
+      border-radius:15px;
+      background:var(--mg-accent) !important;
+      color:#fff !important;
+      box-shadow:var(--mg-shadow);
+    }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .drawer > #menuButton { display:none !important; }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"].menu-expanded .modern-menu-trigger { visibility:hidden; }
+    @media (max-width: 899px) {
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] .app { padding-right:0 !important; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"].menu-expanded .app { padding-right:0 !important; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] .topbar {
+        width:100% !important;
+        padding:20px 76px 8px 16px !important;
+      }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] .content { padding:10px 16px 36px !important; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu .quick { min-height:116px !important; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] .drawer-backdrop { display:block !important; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] .drawer {
+        top:0 !important;
+        right:0 !important;
+        width:min(88vw,360px) !important;
+        height:100dvh !important;
+        padding:72px 16px 20px !important;
+        border-radius:20px 0 0 20px !important;
+        transform:translateX(105%) !important;
+      }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"].menu-expanded .drawer,
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] .drawer.open { transform:translateX(0) !important; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] .drawer-head,
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] .drawer.open .drawer-head { display:flex !important; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] .drawer .theme-switcher { display:block; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] .modern-menu-trigger { top:12px; right:12px; }
+    }
+    @media (max-width: 560px) {
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] .topbar .hero-card { min-height:142px; padding:18px !important; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] .hero-copy strong { font-size:18px; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] .hero-copy span { font-size:12px; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu .quick { min-height:108px !important; padding:13px 7px !important; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu .quick h3 { font-size:12px !important; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .orbit-menu .quick small { font-size:11px !important; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .chat { align-items:stretch; flex-direction:column; }
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] #homePane .chat > a { width:100% !important; text-align:center !important; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] *,
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] *::before,
+      body.mg-athlete-dashboard[data-mg-theme^="modern-"] *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+    }
+  </style>
   <meta name="robots" content="noindex, follow">
 </head>
-  <body class="mg-athlete-dashboard">
+  <body class="mg-athlete-dashboard" data-mg-theme="modern-light">
     <video
       class="dashboard-bg"
-      autoplay
       muted
       loop
       playsinline
-      preload="auto"
+      preload="none"
       poster="assets/video/dashboard-poster.jpg"
       aria-hidden="true"
     >
@@ -1807,6 +2263,9 @@
     <div class="dashboard-bg-overlay" aria-hidden="true"></div>
     <div class="app">
       <header class="topbar">
+        <button class="icon-btn modern-menu-trigger" id="modernMenuButton" type="button" aria-label="باز کردن منوی کاربری">
+          ☰
+        </button>
         <div>
           <h1>محمد کاشانی</h1>
           <p>ورزشکار · باشگاه MG</p>
@@ -1840,7 +2299,7 @@
               ><span class="qicon">◉</span>
               <h3>آموزش‌ها</h3>
               <small>کتابخانه حرکات</small></a
-            ><a class="quick quick-center" href="workout-view.html?demo=athlete"
+            ><a class="quick quick-center" href="workout-view.html"
               ><span class="qicon">🏋</span>
               <h3>برنامه تمرینی</h3>
               <small>برنامه امروز</small></a
@@ -1991,6 +2450,29 @@
         <strong>محمد کاشانی</strong><span>ورزشکار</span>
         <div class="wallet"><span>اعتبار کیف پول</span><b>۷۵۰,۰۰۰ ریال</b></div>
       </div>
+      <section class="theme-switcher" aria-labelledby="themeSwitcherTitle">
+        <div class="theme-switcher-head">
+          <strong id="themeSwitcherTitle">انتخاب تم</strong>
+          <span id="themeSelectionStatus" aria-live="polite">روشن جدید</span>
+        </div>
+        <div class="theme-options" role="group" aria-labelledby="themeSwitcherTitle">
+          <button class="theme-option" type="button" data-mg-theme-choice="modern-light" aria-pressed="true">
+            <span class="theme-swatch theme-swatch-light" aria-hidden="true"><i></i><i></i></span>
+            <span class="theme-option-label"><strong>روشن جدید</strong><small>پیش‌فرض پیشنهادی</small></span>
+            <span class="theme-option-check" aria-hidden="true">✓</span>
+          </button>
+          <button class="theme-option" type="button" data-mg-theme-choice="classic" aria-pressed="false">
+            <span class="theme-swatch theme-swatch-classic" aria-hidden="true"><i></i><i></i></span>
+            <span class="theme-option-label"><strong>کلاسیک</strong><small>ظاهر قبلی داشبورد</small></span>
+            <span class="theme-option-check" aria-hidden="true">✓</span>
+          </button>
+          <button class="theme-option" type="button" data-mg-theme-choice="modern-dark" aria-pressed="false">
+            <span class="theme-swatch theme-swatch-dark" aria-hidden="true"><i></i><i></i></span>
+            <span class="theme-option-label"><strong>دارک جدید</strong><small>نسخهٔ تیرهٔ طرح پیشنهادی</small></span>
+            <span class="theme-option-check" aria-hidden="true">✓</span>
+          </button>
+        </div>
+      </section>
       <nav class="menu">
         <button class="active" data-menu="home">
           <span class="mi">⌂</span>داشبورد کاربری</button
@@ -2009,12 +2491,62 @@
     </aside>
     <script src="mg-api.js?v=20260919-access"></script>
     <script>
+      const mgDashboardThemeKey = "mg_dashboard_theme";
+      const mgDashboardThemeLabels = {
+        "modern-light": "روشن جدید",
+        classic: "کلاسیک",
+        "modern-dark": "دارک جدید",
+      };
+      function setMgDashboardTheme(theme, persist = true) {
+        if (!Object.prototype.hasOwnProperty.call(mgDashboardThemeLabels, theme)) return;
+        document.body.dataset.mgTheme = theme;
+        document.documentElement.dataset.mgTheme = theme;
+        document.querySelectorAll("[data-mg-theme-choice]").forEach((button) => {
+          button.setAttribute(
+            "aria-pressed",
+            String(button.dataset.mgThemeChoice === theme),
+          );
+        });
+        const status = document.getElementById("themeSelectionStatus");
+        if (status) status.textContent = mgDashboardThemeLabels[theme];
+        if (persist) {
+          try {
+            localStorage.setItem(mgDashboardThemeKey, theme);
+          } catch {}
+        }
+        const dashboardVideo = document.querySelector(".dashboard-bg");
+        if (dashboardVideo) {
+          if (theme === "classic") {
+            if (dashboardVideo.readyState === 0) dashboardVideo.load();
+            dashboardVideo.play().catch(() => {});
+          } else {
+            dashboardVideo.pause();
+          }
+        }
+      }
+      let initialMgDashboardTheme = "modern-light";
+      try {
+        const saved = localStorage.getItem(mgDashboardThemeKey);
+        if (Object.prototype.hasOwnProperty.call(mgDashboardThemeLabels, saved))
+          initialMgDashboardTheme = saved;
+      } catch {}
+      setMgDashboardTheme(initialMgDashboardTheme, false);
+      document.querySelectorAll("[data-mg-theme-choice]").forEach((button) => {
+        button.addEventListener("click", () =>
+          setMgDashboardTheme(button.dataset.mgThemeChoice),
+        );
+      });
+      window.addEventListener("storage", (event) => {
+        if (event.key === mgDashboardThemeKey && event.newValue)
+          setMgDashboardTheme(event.newValue, false);
+      });
       const q = new URLSearchParams(location.search).get("demo");
       if (q !== "athlete" && !localStorage.getItem("mg_session"))
         location.href = "account.html";
       const drawer = document.querySelector("#drawer"),
         backdrop = document.querySelector("#drawerBackdrop"),
         menuButton = document.querySelector("#menuButton"),
+        modernMenuButton = document.querySelector("#modernMenuButton"),
         closeButton = document.querySelector("#closeDrawer");
       function openDrawer() {
         drawer.classList.add("open");
@@ -2033,6 +2565,7 @@
         else openDrawer();
       }
       menuButton.onclick = toggleDrawer;
+      modernMenuButton.onclick = toggleDrawer;
       closeButton.onclick = closeDrawer;
       backdrop.onclick = closeDrawer;
       const panes = {
@@ -2076,7 +2609,9 @@
         try {
           await MGApi.logout();
         } finally {
+          const savedTheme = localStorage.getItem(mgDashboardThemeKey);
           localStorage.clear();
+          if (savedTheme) localStorage.setItem(mgDashboardThemeKey, savedTheme);
           location.href = "account.html";
         }
       }
@@ -2269,11 +2804,14 @@
             cancelAnimationFrame(raf);
             raf = 0;
           }
-          video.play().catch(() => {});
+          if (document.body.dataset.mgTheme === "classic")
+            video.play().catch(() => {});
+          else video.pause();
         };
         document.addEventListener(
           "pointermove",
           (e) => {
+            if (document.body.dataset.mgTheme !== "classic") return;
             const x = clamp(e.clientX / innerWidth),
               y = clamp(e.clientY / innerHeight);
             overlay?.style.setProperty("--pointer-x", `${x * 100}%`);
@@ -2294,6 +2832,7 @@
         document.addEventListener(
           "pointerdown",
           (e) => {
+            if (document.body.dataset.mgTheme !== "classic") return;
             if (
               e.pointerType === "touch" &&
               !e.target.closest("button,a,input,.drawer,.gallery")
