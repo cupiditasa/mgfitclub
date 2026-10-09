@@ -13,6 +13,7 @@ const ENTRY_STATUSES = new Set(["pending", "approved", "rejected", "exited"]);
 const PROGRAM_KINDS = new Set(["training", "food"]);
 const API_VERSION = "20261008-news-sync-fontfix-1";
 const SUPPORT_PHONE = "09174922677";
+const SESSION_MAX_DAYS = 90;
 const APPROVAL_NOTICE = "فقط کاربران باشگاه می‌توانند ثبت‌نام کنند. درخواست شما پس از تأیید شماره برای مدیریت ارسال خواهد شد؛ پس از تأیید مدیر، دسترسی شما باز می‌شود.";
 const SMS_VERIFY_TEMPLATE_ID = 791767;
 const SMS_VERIFY_ENDPOINT = "https://api.sms.ir/v1/send/verify";
@@ -77,8 +78,11 @@ async function jsonBody(request, limit) {
 }
 function cors(request, env) {
   const origin = request.headers.get("Origin") || "";
-  const list = String(env.APP_ORIGIN || "*").split(",").map((x) => x.trim()).filter(Boolean);
-  const allowed = list.includes("*") || list.includes(origin) ? origin || "*" : list[0] || "*";
+  const list = new Set([
+    ...String(env.APP_ORIGIN || "*").split(",").map((x) => x.trim()).filter(Boolean),
+    "https://staff.mgfitclub.ir",
+  ]);
+  const allowed = list.has("*") || list.has(origin) ? origin || "*" : list.values().next().value || "*";
   return {
     "access-control-allow-origin": allowed,
     "access-control-allow-methods": "GET,POST,PATCH,OPTIONS",
@@ -155,7 +159,7 @@ async function currentUser(request, env) {
 async function issueSession(env, user) {
   const sessionToken = token();
   await env.DB.prepare(
-    "INSERT INTO sessions (id,user_id,token_hash,expires_at) VALUES (?,?,?,datetime('now','+30 days'))",
+    `INSERT INTO sessions (id,user_id,token_hash,expires_at) VALUES (?,?,?,datetime('now','+${SESSION_MAX_DAYS} days'))`,
   ).bind(makeId("sess"), user.id, await hash(sessionToken)).run();
   return sessionToken;
 }

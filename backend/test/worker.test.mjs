@@ -259,7 +259,7 @@ test("staff registrations require a real club and manager/support roles cannot b
   }
 });
 
-test("sessions last 30 days, reject expiry and are revoked by logout", async () => {
+test("sessions last at most 90 days, reject expiry and are revoked by logout", async () => {
   const { env, DB } = envFactory();
   const signIn = async () => {
     const result = await call(env, "/api/auth/test-login", {
@@ -272,7 +272,7 @@ test("sessions last 30 days, reject expiry and are revoked by logout", async () 
   };
   const headers = await signIn();
   const remaining = DB.prepare("SELECT julianday(expires_at)-julianday('now') AS days FROM sessions LIMIT 1").first();
-  assert.ok(remaining.days > 29.99 && remaining.days <= 30);
+  assert.ok(remaining.days > 89.99 && remaining.days <= 90);
   assert.equal((await call(env, "/api/me", { headers })).status, 200);
   await call(env, "/api/auth/logout", { method: "POST", headers });
   assert.equal((await call(env, "/api/me", { headers })).status, 401);
@@ -281,11 +281,36 @@ test("sessions last 30 days, reject expiry and are revoked by logout", async () 
   assert.equal((await call(env, "/api/me", { headers: nextHeaders })).status, 401);
 });
 
+test("90-day session migration extends only active unrevoked sessions", () => {
+  const { DB } = envFactory();
+  DB.prepare("INSERT INTO sessions (id,user_id,token_hash,expires_at,created_at) VALUES (?,?,?,?,datetime('now'))")
+    .bind("active_session", "u_athlete", "active_hash", DB.prepare("SELECT datetime('now','+20 days') AS value").first().value).run();
+  DB.prepare("INSERT INTO sessions (id,user_id,token_hash,expires_at,created_at,revoked_at) VALUES (?,?,?,datetime('now','+20 days'),datetime('now'),datetime('now'))")
+    .bind("revoked_session", "u_athlete", "revoked_hash").run();
+  DB.prepare("INSERT INTO sessions (id,user_id,token_hash,expires_at,created_at) VALUES (?,?,?,datetime('now','-1 day'),datetime('now','-31 days'))")
+    .bind("expired_session", "u_athlete", "expired_hash").run();
+  DB.db.exec(fs.readFileSync(new URL("../migrations/016-session-max-90-days.sql", import.meta.url), "utf8"));
+  const days = (id) => DB.prepare("SELECT julianday(expires_at)-julianday('now') AS value FROM sessions WHERE id=?").bind(id).first().value;
+  assert.ok(days("active_session") > 89.99 && days("active_session") <= 90);
+  assert.ok(days("revoked_session") > 19.99 && days("revoked_session") <= 20);
+  assert.ok(days("expired_session") < 0);
+});
+
+test("staff subdomain is allowed by API CORS when root origin is configured", async () => {
+  const { env } = envFactory();
+  env.APP_ORIGIN = "https://mgfitclub.ir";
+  const response = await worker.fetch(new Request("https://api.mgfitclub.ir/health", {
+    headers: { Origin: "https://staff.mgfitclub.ir" },
+  }), env);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("access-control-allow-origin"), "https://staff.mgfitclub.ir");
+});
+
 test("health and role-aware test login", async () => {
   const { env } = envFactory();
   const health = await call(env, "/health");
   assert.equal(health.status, 200);
-  assert.equal(health.body.version, "20261008-news-seo-1");
+  assert.equal(health.body.version, "20261008-news-sync-fontfix-1");
   assert.deepEqual(health.body.otp, { provider: "sms.ir", method: "verify", templateId: 791767, parameter: "CODE" });
   const login = await call(env, "/api/auth/test-login", {
     method: "POST",

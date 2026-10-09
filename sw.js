@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261008-news-sync-fontfix";
+const CACHE_NAME = "mg-fitclub-v20261008-public-switch-session90";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -10,6 +10,8 @@ const APP_SHELL = [
   "./workouts.css?v=20261005",
   "./",
   "./account.html",
+  "./dashboard-switch.js?v=20261008",
+  "./dashboard-switch.css?v=20261008",
   "./mg-api.js?v=20261006-api-domain",
   "./access-control.js?v=20260928-device",
   "./device-verification.html",

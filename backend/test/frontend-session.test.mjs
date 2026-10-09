@@ -11,7 +11,11 @@ const loginSource = [...accountSource.matchAll(/<script>([\s\S]*?)<\/script>/g)]
 
 function browser(fetcher, saved = "saved-token") {
   const values = new Map(saved ? [["mg_session", saved], ["mg_role", "athlete"]] : []);
-  const elements = Object.fromEntries(["target", "code", "action", "status", "roles", "roleToggle"].map(id => [id, { value: "", style: {}, textContent: "", disabled: false }]));
+  const elements = Object.fromEntries(["target", "code", "action", "status", "roles", "roleToggle", "loginInstructions"].map(id => [id, {
+    value: "", style: {}, textContent: "", disabled: false, hidden: false,
+    addEventListener() {}, querySelectorAll() { return []; },
+    classList: { toggle() {}, remove() {} },
+  }]));
   const context = vm.createContext({
     Headers, URL, AbortSignal, fetch: fetcher,
     localStorage: { getItem: key => values.get(key) || null, setItem: (key, val) => values.set(key, val), removeItem: key => values.delete(key) },
@@ -25,8 +29,9 @@ function browser(fetcher, saved = "saved-token") {
 }
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
-test("head-loaded API handles missing body and restores the server role without caching", async () => {
+test("staff sessions on athlete login are revoked and moved to the staff login origin", async () => {
   const b = browser(async (url, options) => {
+    if (url.endsWith("/api/auth/logout")) return Response.json({ ok: true });
     assert.ok(url.endsWith("/api/me"));
     assert.equal(options.cache, "no-store");
     assert.equal(options.headers.get("authorization"), "Bearer saved-token");
@@ -34,8 +39,8 @@ test("head-loaded API handles missing body and restores the server role without 
   });
   vm.runInContext(loginSource, b.context);
   await flush();
-  assert.equal(b.context.location.redirect, "coach-dashboard.html");
-  assert.equal(b.values.get("mg_role"), "coach");
+  assert.equal(b.context.location.redirect, "https://staff.mgfitclub.ir/account.html");
+  assert.equal(b.values.has("mg_session"), false);
 });
 
 test("invalid or expired session is cleared and login remains available", async () => {

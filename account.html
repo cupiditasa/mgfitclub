@@ -93,6 +93,14 @@
         color: var(--text);
         border: 1px solid #59634a;
       }
+      .roles[hidden],#roleToggle[hidden],.staff-entry[hidden] { display: none !important; }
+      .staff-entry {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-height: 34px; margin-top: 10px; padding: 6px 11px;
+        border: 1px solid #59634a; border-radius: 9px; color: var(--muted);
+        text-decoration: none; font-size: 12px;
+      }
+      .staff-entry:hover { border-color: var(--lime); color: var(--lime); }
       .roles {
         display: none;
         grid-template-columns: repeat(2, 1fr);
@@ -221,13 +229,13 @@
       <a class="back" href="index.html">بازگشت</a>
       <div class="brand">MG FITCLUB</div>
       <h1>ورود به حساب</h1>
-      <p class="muted">
+      <p id="loginInstructions" class="muted">
         نقش خود را انتخاب کنید، سپس شمارهٔ موبایل و کد ورود را وارد کنید.
       </p>
-      <button id="roleToggle" class="button ghost" type="button">
+      <button id="roleToggle" class="button ghost" type="button" hidden>
         انتخاب نقش: ورزشکار
       </button>
-      <div id="roles" class="roles">
+      <div id="roles" class="roles" hidden>
         <button class="role active" data-role="athlete" type="button">
           ورزشکار</button
         ><button class="role" data-role="coach" type="button">مربی</button
@@ -264,10 +272,14 @@
         autocomplete="one-time-code"
       /><button id="action" class="button" type="button">دریافت کد ورود</button>
       <p id="status" role="status" aria-live="polite"></p>
+      <a id="staffEntry" class="staff-entry" href="https://staff.mgfitclub.ir/account.html">ورود ادمین</a>
+      <a id="athleteEntry" class="staff-entry" href="https://mgfitclub.ir/account.html" hidden>ورود ورزشکار</a>
     </main>
     <script>
       (() => {
         const API = "https://api.mgfitclub.ir",
+          STAFF_ORIGIN = "https://staff.mgfitclub.ir",
+          isStaffHost = String(location.hostname || "").toLowerCase() === "staff.mgfitclub.ir",
           $ = (id) => document.getElementById(id),
           target = $("target"),
           code = $("code"),
@@ -287,7 +299,7 @@
         let sent = false,
           busy = false,
           challengeId = "",
-          selected = "athlete";
+          selected = isStaffHost ? "manager" : "athlete";
         const names = {
             admin: "مدیریت کل",
             athlete: "ورزشکار",
@@ -315,6 +327,21 @@
             if (!r.ok) throw Error(d.error || "خطای سرویس");
             return d;
           };
+        Array.from(roles.querySelectorAll?.("[data-role]") || []).forEach((option) => {
+          option.hidden = isStaffHost ? option.dataset.role === "athlete" : option.dataset.role !== "athlete";
+        });
+        Array.from(roles.querySelectorAll?.(".role") || []).forEach((option) => option.classList.toggle("active", option.dataset.role === selected));
+        roleToggle.hidden = !isStaffHost;
+        roles.hidden = !isStaffHost;
+        if (isStaffHost) {
+          $("loginInstructions").textContent = "نقش سازمانی خود را انتخاب کنید، سپس شمارهٔ موبایل و کد ورود را وارد کنید.";
+          roleToggle.textContent = "انتخاب نقش: " + names[selected];
+          $("staffEntry").hidden = true;
+          $("athleteEntry").hidden = false;
+          document.querySelector(".back").href = "https://mgfitclub.ir/";
+        } else {
+          $("loginInstructions").textContent = "برای ورود، شمارهٔ موبایل و کد یک‌بارمصرف را وارد کنید.";
+        }
         roleToggle.onclick = () => roles.classList.toggle("open");
         target.addEventListener("input", () => {
           target.value = target.value.replace(/[^0-9۰-۹+()\s-]/g, "");
@@ -396,6 +423,16 @@
           try {
             const user = await window.MGApi.restoreSession();
             if (user) {
+              if (!isStaffHost && user.role !== "athlete") {
+                await window.MGApi.logout();
+                location.replace(STAFF_ORIGIN + "/account.html");
+                return;
+              }
+              if (isStaffHost && user.role === "athlete") {
+                await window.MGApi.logout();
+                location.replace("https://mgfitclub.ir/account.html");
+                return;
+              }
               location.replace(routes[user.role] || routes.athlete);
               return;
             }
