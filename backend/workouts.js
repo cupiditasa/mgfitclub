@@ -14,6 +14,32 @@ export async function handleWorkouts(request,env,c){
  const db=env.DB,now=new Date().toISOString(),out=(x,s=200)=>response(x,s,headers),coach=hasRole(user,'coach'),support=hasRole(user,'support');
  const audit=(action,id,meta)=>db.prepare("INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,metadata_json) VALUES (?,?,?,'workout',?,?)").bind(makeId('audit'),user.id,action,id,JSON.stringify(meta));
  const payload=async()=>jsonBody(request,100000);
+ if(path==='/api/workouts/saved'&&request.method==='GET'){
+  if(!hasRole(user,'athlete'))fail('athlete_only',403);
+  const rows=(await db.prepare('SELECT id,title,focus,goal,body_json,created_at FROM athlete_saved_workouts WHERE athlete_id=? ORDER BY created_at DESC,id DESC LIMIT 100').bind(user.id).all()).results;
+  return out({programs:rows.map(row=>({id:row.id,title:row.title,focus:row.focus,goal:row.goal,exercises:JSON.parse(row.body_json),createdAt:row.created_at}))});
+ }
+ if(path==='/api/workouts/saved'&&request.method==='POST'){
+  if(!hasRole(user,'athlete'))fail('athlete_only',403);
+  const b=await jsonBody(request,30000),title=typeof b.title==='string'?b.title.trim():'',focus=typeof b.focus==='string'?b.focus.trim():'',goal=typeof b.goal==='string'?b.goal.trim():'',items=b.exercises;
+  if(!keyOK(b.requestKey)||title.length<2||title.length>140||focus.length<2||focus.length>80||goal.length<2||goal.length>120||!Array.isArray(items)||items.length<1||items.length>30)fail('invalid_saved_workout');
+  const allowedBlocks=new Set(['گرم‌کردن','اصلی','سردکردن']);
+  const exercises=items.map(item=>{
+   const key=typeof item?.key==='string'?item.key:'';
+   const name=typeof item?.name==='string'?item.name.trim():'';
+   const block=typeof item?.block==='string'?item.block:'';
+   const sets=Number(item?.sets),reps=typeof item?.reps==='string'?item.reps.trim():String(item?.reps??'');
+   if(!/^[A-Za-z0-9_-]{1,48}$/.test(key)||name.length<2||name.length>140||!allowedBlocks.has(block)||!Number.isInteger(sets)||sets<1||sets>12||reps.length<1||reps.length>24||!/^[0-9۰-۹٠-٩\-–×xX\s]+$/.test(reps))fail('invalid_saved_workout');
+   return {key,name,block,sets,reps};
+  });
+  const bodyJson=JSON.stringify(exercises),id=makeId('saved_workout');
+  await db.batch([
+   db.prepare('INSERT INTO athlete_saved_workouts(id,athlete_id,request_key,title,focus,goal,body_json) VALUES (?,?,?,?,?,?,?) ON CONFLICT(athlete_id,request_key) DO NOTHING').bind(id,user.id,b.requestKey,title,focus,goal,bodyJson),
+   db.prepare("INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,metadata_json) SELECT ?,?,'athlete_workout_saved','athlete_saved_workout',id,? FROM athlete_saved_workouts WHERE athlete_id=? AND request_key=?").bind(makeId('audit'),user.id,JSON.stringify({title,count:exercises.length}),user.id,b.requestKey)
+  ]);
+  const saved=await db.prepare('SELECT id,title,focus,goal,body_json,created_at FROM athlete_saved_workouts WHERE athlete_id=? AND request_key=?').bind(user.id,b.requestKey).first();
+  return out({ok:true,program:{id:saved.id,title:saved.title,focus:saved.focus,goal:saved.goal,exercises:JSON.parse(saved.body_json),createdAt:saved.created_at}},saved.id===id?201:200);
+ }
  const own=async id=>{if(!coach)fail('coach_only',403);const row=await db.prepare('SELECT * FROM workout_templates WHERE id=? AND coach_id=?').bind(id,user.id).first();if(!row)fail('program_not_found',404);return row};
  const readyProgram=async value=>{
   let program;try{program=validateWorkout(value)}catch(e){fail(e.message)}

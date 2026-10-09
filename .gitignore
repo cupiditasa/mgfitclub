@@ -6,6 +6,7 @@
 node_modules/
 .wrangler/
 **/.wrangler/
+.private-backups/
 attendance-bridge/.test/
 .test/
 *.mgp

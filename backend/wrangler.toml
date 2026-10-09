@@ -1,0 +1,16 @@
+name = "mg-fitclub-api"
+main = "worker.js"
+compatibility_date = "2026-09-12"
+keep_vars = true
+workers_dev = false
+
+[triggers]
+crons = ["0 * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mg-fitclub-production"
+database_id = "f9484d9b-05aa-4d7f-97e1-b0a16a0cac36"
+
+[ai]
+binding = "AI"

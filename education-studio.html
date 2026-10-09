@@ -417,6 +417,8 @@ button.badge:disabled{opacity:.55;cursor:wait}
 .planrow h3{margin:0;font-size:14px;font-weight:800}
 .planrow button{margin-inline-start:auto;color:var(--lime);font-size:11px;font-weight:700}
 .planrow button:hover{text-decoration:underline}
+#savePrivateWeek{border:1px solid rgba(201,242,79,.45);border-radius:10px;padding:8px 12px;background:rgba(201,242,79,.1);color:var(--lime)}
+#savePrivateWeek:disabled{opacity:.55;cursor:wait}
 .planitems{display:grid;gap:7px;max-height:170px;overflow-y:auto;overflow-x:hidden;padding-inline-end:3px}
 .planitem{display:grid;grid-template-columns:auto 1fr auto;gap:9px;align-items:center;border:1px solid var(--line2);
   background:rgba(4,10,13,.4);border-radius:12px;padding:8px 11px;transition:.2s}
@@ -818,6 +820,7 @@ button.badge:disabled{opacity:.55;cursor:wait}
       <h3>برنامهٔ پیشنهادی</h3>
       <button id="rebuildWeek" type="button">ساخت دوباره</button>
       <button id="copyWeek" type="button">کپی برنامه</button>
+      <button id="savePrivateWeek" type="button">ذخیره در برنامه‌های من</button>
     </div>
     <div class="planitems" id="weekItems" style="max-height:340px">
       <div class="empty-note">برای شروع، هدف و گروه عضلانی را از بالا انتخاب کن.</div>
@@ -2259,6 +2262,21 @@ $('#copyWeek').onclick=async()=>{
   catch(e){const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();
     try{document.execCommand('copy');toast('برنامه کپی شد')}catch(_){toast('کپی نشد؛ دستی بردار',true)}
     ta.remove();}
+};
+$('#savePrivateWeek').onclick=async event=>{
+  const button=event.currentTarget;
+  if(!weekPlan.length){toast('ابتدا یک برنامهٔ هفتگی بساز یا حرکت‌ها را انتخاب کن',true);return}
+  const token=localStorage.getItem('mg_session');
+  if(!token){toast('برای ذخیرهٔ خصوصی، ابتدا وارد حساب ورزشکاری‌ات شو',true);setTimeout(()=>location.href='account.html',700);return}
+  const exercises=weekPlan.map(item=>{const exercise=byKey(item.k);return exercise?{key:item.k,name:exercise.fa,sets:Number(item.sets),reps:String(item.reps),block:item.block}:null}).filter(Boolean);
+  if(!exercises.length){toast('برنامه‌ای برای ذخیره پیدا نشد',true);return}
+  button.disabled=true;button.textContent='در حال ذخیره…';
+  try{
+    const response=await fetch('https://api.mgfitclub.ir/api/workouts/saved',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+token},body:JSON.stringify({requestKey:crypto.randomUUID(),title:'برنامهٔ هفتگی · '+weekFocus+' · '+weekGoal,focus:weekFocus,goal:weekGoal,exercises})});
+    const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.error||'save_failed');
+    toast('برنامه در بخش خصوصی و داشبوردت ذخیره شد');
+  }catch(error){toast(error.message==='athlete_only'?'برای ذخیره باید با حساب ورزشکار وارد شوی':error.message==='workouts_disabled'?'ذخیرهٔ برنامه هنوز روی سرور فعال نشده است':'ذخیره انجام نشد؛ اتصال حساب را بررسی و دوباره تلاش کن',true)}
+  finally{button.disabled=false;button.textContent='ذخیره در برنامه‌های من'}
 };
 
 /* ---------- راه‌اندازی ---------- */

@@ -18,7 +18,7 @@ export async function handleCoachMarket(request,env,c){
  const db=env.DB,now=new Date().toISOString(),out=(value,status=200)=>response(value,status,headers);
  const coach=hasRole(user,'coach'),athlete=hasRole(user,'athlete'),manager=hasRole(user,'manager'),support=hasRole(user,'support');
  const audit=(action,id,meta={})=>db.prepare("INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,metadata_json) VALUES (?,?,?,'coach_service_request',?,?)").bind(makeId('audit'),user.id,action,id,JSON.stringify(meta));
- const body=()=>jsonBody(request,25000);
+ const body=()=>jsonBody(request,220000);
  if(path==='/api/coach-market/offers'&&request.method==='GET'){
   if(!coach)fail('coach_only',403);
   const row=await db.prepare('SELECT * FROM coach_offerings WHERE coach_id=?').bind(user.id).first();
@@ -56,8 +56,15 @@ export async function handleCoachMarket(request,env,c){
   const flag=kind==='workout'?'workout_enabled':kind==='nutrition'?'nutrition_enabled':'in_person_enabled';if(!coachRow[flag])fail('offering_disabled',409);
   let pkg=null;if(kind!=='nutrition'){const list=JSON.parse(kind==='workout'?coachRow.workout_packages_json:coachRow.in_person_packages_json);pkg=list.find(x=>x.id===b.packageId);if(!pkg)fail('package_not_found',404)}
   const notes=typeof b.notes==='string'?b.notes.trim():'';if(notes.length>2000)fail('notes_too_long');
+  let intake={heightCm:null,weightKg:null,goal:null,photoData:null};
+  if(kind==='workout'){
+   const height=Number(b.heightCm),weight=Number(b.weightKg),goal=typeof b.goal==='string'?b.goal.trim():'';
+   const photo=typeof b.photoData==='string'?b.photoData:'';
+   if(!Number.isInteger(height)||height<80||height>250||!Number.isFinite(weight)||weight<25||weight>350||goal.length<2||goal.length>500||photo.length>160000||!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(photo))fail('workout_intake_required');
+   intake={heightCm:height,weightKg:weight,goal,photoData:photo};
+  }
   const id=makeId('coach_request');
-  await db.batch([db.prepare('INSERT INTO coach_service_requests(id,request_key,club_id,coach_id,athlete_id,kind,package_id,package_name,package_price,notes,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(athlete_id,request_key) DO NOTHING').bind(id,b.requestKey,user.club_id,coachRow.coach_id,user.id,kind,pkg?.id||null,pkg?.name||null,pkg?.price??null,notes,now,now),db.prepare("INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,metadata_json) SELECT ?,?,'coach_request_created','coach_service_request',?,? WHERE EXISTS(SELECT 1 FROM coach_service_requests WHERE id=?)").bind(makeId('audit'),user.id,id,JSON.stringify({kind,coachId:coachRow.coach_id}),id)]);
+  await db.batch([db.prepare('INSERT INTO coach_service_requests(id,request_key,club_id,coach_id,athlete_id,kind,package_id,package_name,package_price,notes,height_cm,weight_kg,goal,photo_data,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(athlete_id,request_key) DO NOTHING').bind(id,b.requestKey,user.club_id,coachRow.coach_id,user.id,kind,pkg?.id||null,pkg?.name||null,pkg?.price??null,notes,intake.heightCm,intake.weightKg,intake.goal,intake.photoData,now,now),db.prepare("INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,metadata_json) SELECT ?,?,'coach_request_created','coach_service_request',?,? WHERE EXISTS(SELECT 1 FROM coach_service_requests WHERE id=?)").bind(makeId('audit'),user.id,id,JSON.stringify({kind,coachId:coachRow.coach_id}),id)]);
   const saved=await db.prepare('SELECT id,status FROM coach_service_requests WHERE athlete_id=? AND request_key=?').bind(user.id,b.requestKey).first();return out({ok:true,request:saved},saved.id===id?201:200);
  }
  if(path==='/api/coach-market/requests'&&request.method==='GET'){
