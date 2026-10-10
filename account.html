@@ -13,6 +13,7 @@
     />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="apple-touch-icon" href="assets/brand/mg-mark-acid.webp" />
+    <script>window.MG_API_BASE = "https://mgfitclub.ir/api/api01";</script>
     <script src="mg-api.js?v=20261006-api-domain"></script>
     <title>ورود | MG FitClub</title>
     <style>
@@ -278,7 +279,7 @@
     </main>
     <script>
       (() => {
-        const API = "https://api.mgfitclub.ir",
+        const API = window.MG_API_BASE || "https://api.mgfitclub.ir",
           STAFF_LOGIN_URL = "https://mgfitclub.ir/staff/login",
           isStaffPortal = String(location.hostname || "").toLowerCase() === "staff.mgfitclub.ir" || /^\/staff\/login\/?$/.test(String(location.pathname || "")),
           $ = (id) => document.getElementById(id),

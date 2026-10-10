@@ -65,6 +65,11 @@ test("staff login route loads the shared login page while retaining its URL", ()
   assert.match(apiSource, /staff\\\/login/);
 });
 
+test("account login sends API requests through the same-origin API path gateway", () => {
+  assert.match(accountSource, /window\.MG_API_BASE\s*=\s*["']https:\/\/mgfitclub\.ir\/api\/api01["']/);
+  assert.match(accountSource, /const API = window\.MG_API_BASE \|\|/);
+});
+
 test("invalid or expired session is cleared and login remains available", async () => {
   const b = browser(async () => Response.json({ error: "unauthorized" }, { status: 401 }));
   vm.runInContext(loginSource, b.context);
