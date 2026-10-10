@@ -11,6 +11,7 @@ const loginSource = [...accountSource.matchAll(/<script>([\s\S]*?)<\/script>/g)]
 
 function browser(fetcher, saved = "saved-token", pathname = "") {
   const values = new Map(saved ? [["mg_session", saved], ["mg_role", "athlete"]] : []);
+  const sessionValues = new Map();
   const elements = Object.fromEntries(["target", "code", "action", "status", "roles", "roleToggle", "loginInstructions", "staffEntry", "athleteEntry"].map(id => [id, {
     value: "", style: {}, textContent: "", disabled: false, hidden: false,
     addEventListener() {}, querySelectorAll() { return []; },
@@ -19,13 +20,15 @@ function browser(fetcher, saved = "saved-token", pathname = "") {
   const context = vm.createContext({
     Headers, URL, AbortSignal, fetch: fetcher,
     localStorage: { getItem: key => values.get(key) || null, setItem: (key, val) => values.set(key, val), removeItem: key => values.delete(key) },
+    sessionStorage: { getItem: key => sessionValues.get(key) || null, setItem: (key, val) => sessionValues.set(key, val), removeItem: key => sessionValues.delete(key) },
+    crypto: { subtle: { async digest(_algorithm, data) { const bytes = new Uint8Array(data); return new Uint8Array([bytes[0], bytes[1], bytes.length, 4]).buffer; } } }, TextEncoder,
     document: { body: null, documentElement: { dataset: {} }, head: { appendChild() {} }, cookie: "", addEventListener() {}, createElement: () => ({ dataset: {}, addEventListener() {} }), getElementById: id => elements[id], querySelector: () => ({ href: "" }) },
     location: { hostname: "mgfitclub.ir", pathname, search: "", href: `https://mgfitclub.ir${pathname || "/account.html"}`, replace(url) { this.redirect = url; } },
     history: { replaceState() {} },
   });
   context.window = context;
   vm.runInContext(apiSource, context);
-  return { context, values, elements };
+  return { context, values, sessionValues, elements };
 }
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
@@ -110,6 +113,22 @@ test("late restore cannot restore a session after logout", async () => {
   respond(Response.json({ user: { role: "coach" } }));
   assert.equal(await pending, null);
   assert.equal(b.values.has("mg_role"), false);
+});
+
+test("recent verified continuity is tab-local, expires, and is cleared on logout", async () => {
+  const b = browser(async () => Response.json({ user: { id: "u1", role: "athlete", access_state: "approved" } }));
+  const user = await b.context.MGApi.restoreSession();
+  assert.equal(user.role, "athlete");
+  assert.equal((await b.context.MGApi.recentVerifiedUser()).id, "u1");
+  b.values.set("mg_session", "another-account-token");
+  assert.equal(await b.context.MGApi.recentVerifiedUser(), null);
+  b.values.set("mg_session", "saved-token");
+  const record = JSON.parse(b.sessionValues.get("mg_recent_verified_user"));
+  record.verifiedAt -= 16 * 60 * 1000;
+  b.sessionValues.set("mg_recent_verified_user", JSON.stringify(record));
+  assert.equal(await b.context.MGApi.recentVerifiedUser(), null);
+  await b.context.MGApi.logout();
+  assert.equal(b.sessionValues.has("mg_recent_verified_user"), false);
 });
 
 test("service worker bypasses API, cross-origin, authorized and no-store requests", () => {

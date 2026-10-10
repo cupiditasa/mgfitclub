@@ -91,6 +91,42 @@
   const clearSession = () => {
     localStorage.removeItem("mg_session");
     localStorage.removeItem("mg_role");
+    try { sessionStorage.removeItem("mg_recent_verified_user"); } catch {}
+  };
+
+  const verificationFingerprint = async (token) => {
+    if (!token || !window.crypto?.subtle || typeof TextEncoder === "undefined") return "";
+    const digest = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+    return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+  };
+
+  // Short-lived continuity hint for an outage immediately after login.
+  // This only unlocks the static shell; API authorization remains server-side.
+  const rememberVerifiedUser = async (user) => {
+    const token = localStorage.getItem("mg_session");
+    if (!token || !user?.role || !user?.access_state) return false;
+    try {
+      const fingerprint = await verificationFingerprint(token);
+      if (!fingerprint || localStorage.getItem("mg_session") !== token) return false;
+      sessionStorage.setItem("mg_recent_verified_user", JSON.stringify({
+        user: { id: user.id, role: user.role, access_state: user.access_state },
+        fingerprint,
+        verifiedAt: Date.now(),
+      }));
+      return true;
+    } catch { return false; }
+  };
+
+  const recentVerifiedUser = async () => {
+    const token = localStorage.getItem("mg_session");
+    if (!token) return null;
+    try {
+      const record = JSON.parse(sessionStorage.getItem("mg_recent_verified_user") || "null");
+      if (!record?.user?.role || !record.user.access_state || !Number.isFinite(record.verifiedAt) ||
+          Date.now() - record.verifiedAt < 0 || Date.now() - record.verifiedAt > 15 * 60 * 1000) return null;
+      const fingerprint = await verificationFingerprint(token);
+      return fingerprint && fingerprint === record.fingerprint ? record.user : null;
+    } catch { return null; }
   };
 
   // Only the server can decide whether a persisted session is still valid.
@@ -102,6 +138,7 @@
       if (localStorage.getItem("mg_session") !== saved) return null;
       if (!data.user?.role) throw new Error("Invalid session response");
       localStorage.setItem("mg_role", data.user.role);
+      await rememberVerifiedUser(data.user);
       return data.user;
     } catch (error) {
       if (error.status === 401) {
@@ -150,6 +187,8 @@
     logout,
     clearSession,
     restoreSession,
+    rememberVerifiedUser,
+    recentVerifiedUser,
     errorMessage: (error) => ({
       support_phone_only: "این شماره اجازه ورود به پنل پشتیبانی ندارد.",
       club_account_required: "حساب مدیریت باشگاه باید توسط پشتیبانی ساخته شود.",
@@ -171,7 +210,7 @@
   const page = location.pathname?.split("/").pop();
   if (page && page !== "account.html" && !/^\/staff\/login\/?$/.test(String(location.pathname || ""))) {
     const guard = document.createElement("script");
-    guard.src = "access-control.js?v=20261005-bridge";
+    guard.src = "access-control.js?v=20261010-athlete-api-outage";
     guard.onerror = () => {
       document.getElementById("mg-access-cloak")?.remove();
       document.body.replaceChildren(document.createTextNode("بررسی دسترسی ممکن نشد؛ اتصال اینترنت را بررسی و صفحه را دوباره بارگذاری کنید."));

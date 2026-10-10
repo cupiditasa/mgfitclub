@@ -23,5 +23,5 @@ test('unavailable or unauthorized API never fabricates balance',async()=>{
  for(const status of [401,503,500]){const b=browser(async()=>{throw {status}});b.events['mg:access-ready']();await flush();assert.equal(b.els.trials.children.length,0);assert.equal(b.els.refresh.disabled,false);if(status===401)assert.equal(b.els.status.children[0].href,'account.html');}
 });
 test('pilot HTML is private and uses existing session guard',()=>{
- const html=fs.readFileSync(new URL('attendance-pilot.html',root),'utf8');assert.match(html,/id="mg-access-cloak"/);assert.match(html,/noindex, follow/);assert.match(html,/mg-api.js\?v=20260919-access/);assert.ok(!html.includes('bridgeToken'));
+ const html=fs.readFileSync(new URL('attendance-pilot.html',root),'utf8');assert.match(html,/id="mg-access-cloak"/);assert.match(html,/noindex, follow/);assert.match(html,/mg-api.js\?v=20261010-offline-continuity/);assert.ok(!html.includes('bridgeToken'));
 });

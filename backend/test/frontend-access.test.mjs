@@ -7,7 +7,7 @@ const frontendRoot = fs.existsSync(new URL("../../current/access-control.js", im
 const source = fs.readFileSync(new URL("access-control.js", frontendRoot), "utf8");
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
-function guardBrowser(path, getUser) {
+function guardBrowser(path, getUser, stored = {}) {
   class Element {
     constructor(tag) { this.tagName = tag; this.children = []; this.dataset = {}; this.style = {}; this.inert = false; this.attributes = {}; }
     append(...nodes) { for (const node of nodes) { node.parent = this; this.children.push(node); } }
@@ -31,16 +31,22 @@ function guardBrowser(path, getUser) {
   };
   const cloak = new Element("style"); cloak.id = "mg-access-cloak"; document.head.append(cloak);
   const content = new Element("main"); document.body.append(content);
-  const events = [];
-  const context = vm.createContext({ document, Date,
+  const events = [], listeners = {};
+  const local = new Map(Object.entries(stored));
+  const localStorage = {
+    getItem(key) { return local.has(key) ? local.get(key) : null; },
+    setItem(key, value) { local.set(key, String(value)); },
+    removeItem(key) { local.delete(key); },
+  };
+  const context = vm.createContext({ document, Date, localStorage,
     location: { pathname: "/" + path, search: "?demo=coach", replace(url) { this.redirect = url; } },
-    MGApi: { restoreSession: getUser, request: async () => ({ profile: {} }), logout: async () => {} },
+    MGApi: { restoreSession: getUser, recentVerifiedUser: async () => null, request: async () => ({ profile: {} }), logout: async () => {} },
     CustomEvent: class { constructor(type, data) { this.type = type; this.detail = data.detail; } },
-    addEventListener() {}, dispatchEvent: event => events.push(event),
+    addEventListener(type, listener) { listeners[type] = listener; }, dispatchEvent: event => events.push(event),
   });
   context.window = context;
   vm.runInContext(source, context);
-  return { context, document, content, events };
+  return { context, document, content, events, listeners };
 }
 
 test("pending staff see a modal lock with role/profile controls, never an unlocked dashboard", async () => {
@@ -85,13 +91,74 @@ test("server/network failure leaves the dashboard locked", async () => {
   assert.equal(b.events.length, 0);
 });
 
+test("athlete dashboard shell stays open on API failure with an existing athlete session", async () => {
+  const b = guardBrowser("dashboard.html", async () => { throw Error("API unavailable"); }, {
+    mg_session: "existing-session", mg_role: "athlete",
+  });
+  assert.equal(b.document.getElementById("mg-access-lock"), null, "do not show a blocking lock while the API is being checked");
+  assert.equal(b.document.getElementById("mg-network-notice").attributes.role, "status");
+  await flush();
+  assert.equal(b.document.getElementById("mg-access-lock"), null);
+  assert.equal(b.document.getElementById("mg-network-notice").attributes.role, "status");
+  assert.equal(b.content.inert, false);
+  assert.equal(b.context.MGCurrentUser.role, "athlete");
+  assert.equal(b.events[0].type, "mg:access-ready");
+});
+
+test("offline shell exception is limited to athlete dashboard with an existing session", async () => {
+  for (const [path, stored] of [
+    ["coach-dashboard.html", { mg_session: "session", mg_role: "athlete" }],
+    ["dashboard.html", { mg_role: "athlete" }],
+    ["dashboard.html", { mg_session: "session", mg_role: "coach" }],
+  ]) {
+    const b = guardBrowser(path, async () => { throw Error("API unavailable"); }, stored);
+    await flush();
+    assert.ok(b.document.getElementById("mg-access-lock"), `${path} with ${JSON.stringify(stored)}`);
+    assert.equal(b.content.inert, true);
+  }
+});
+
+test("freshly verified approved session keeps the dashboard shell open during a network outage", async () => {
+  const b = guardBrowser("coach-dashboard.html", async () => { throw Error("offline"); });
+  b.context.MGApi.recentVerifiedUser = async () => ({ id: "coach-1", role: "coach", access_state: "approved" });
+  await flush();
+  assert.equal(b.document.getElementById("mg-access-lock"), null);
+  assert.equal(b.document.getElementById("mg-network-notice").attributes.role, "status");
+  assert.equal(b.content.inert, false);
+  assert.equal(b.events[0].type, "mg:access-ready");
+});
+
+test("pending or wrong-role cached user cannot open a protected dashboard offline", async () => {
+  const pending = guardBrowser("coach-dashboard.html", async () => { throw Error("offline"); });
+  pending.context.MGApi.recentVerifiedUser = async () => ({ role: "coach", access_state: "pending" });
+  await flush();
+  assert.ok(pending.document.getElementById("mg-access-lock"));
+  const wrongRole = guardBrowser("support.html", async () => { throw Error("offline"); });
+  wrongRole.context.MGApi.recentVerifiedUser = async () => ({ role: "athlete", access_state: "approved" });
+  await flush();
+  assert.ok(wrongRole.document.getElementById("mg-access-lock"));
+});
+
+test("a previously validated page remains open and offers recovery after the connection drops", async () => {
+  let attempts = 0;
+  const b = guardBrowser("coach-dashboard.html", async () => {
+    if (++attempts === 1) return { role: "coach", access_state: "approved" };
+    throw Error("offline");
+  });
+  await flush();
+  await b.listeners.online(); await flush();
+  assert.equal(b.document.getElementById("mg-access-lock"), null);
+  assert.ok(b.document.getElementById("mg-network-notice"));
+  assert.equal(b.content.inert, false);
+});
+
 test("all protected HTML pages load the guard version and begin cloaked; inline scripts compile", () => {
   const root = frontendRoot;
   for (const file of fs.readdirSync(root).filter(name => name.endsWith(".html"))) {
     const html = fs.readFileSync(new URL(file, root), "utf8");
     if (html.includes("mg-api.js") && file !== "account.html") {
       assert.ok(html.includes('id="mg-access-cloak"'), file);
-      assert.ok(/mg-api\.js\?v=(20260919-access|20261005)/.test(html), file);
+      assert.ok(/mg-api\.js\?v=20261010-offline-continuity/.test(html), file);
     }
     for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
       if (/type=["'](?:application\/(?:ld\+)?json|module)/.test(match[1]) || !match[2].trim()) continue;
