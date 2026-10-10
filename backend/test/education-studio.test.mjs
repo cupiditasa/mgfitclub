@@ -14,6 +14,18 @@ test('education studio private-save action compiles and posts a curated week pla
  assert.ok(source.includes("localStorage.getItem('mg_session')"));
 });
 
+test('education studio separates movement learning from workout building with accessible tabs',()=>{
+ assert.match(html,/id="workspaceSwitch"[^>]*role="tablist"/);
+ assert.match(html,/id="learnTab"[^>]*aria-controls="studio"/);
+ assert.match(html,/id="planTab"[^>]*aria-controls="planner"/);
+ assert.match(html,/body\[data-workspace="learn"\] #planner/);
+ assert.match(html,/body\[data-workspace="plan"\] #studio/);
+ const module=html.match(/<script type="module">\s*([\s\S]*?)\s*<\/script>/);
+ assert.ok(module,'education studio module script is present');
+ assert.match(module[1],/function setWorkspace\(mode,writeHash=true\)/);
+ assert.match(module[1],/window\.addEventListener\('hashchange'/);
+});
+
 test('mobile movement library is an accessible off-canvas drawer, not a model overlay',()=>{
  assert.match(html,/\.layout\{display:grid;grid-template-columns:minmax\(0,1fr\);min-width:0\}/);
  assert.match(html,/\.library:not\(\.open\)\{visibility:hidden;pointer-events:none;transform:translateX\(110%\)!important\}/);

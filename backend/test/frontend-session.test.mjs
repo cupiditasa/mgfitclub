@@ -20,7 +20,7 @@ function browser(fetcher, saved = "saved-token") {
     Headers, URL, AbortSignal, fetch: fetcher,
     localStorage: { getItem: key => values.get(key) || null, setItem: (key, val) => values.set(key, val), removeItem: key => values.delete(key) },
     document: { body: null, documentElement: { dataset: {} }, addEventListener() {}, getElementById: id => elements[id] },
-    location: { search: "", href: "https://site.test/account.html", replace(url) { this.redirect = url; } },
+    location: { pathname: "", search: "", href: "https://site.test/account.html", replace(url) { this.redirect = url; } },
     history: { replaceState() {} },
   });
   context.window = context;

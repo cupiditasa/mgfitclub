@@ -1,4 +1,46 @@
 (() => {
+  const mgThemePages = new Set([
+    "access-center.html", "account.html", "admin.html", "admin-dashboard.html",
+    "admin-transactions.html", "attendance-pilot.html", "club-attendance.html",
+    "coach.html", "coach-dashboard.html", "coach-directory.html", "coach-food.html",
+    "coach-market-log.html", "coach-offerings.html", "coach-profile.html",
+    "coach-programs.html", "coach-requests.html", "coach-transactions.html",
+    "dashboard.html", "device-verification.html", "education.html", "exercise-library.html",
+    "food-plan-view.html", "nutrition.html", "nutrition-builder.html", "nutrition-view.html",
+    "secretary.html", "support.html", "training-request.html", "workout-log.html", "workout-view.html",
+  ]);
+  const mgThemeValues = new Set([
+    "modern-light", "modern-light-coral", "modern-dark", "modern-dark-coral", "classic",
+  ]);
+  const mgThemePageName = location.pathname.split("/").filter(Boolean).pop() || "index.html";
+  if (mgThemePages.has(mgThemePageName)) {
+    const cookieTheme = document.cookie.match(/(?:^|;\s*)mg_theme_pref=([^;]*)/)?.[1];
+    let storedTheme = "";
+    try { storedTheme = localStorage.getItem("mg_dashboard_theme") || ""; } catch {}
+    let theme = "";
+    try { theme = decodeURIComponent(cookieTheme || ""); } catch {}
+    if (!mgThemeValues.has(theme)) theme = storedTheme;
+    if (!mgThemeValues.has(theme)) theme = "modern-light";
+    document.documentElement.dataset.mgTheme = theme;
+    if (document.body) document.body.dataset.mgTheme = theme;
+    else document.addEventListener("DOMContentLoaded", () => {
+      if (document.body) document.body.dataset.mgTheme = theme;
+    }, { once: true });
+
+    if (!document.querySelector("link[data-mg-global-theme]")) {
+      const themeCss = document.createElement("link");
+      themeCss.rel = "stylesheet";
+      themeCss.href = "mg-global-theme.css?v=20261009-palette4";
+      themeCss.dataset.mgGlobalTheme = "true";
+      document.head.appendChild(themeCss);
+    }
+    if (!document.querySelector("script[data-mg-global-theme]")) {
+      const themeScript = document.createElement("script");
+      themeScript.src = "mg-global-theme.js?v=20261009-palette4";
+      themeScript.dataset.mgGlobalTheme = "true";
+      document.head.appendChild(themeScript);
+    }
+  }
   const activeSession = localStorage.getItem("mg_session");
   const applyStoredRole = () => {
     if (localStorage.getItem("mg_session") && document.body && !document.body.dataset.role)

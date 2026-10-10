@@ -9,8 +9,9 @@
     <title>داشبورد ورزشکار | MG FitClub</title>
     <script>
       try {
-        const savedDashboardTheme = localStorage.getItem("mg_dashboard_theme");
-        if (["modern-light", "classic", "modern-dark"].includes(savedDashboardTheme))
+        const cookieTheme = document.cookie.match(/(?:^|;\s*)mg_theme_pref=([^;]*)/)?.[1];
+        const savedDashboardTheme = decodeURIComponent(cookieTheme || localStorage.getItem("mg_dashboard_theme") || "");
+        if (["modern-light", "modern-light-coral", "modern-dark", "modern-dark-coral", "classic"].includes(savedDashboardTheme))
           document.documentElement.dataset.mgTheme = savedDashboardTheme;
       } catch {}
     </script>
@@ -1794,38 +1795,42 @@
     }
   </style>
   <style id="dashboard-theme-selector">
-    html[data-mg-theme="modern-light"] { background: #f7f6fb !important; }
-    html[data-mg-theme="modern-dark"] { background: #111018 !important; }
+    html[data-mg-theme="modern-light"], html[data-mg-theme="modern-light-coral"] { background: #f3f6f0 !important; }
+    html[data-mg-theme="modern-dark"], html[data-mg-theme="modern-dark-coral"] { background: #0d1510 !important; }
     body.mg-athlete-dashboard[data-mg-theme="modern-light"] {
-      --mg-page: #f7f6fb;
+      --mg-page: #f3f6f0;
       --mg-surface: #fff;
-      --mg-surface-soft: #f4f0fc;
-      --mg-text: #282139;
-      --mg-muted: #655f72;
-      --mg-border: #e7e2ef;
-      --mg-accent: #7040e8;
-      --mg-accent-soft: #f0eaff;
-      --mg-green: #168b59;
-      --mg-shadow: 0 12px 32px rgba(42, 28, 73, .08);
+      --mg-surface-soft: #edf3e7;
+      --mg-text: #20291e;
+      --mg-muted: #56624f;
+      --mg-border: #dce5d7;
+      --mg-accent: #4d6d1c;
+      --mg-accent-soft: #e8f1d8;
+      --mg-green: #b8e63f;
+      --mg-on-primary: #18210f;
+      --mg-shadow: 0 12px 32px rgba(35, 49, 29, .10);
       color-scheme: light;
       color: var(--mg-text);
       background: var(--mg-page) !important;
     }
     body.mg-athlete-dashboard[data-mg-theme="modern-dark"] {
-      --mg-page: #111018;
-      --mg-surface: #1b1823;
-      --mg-surface-soft: #24202f;
-      --mg-text: #f4f0fa;
-      --mg-muted: #c2b9d0;
-      --mg-border: #40384c;
-      --mg-accent: #b99aff;
-      --mg-accent-soft: #302744;
-      --mg-green: #baf45b;
+      --mg-page: #0d1510;
+      --mg-surface: #17221a;
+      --mg-surface-soft: #202d23;
+      --mg-text: #f2f7ef;
+      --mg-muted: #bac7b7;
+      --mg-border: #394a3d;
+      --mg-accent: #d6ff78;
+      --mg-accent-soft: #2a3b1d;
+      --mg-green: #c6ff3f;
+      --mg-on-primary: #17200f;
       --mg-shadow: 0 14px 36px rgba(0, 0, 0, .24);
-      color-scheme: dark;
+      color-scheme: inherit;
       color: var(--mg-text);
       background: var(--mg-page) !important;
     }
+    body.mg-athlete-dashboard[data-mg-theme="modern-light-coral"] { --mg-secondary:#a3354d; --mg-accent:#4d6d1c; }
+    body.mg-athlete-dashboard[data-mg-theme="modern-dark-coral"] { --mg-secondary:#ff91a3; --mg-accent:#d6ff78; }
     body.mg-athlete-dashboard[data-mg-theme^="modern-"] .dashboard-bg,
     body.mg-athlete-dashboard[data-mg-theme^="modern-"] .dashboard-bg-overlay {
       display: none !important;
@@ -1897,9 +1902,9 @@
       overflow: hidden;
       border: 1px solid rgba(255,255,255,.18) !important;
       border-radius: 24px !important;
-      background: linear-gradient(115deg, #4f2caf, #7040e8 62%, #895df0) !important;
-      box-shadow: 0 16px 34px rgba(79,44,175,.18) !important;
-      color: #fff !important;
+      background: linear-gradient(115deg, var(--mg-primary), var(--mg-primary) 62%, color-mix(in srgb, var(--mg-primary), white 16%)) !important;
+      box-shadow: 0 16px 34px color-mix(in srgb, var(--mg-primary) 22%, transparent) !important;
+      color: var(--mg-on-primary, #17200f) !important;
       -webkit-backdrop-filter: none;
       backdrop-filter: none;
     }
@@ -1913,7 +1918,7 @@
     }
     body.mg-athlete-dashboard[data-mg-theme^="modern-"] .hero-copy strong,
     body.mg-athlete-dashboard[data-mg-theme^="modern-"] .hero-copy span {
-      color: #fff !important;
+      color: var(--mg-on-primary, #17200f) !important;
     }
     body.mg-athlete-dashboard[data-mg-theme^="modern-"] .topbar .hero-card .avatar {
       position: relative !important;
@@ -2065,12 +2070,10 @@
       min-height: 44px;
       border: 0;
       border-radius: 13px;
-      background: var(--mg-green) !important;
-      color: #fff !important;
+      background: var(--mg-primary) !important;
+      color: var(--mg-on-primary, #17200f) !important;
       box-shadow: none !important;
     }
-    body.mg-athlete-dashboard[data-mg-theme="modern-dark"] #homePane .chat a,
-    body.mg-athlete-dashboard[data-mg-theme="modern-dark"] .form-row button { color: #1a2111 !important; }
     body.mg-athlete-dashboard[data-mg-theme^="modern-"] .panel-card,
     body.mg-athlete-dashboard[data-mg-theme^="modern-"] .chatPane .panel-card {
       border: 1px solid var(--mg-border) !important;
@@ -2085,11 +2088,9 @@
     body.mg-athlete-dashboard[data-mg-theme^="modern-"] .pane-back {
       border: 1px solid var(--mg-border);
       border-radius: 12px;
-      background: var(--mg-accent) !important;
-      color: #fff !important;
+      background: var(--mg-primary) !important;
+      color: var(--mg-on-primary, #17200f) !important;
     }
-    body.mg-athlete-dashboard[data-mg-theme="modern-dark"] .primary,
-    body.mg-athlete-dashboard[data-mg-theme="modern-dark"] .pane-back { color: #211735 !important; }
     body.mg-athlete-dashboard[data-mg-theme^="modern-"] .form-row input {
       border: 1px solid var(--mg-border) !important;
       background: var(--mg-surface-soft) !important;
@@ -2102,8 +2103,8 @@
     }
     body.mg-athlete-dashboard[data-mg-theme^="modern-"] .gallery-mode-controls button.active,
     body.mg-athlete-dashboard[data-mg-theme^="modern-"] .gallery-mode-controls button:hover {
-      background: var(--mg-accent) !important;
-      color: #fff !important;
+      background: var(--mg-primary) !important;
+      color: var(--mg-on-primary, #17200f) !important;
     }
     body.mg-athlete-dashboard[data-mg-theme^="modern-"] .drawer {
       border: 1px solid var(--mg-border) !important;
@@ -2150,7 +2151,7 @@
     .theme-switcher-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:9px; }
     .theme-switcher-head strong { font-size:13px; }
     .theme-switcher-head span { color:var(--mg-muted, #bac5b3); font-size:11px; }
-    .theme-options { display:grid; gap:7px; }
+    .theme-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
     .theme-option {
       display:flex;
       align-items:center;
@@ -2168,20 +2169,28 @@
     .theme-option[aria-pressed="true"] { border-color:var(--mg-accent, #c6ff3f); box-shadow:inset 0 0 0 1px var(--mg-accent, #c6ff3f); }
     .theme-swatch { display:flex; flex:0 0 34px; height:26px; overflow:hidden; border:1px solid #8884; border-radius:8px; }
     .theme-swatch i { flex:1; }
-    .theme-swatch-light i:first-child { background:#f7f6fb; }
-    .theme-swatch-light i:last-child { background:#7040e8; }
+    .theme-swatch-light i:first-child { background:#f3f6f0; }
+    .theme-swatch-light i:nth-child(2) { background:#b8e63f; }
+    .theme-swatch-light i:nth-child(3) { background:#d4b96e; }
+    .theme-swatch-light-coral i:first-child { background:#f3f6f0; }
+    .theme-swatch-light-coral i:nth-child(2) { background:#b8e63f; }
+    .theme-swatch-light-coral i:nth-child(3) { background:#a3354d; }
     .theme-swatch-classic i:first-child { background:#080a08; }
-    .theme-swatch-classic i:last-child { background:#c6ff3f; }
-    .theme-swatch-dark i:first-child { background:#111018; }
-    .theme-swatch-dark i:last-child { background:#b99aff; }
+    .theme-swatch-classic i:nth-child(2) { background:#c6ff3f; }
+    .theme-swatch-classic i:nth-child(3) { background:#aab4a4; }
+    .theme-swatch-dark i:first-child { background:#0d1510; }
+    .theme-swatch-dark i:nth-child(2) { background:#c6ff3f; }
+    .theme-swatch-dark i:nth-child(3) { background:#f0c866; }
+    .theme-swatch-dark-coral i:first-child { background:#0d1510; }
+    .theme-swatch-dark-coral i:nth-child(2) { background:#c6ff3f; }
+    .theme-swatch-dark-coral i:nth-child(3) { background:#ff91a3; }
     .theme-option-label { flex:1; }
     .theme-option-label strong { display:block; font-size:12px; }
     .theme-option-label small { display:block; color:var(--mg-muted, #bac5b3); font-size:10px; }
     .theme-option-check { visibility:hidden; color:var(--mg-accent, #c6ff3f); font-size:15px; }
     .theme-option[aria-pressed="true"] .theme-option-check { visibility:visible; }
     .theme-option:focus-visible { outline:3px solid var(--mg-accent, #c6ff3f); outline-offset:2px; }
-    body.mg-athlete-dashboard[data-mg-theme="modern-light"] .theme-switcher { --mg-border:#e7e2ef; --mg-surface:#fff; --mg-surface-soft:#f4f0fc; --mg-text:#282139; --mg-muted:#655f72; --mg-accent:#7040e8; }
-    body.mg-athlete-dashboard[data-mg-theme="modern-dark"] .theme-switcher { --mg-border:#40384c; --mg-surface:#1b1823; --mg-surface-soft:#24202f; --mg-text:#f4f0fa; --mg-muted:#c2b9d0; --mg-accent:#b99aff; }
+    body.mg-athlete-dashboard[data-mg-theme^="modern-"] .theme-switcher { --mg-border:var(--mg-border); --mg-surface:var(--mg-surface); --mg-surface-soft:var(--mg-surface-soft); --mg-text:var(--mg-text); --mg-muted:var(--mg-muted); --mg-accent:var(--mg-accent); }
     .modern-menu-trigger { display:none; }
     body.mg-athlete-dashboard[data-mg-theme^="modern-"] .modern-menu-trigger {
       position:fixed;
@@ -2457,18 +2466,28 @@
         </div>
         <div class="theme-options" role="group" aria-labelledby="themeSwitcherTitle">
           <button class="theme-option" type="button" data-mg-theme-choice="modern-light" aria-pressed="true">
-            <span class="theme-swatch theme-swatch-light" aria-hidden="true"><i></i><i></i></span>
-            <span class="theme-option-label"><strong>روشن جدید</strong><small>پیش‌فرض پیشنهادی</small></span>
+            <span class="theme-swatch theme-swatch-light" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="theme-option-label"><strong>روشن · طلایی و نقره‌ای</strong><small>تم جدید · پیش‌فرض</small></span>
             <span class="theme-option-check" aria-hidden="true">✓</span>
           </button>
-          <button class="theme-option" type="button" data-mg-theme-choice="classic" aria-pressed="false">
-            <span class="theme-swatch theme-swatch-classic" aria-hidden="true"><i></i><i></i></span>
-            <span class="theme-option-label"><strong>کلاسیک</strong><small>ظاهر قبلی داشبورد</small></span>
+          <button class="theme-option" type="button" data-mg-theme-choice="modern-light-coral" aria-pressed="false">
+            <span class="theme-swatch theme-swatch-light-coral" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="theme-option-label"><strong>روشن · مرجانی</strong><small>لایم با تأکید مرجانی</small></span>
             <span class="theme-option-check" aria-hidden="true">✓</span>
           </button>
           <button class="theme-option" type="button" data-mg-theme-choice="modern-dark" aria-pressed="false">
-            <span class="theme-swatch theme-swatch-dark" aria-hidden="true"><i></i><i></i></span>
-            <span class="theme-option-label"><strong>دارک جدید</strong><small>نسخهٔ تیرهٔ طرح پیشنهادی</small></span>
+            <span class="theme-swatch theme-swatch-dark" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="theme-option-label"><strong>تیره · طلایی و نقره‌ای</strong><small>نسخهٔ تیرهٔ تم جدید</small></span>
+            <span class="theme-option-check" aria-hidden="true">✓</span>
+          </button>
+          <button class="theme-option" type="button" data-mg-theme-choice="modern-dark-coral" aria-pressed="false">
+            <span class="theme-swatch theme-swatch-dark-coral" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="theme-option-label"><strong>تیره · مرجانی</strong><small>لایم با تأکید مرجانی</small></span>
+            <span class="theme-option-check" aria-hidden="true">✓</span>
+          </button>
+          <button class="theme-option" type="button" data-mg-theme-choice="classic" aria-pressed="false">
+            <span class="theme-swatch theme-swatch-classic" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="theme-option-label"><strong>کلاسیک</strong><small>ظاهر قبلی داشبورد</small></span>
             <span class="theme-option-check" aria-hidden="true">✓</span>
           </button>
         </div>
@@ -2493,9 +2512,11 @@
     <script>
       const mgDashboardThemeKey = "mg_dashboard_theme";
       const mgDashboardThemeLabels = {
-        "modern-light": "روشن جدید",
+        "modern-light": "روشن · طلایی و نقره‌ای",
+        "modern-light-coral": "روشن · مرجانی",
+        "modern-dark": "تیره · طلایی و نقره‌ای",
+        "modern-dark-coral": "تیره · مرجانی",
         classic: "کلاسیک",
-        "modern-dark": "دارک جدید",
       };
       function setMgDashboardTheme(theme, persist = true) {
         if (!Object.prototype.hasOwnProperty.call(mgDashboardThemeLabels, theme)) return;
@@ -2513,6 +2534,7 @@
           try {
             localStorage.setItem(mgDashboardThemeKey, theme);
           } catch {}
+          window.dispatchEvent(new CustomEvent("mg:theme-change", { detail: { theme } }));
         }
         const dashboardVideo = document.querySelector(".dashboard-bg");
         if (dashboardVideo) {
@@ -2526,7 +2548,8 @@
       }
       let initialMgDashboardTheme = "modern-light";
       try {
-        const saved = localStorage.getItem(mgDashboardThemeKey);
+        const cookieTheme = document.cookie.match(/(?:^|;\s*)mg_theme_pref=([^;]*)/)?.[1];
+        const saved = decodeURIComponent(cookieTheme || localStorage.getItem(mgDashboardThemeKey) || "");
         if (Object.prototype.hasOwnProperty.call(mgDashboardThemeLabels, saved))
           initialMgDashboardTheme = saved;
       } catch {}

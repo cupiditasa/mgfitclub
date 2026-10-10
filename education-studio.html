@@ -68,6 +68,18 @@ button{cursor:pointer;border:0;background:none}
 ::-webkit-scrollbar-thumb{background:rgba(233,244,238,.14);border-radius:9px;border:2px solid transparent;background-clip:content-box}
 ::-webkit-scrollbar-thumb:hover{background:rgba(201,242,79,.45);background-clip:content-box}
 .shell{max-width:1720px;margin:auto;padding:0 clamp(14px,2.4vw,36px) 70px}
+.workspace-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:760px;margin:12px auto 18px;padding:7px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.035);box-shadow:var(--sh-2)}
+.workspace-tab{display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:10px 16px;border:1px solid transparent;border-radius:13px;color:var(--muted);font-size:14px;font-weight:800;transition:background .2s,color .2s,border-color .2s,box-shadow .2s}
+.workspace-tab:hover{color:var(--ink);background:rgba(255,255,255,.045)}
+.workspace-tab[aria-selected=true]{color:#101812;background:var(--grad);border-color:rgba(201,242,79,.55);box-shadow:0 8px 24px -12px rgba(201,242,79,.75)}
+.workspace-tab svg{width:19px;height:19px;flex:0 0 auto}
+.workspace-intro{max-width:760px;margin:0 auto 22px;text-align:center;color:var(--muted);font-size:12px;line-height:1.9}
+.navlinks{display:none!important}
+body[data-workspace="learn"] #planner,body[data-workspace="learn"] #steps,body[data-workspace="learn"] .hero{display:none!important}
+body[data-workspace="plan"] #studio,body[data-workspace="plan"] #steps,body[data-workspace="plan"] .hero{display:none!important}
+body[data-workspace="plan"] #planner{display:block;margin-top:0}
+body[data-workspace="learn"] #details .card.plan{display:none}
+@media(max-width:640px){.workspace-switch{margin:8px auto 13px;padding:5px;gap:5px}.workspace-tab{min-height:48px;padding:8px 7px;font-size:12px;gap:6px}.workspace-intro{font-size:11px;margin-bottom:14px}}
 kbd,.kbd{padding:2px 6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;color:var(--lime);background:rgba(4,10,12,.8);font:600 10px var(--fontnum);letter-spacing:.03em}
 
 /* ---------- ریل پیشرفت اسکرول ---------- */
@@ -552,6 +564,9 @@ button.badge:disabled{opacity:.55;cursor:wait}
   body.drawer-open{overflow:hidden;overscroll-behavior:none}
 }
 @media(max-width:640px){
+  .topbar{gap:8px}
+  .topnav{margin-inline-start:auto}
+  #paletteBtn,#helpBtn{display:none}
   .brandmeta{display:none}
   .statuspill{display:none}
   .stage-head{padding:14px 15px 0}
@@ -589,8 +604,9 @@ button.badge:disabled{opacity:.55;cursor:wait}
 }
 @page{size:A4;margin:13mm}
 </style>
+<script src="mg-global-theme.js?v=20261009-palette4"></script>
 </head>
-<body>
+<body data-workspace="learn">
 <div class="rail" id="rail" aria-hidden="true"></div>
 <div class="aurora a1" aria-hidden="true"></div>
 <div class="aurora a2" aria-hidden="true"></div>
@@ -615,6 +631,18 @@ button.badge:disabled{opacity:.55;cursor:wait}
   </div>
 </header>
 
+<nav class="workspace-switch" id="workspaceSwitch" role="tablist" aria-label="بخش آموزش و برنامه‌ریزی">
+  <button class="workspace-tab" id="learnTab" type="button" role="tab" aria-selected="true" aria-controls="studio" tabindex="0" data-workspace-tab="learn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 5.5v15M8 7h8M8 11h8"/></svg>
+    <span>آموزش حرکت‌ها</span>
+  </button>
+  <button class="workspace-tab" id="planTab" type="button" role="tab" aria-selected="false" aria-controls="planner" tabindex="-1" data-workspace-tab="plan">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 3h10a2 2 0 0 1 2 2v16H5V5a2 2 0 0 1 2-2Z"/><path d="M9 3v4h6V3M8 12h8M8 16h5"/><path d="m16 17 1.5 1.5L21 15"/></svg>
+    <span>ساخت برنامهٔ تمرینی</span>
+  </button>
+</nav>
+<p class="workspace-intro" id="workspaceIntro">حرکتی را از فهرست انتخاب کن تا اجرای سه‌بعدی، عضلات درگیر و نکات فرم را ببینی.</p>
+
 <main id="top">
 <section class="hero reveal">
   <div>
@@ -636,7 +664,7 @@ button.badge:disabled{opacity:.55;cursor:wait}
   </div>
 </section>
 
-<section class="layout" id="studio">
+<section class="layout" id="studio" role="tabpanel" aria-labelledby="learnTab" tabindex="0">
   <aside class="panel library reveal" id="library" aria-labelledby="libTitle">
     <div class="secthead"><span class="num">۰۱</span><h2 id="libTitle">کتابخانهٔ حرکت‌ها</h2><span class="countchip" id="libCount">۱۵۵</span>
       <button class="library-close" id="libraryClose" type="button" aria-label="بستن فهرست حرکت‌ها" title="بستن فهرست حرکت‌ها">
@@ -810,7 +838,7 @@ button.badge:disabled{opacity:.55;cursor:wait}
   </article>
 </section>
 
-<section class="bottom" id="planner" style="grid-template-columns:1fr">
+<section class="bottom" id="planner" role="tabpanel" aria-labelledby="planTab" tabindex="0" style="grid-template-columns:1fr">
   <article class="panel card reveal">
     <div class="secthead"><span class="num">۰۴</span><h2>مسیر تمرین هفتگی · تمرین‌ساز هوشمند</h2><span class="countchip" id="weekCount">۰ حرکت</span></div>
     <p class="summary">هدف و گروه عضلانی تمرینت را انتخاب کن؛ تمرین‌یار از کتابخانهٔ ۱۵۵ حرکتی یک برنامهٔ متوازن می‌چیند — با گرم‌کردن، حرکات اصلی و سردکردن.</p>
@@ -2177,6 +2205,32 @@ buildFilters();
 $('#mCount').textContent=fa(DATA.length);$('#mAnim').textContent=pad(ANIMN);
 $('#search').addEventListener('input',renderLibrary);
 $$('.segbtn').forEach(b=>b.onclick=()=>{listView=b.dataset.view;$$('.segbtn').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));renderLibrary()});
+function setWorkspace(mode,writeHash=true){
+  const workspace=mode==='plan'?'plan':'learn';
+  document.body.dataset.workspace=workspace;
+  $('#learnTab').setAttribute('aria-selected',String(workspace==='learn'));
+  $('#learnTab').tabIndex=workspace==='learn'?0:-1;
+  $('#planTab').setAttribute('aria-selected',String(workspace==='plan'));
+  $('#planTab').tabIndex=workspace==='plan'?0:-1;
+  $('#workspaceIntro').textContent=workspace==='plan'
+    ?'گروه عضلانی و هدف را انتخاب کن، برنامهٔ هفتگی را بساز و در صورت ورود به حساب، در برنامه‌های خودت ذخیره کن.'
+    :'حرکتی را از فهرست انتخاب کن تا اجرای سه‌بعدی، عضلات درگیر و نکات فرم را ببینی.';
+  closeDrawer(false);
+  if(writeHash){history.replaceState(null,'',location.pathname+location.search+(workspace==='plan'?'#planner':'#studio'));window.scrollTo({top:0,behavior:'smooth'});}
+}
+$('#workspaceSwitch').addEventListener('click',event=>{
+  const tab=event.target.closest('[data-workspace-tab]');
+  if(tab)setWorkspace(tab.dataset.workspaceTab);
+});
+$('#workspaceSwitch').addEventListener('keydown',event=>{
+  if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+  event.preventDefault();
+  const next=event.key==='Home'?'learn':event.key==='End'?'plan':event.key==='ArrowLeft'?'plan':'learn';
+  setWorkspace(next);$(next==='plan'?'#planTab':'#learnTab').focus();
+});
+window.addEventListener('hashchange',()=>setWorkspace(location.hash==='#planner'?'plan':'learn',false));
+setWorkspace(location.hash==='#planner'?'plan':'learn',false);
+if(location.hash==='#planner')window.scrollTo(0,0);
 $('#topSearchFocus').onclick=()=>palOpen();
 $('#paletteBtn').onclick=palOpen;
 $('#palInput').addEventListener('input',e=>palRender(e.target.value));
