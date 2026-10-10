@@ -14,6 +14,8 @@ test('login accepts phone only and shows a numeric mobile keyboard', () => {
   assert.match(field, /autocomplete="tel"/);
   assert.match(html, /شمارهٔ موبایل معتبر وارد کنید/);
   assert.doesNotMatch(html, /ایمیل|email|includes\("@"\)/i);
+  assert.doesNotMatch(html, /clubChoice|clubLabel|انتخاب باشگاه|باشگاه خود را انتخاب کنید/);
   assert.match(html, /\/api\/auth\/request-code[\s\S]{0,120}\{ phone, role: selected/);
+  assert.match(html, /staffPortal:\s*isStaffPortal\s*&&\s*\["coach", "secretary"\]\.includes\(selected\)/);
   assert.match(html, /\/api\/auth\/verify-code[\s\S]{0,120}\{[\s\S]{0,80}phone,/);
 });

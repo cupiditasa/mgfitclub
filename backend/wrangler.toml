@@ -4,6 +4,9 @@ compatibility_date = "2026-09-12"
 keep_vars = true
 workers_dev = false
 
+[vars]
+STAFF_DEFAULT_CLUB_ID = "club_fbb1b21f-93cf-4a88-bbd8-ca5db63b0d2d"
+
 [triggers]
 crons = ["0 * * * *"]
 

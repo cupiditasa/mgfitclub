@@ -32,6 +32,9 @@ class D1Mock {
     this.db.exec(fs.readFileSync(new URL("../schema.sql", import.meta.url), "utf8"));
     this.db.exec(fs.readFileSync(new URL("../migrations/001-runtime.sql", import.meta.url), "utf8"));
     this.db.exec(fs.readFileSync(new URL("../migrations/003-club-access.sql", import.meta.url), "utf8"));
+    this.db.exec(fs.readFileSync(new URL("../migrations/011-coach-marketplace.sql", import.meta.url), "utf8"));
+    this.db.exec(fs.readFileSync(new URL("../migrations/012-athlete-workouts-and-intake.sql", import.meta.url), "utf8"));
+    this.db.exec(fs.readFileSync(new URL("../migrations/017-athlete-coach-selection.sql", import.meta.url), "utf8"));
   }
   prepare(sql) {
     return new D1Statement(this.db, sql);
@@ -97,7 +100,7 @@ const call = async (env, path, options = {}) => {
 const post = (env, path, body, token, method = "POST") => call(env, path, {
   method, body: JSON.stringify(body), headers: { "content-type": "application/json", ...(token ? { authorization: "Bearer " + token } : {}) },
 });
-async function otpLogin(env, phone, role = "athlete", clubId, tamperedRole) {
+async function otpLogin(env, phone, role = "athlete", clubId, tamperedRole, staffPortal = false) {
   let code;
   const saved = globalThis.fetch;
   globalThis.fetch = async (url, options) => {
@@ -106,7 +109,7 @@ async function otpLogin(env, phone, role = "athlete", clubId, tamperedRole) {
     return Response.json({ status: 1, data: { messageId: 1234567 } });
   };
   try {
-    const request = await post(env, "/api/auth/request-code", { phone, role, clubId });
+    const request = await post(env, "/api/auth/request-code", { phone, role, clubId, ...(staffPortal ? { staffPortal: true } : {}) });
     assert.equal(request.status, 202, JSON.stringify(request.body));
     const login = await post(env, "/api/auth/verify-code", { phone, challengeId: request.body.challengeId, code, role: tamperedRole || role });
     assert.equal(login.status, 200, JSON.stringify(login.body));
@@ -280,6 +283,35 @@ test("sessions last at most 90 days, reject expiry and are revoked by logout", a
   DB.prepare("UPDATE sessions SET expires_at=datetime('now','-1 second')").run();
   assert.equal((await call(env, "/api/me", { headers: nextHeaders })).status, 401);
 });
+const authHeader = token => ({ authorization: "Bearer " + token });
+
+test("staff portal pins coach and secretary requests to the configured MG club without a client club choice", async () => {
+  const { env, DB } = envFactory();
+  env.STAFF_DEFAULT_CLUB_ID = "club_test";
+  for (const [index, role] of ["coach", "secretary"].entries()) {
+    const login = await otpLogin(env, `0917000010${index}`, role, undefined, undefined, true);
+    assert.equal(login.user.role, role);
+    assert.equal(login.user.access_state, "pending");
+    assert.equal(login.user.club_id, "club_test");
+    const request = DB.prepare("SELECT club_id,role FROM access_requests WHERE user_id=?").bind(login.user.id).first();
+    assert.equal(request.club_id, "club_test");
+    assert.equal(request.role, role);
+  }
+});
+
+test("staff portal refuses enrollment when its fixed MG club is not configured", async () => {
+  const { env, DB } = envFactory();
+  const savedError = console.error;
+  console.error = () => {};
+  try {
+    const result = await post(env, "/api/auth/request-code", {
+      phone: "09170000109", role: "coach", staffPortal: true,
+    });
+    assert.equal(result.status, 503);
+    assert.equal(result.body.error, "staff_club_not_configured");
+    assert.equal(DB.prepare("SELECT COUNT(*) AS count FROM login_challenges").first().count, 0);
+  } finally { console.error = savedError; }
+});
 
 test("90-day session migration extends only active unrevoked sessions", () => {
   const { DB } = envFactory();
@@ -310,7 +342,7 @@ test("health and role-aware test login", async () => {
   const { env } = envFactory();
   const health = await call(env, "/health");
   assert.equal(health.status, 200);
-  assert.equal(health.body.version, "20261008-news-sync-fontfix-1");
+  assert.equal(health.body.version, "20261010-athlete-messages");
   assert.deepEqual(health.body.otp, { provider: "sms.ir", method: "verify", templateId: 791767, parameter: "CODE" });
   const login = await call(env, "/api/auth/test-login", {
     method: "POST",
@@ -573,4 +605,31 @@ test("training request is idempotent and entry request is not duplicated", async
   });
   assert.equal(duplicate.status, 200);
   assert.equal(duplicate.body.duplicate, true);
+});
+
+test("athlete coach/club messages reach staff inbox and appear in the club-only manager report", async () => {
+  const { env, DB } = envFactory();
+  DB.db.prepare("INSERT INTO account_access (user_id,role,club_id,state) VALUES ('u_athlete','athlete','club_test','approved'),('u_secretary','secretary','club_test','approved')").run();
+  DB.db.prepare("INSERT INTO test_accounts (username,password_hash,role,user_id) VALUES (?,?,?,?)").run("secretary", "23a1f74bc589fe525387f8d2c40f1e552a564fe5de00af935bb7a0592fc976c6", "athlete", "u_secretary");
+  const login = async username => call(env, "/api/auth/test-login", {
+    method: "POST", body: JSON.stringify({ username, password: username === "admin" ? "admin" : username === "athlete" ? "athlete" : username === "coach" ? "coach" : "athlete" }),
+    headers: { "content-type": "application/json" },
+  });
+  const [athlete, coach, secretary, manager] = await Promise.all([login("athlete"), login("coach"), login("secretary"), login("admin")]);
+  assert.equal((await call(env, "/api/messages", { headers: authHeader(athlete.body.token) })).body.coach, null);
+  const noCoach = await post(env, "/api/messages", { body: "سلام", channel: "coach" }, athlete.body.token);
+  assert.equal(noCoach.status, 409); assert.equal(noCoach.body.error, "coach_not_selected");
+  const selected = await post(env, "/api/messages/select-coach", { coachId: "u_coach" }, athlete.body.token);
+  assert.equal(selected.status, 200);
+  assert.equal((await post(env, "/api/messages", { body: "پیام به مربی", channel: "coach" }, athlete.body.token)).status, 201);
+  assert.equal((await post(env, "/api/messages", { body: "پیام به باشگاه", channel: "club" }, athlete.body.token)).status, 201);
+  const coachInbox = await call(env, "/api/messages", { headers: authHeader(coach.body.token) });
+  assert.equal(coachInbox.body.messages[0].body, "پیام به مربی");
+  const secretaryInbox = await call(env, "/api/messages", { headers: authHeader(secretary.body.token) });
+  assert.equal(secretaryInbox.body.messages.length, 1); assert.equal(secretaryInbox.body.messages[0].body, "پیام به باشگاه");
+  assert.equal((await post(env, "/api/messages", { recipientId: "u_athlete", body: "پاسخ منشی" }, secretary.body.token)).status, 201);
+  const report = await call(env, "/api/messages/report", { headers: authHeader(manager.body.token) });
+  assert.equal(report.status, 200); assert.equal(report.body.messages.length, 3);
+  assert.ok(report.body.messages.some(message => message.body === "پاسخ منشی" && message.sender_role === "secretary"));
+  assert.equal((await call(env, "/api/messages/report", { headers: authHeader(athlete.body.token) })).status, 403);
 });

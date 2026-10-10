@@ -323,7 +323,8 @@
           <button class="active" data-tab="athletes">لیست ورزشکاران</button
           ><button data-tab="coaches">لیست مربیان</button
           ><button data-tab="attendance">ورود و خروج</button
-          ><button data-tab="overview">خلاصه مدیریت</button>
+          ><button data-tab="overview">خلاصه مدیریت</button
+          ><button data-tab="messageReport">گزارش پیام‌های منشی و مربی</button>
         </nav>
         <section class="panel active" id="athletes">
           <div class="toolbar">
@@ -385,6 +386,14 @@
             <div class="box">درخواست‌های جدید<b>۱۷</b></div>
             <div class="box">پیام‌های امروز<b>۳۶۵</b></div>
           </div>
+        </section>
+        <section class="panel" id="messageReport">
+          <div class="toolbar">
+            <h2>گزارش پیام‌های منشی و مربی</h2>
+            <button class="btn purple" type="button" onclick="loadMessageReport()">به‌روزرسانی</button>
+          </div>
+          <p id="messageReportStatus" role="status" aria-live="polite">پیام‌های ورزشکاران و پاسخ‌های مربی یا منشی باشگاه، به ترتیب زمان نمایش داده می‌شوند.</p>
+          <div class="cards" id="messageReportCards"></div>
         </section>
       </main>
     </div>
@@ -483,7 +492,32 @@
           .querySelectorAll(".panel")
           .forEach((x) => x.classList.toggle("active", x.id === b.dataset.tab));
         if (b.dataset.tab === "attendance") renderAttendance();
+        if (b.dataset.tab === "messageReport") loadMessageReport();
       };
+      async function loadMessageReport() {
+        const host = document.getElementById("messageReportCards");
+        const status = document.getElementById("messageReportStatus");
+        host.replaceChildren();
+        if (q === "manager" || !localStorage.getItem("mg_session")) {
+          status.textContent = "گزارش واقعی پس از ورود مدیر باشگاه نمایش داده می‌شود.";
+          return;
+        }
+        status.textContent = "در حال دریافت پیام‌های باشگاه…";
+        try {
+          const data = await MGApi.request("/api/messages/report");
+          const roleName = { athlete: "ورزشکار", coach: "مربی", secretary: "منشی" };
+          for (const message of data.messages || []) {
+            const card = document.createElement("article"); card.className = "person";
+            const title = document.createElement("h3"); title.textContent = `${message.sender_name || "کاربر"} (${roleName[message.sender_role] || message.sender_role}) ← ${message.recipient_name || "کاربر"} (${roleName[message.recipient_role] || message.recipient_role})`;
+            const body = document.createElement("p"); body.textContent = message.body;
+            const time = document.createElement("small"); time.textContent = message.created_at || "";
+            card.append(title, body, time); host.append(card);
+          }
+          status.textContent = data.messages?.length ? `${data.messages.length} پیام و پاسخ ثبت‌شده` : "هنوز گفت‌وگوی ورزشکاری با مربی یا منشی ثبت نشده است.";
+        } catch (error) {
+          status.textContent = error.status === 403 ? "این گزارش فقط برای مدیر باشگاه در دسترس است." : "گزارش پیام‌ها بارگذاری نشد؛ اتصال را بررسی کنید.";
+        }
+      }
       athleteSearch.oninput = renderAthletes;
       coachSearch.oninput = renderCoaches;
       function openMessage(name) {

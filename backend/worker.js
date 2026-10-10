@@ -11,7 +11,7 @@ const USER_STATUSES = new Set(["active", "blocked", "pending"]);
 const REQUEST_STATUSES = new Set(["submitted", "assigned", "in_progress", "completed", "rejected"]);
 const ENTRY_STATUSES = new Set(["pending", "approved", "rejected", "exited"]);
 const PROGRAM_KINDS = new Set(["training", "food"]);
-const API_VERSION = "20261008-news-sync-fontfix-1";
+const API_VERSION = "20261010-athlete-messages";
 const SUPPORT_PHONE = "09174922677";
 const SESSION_MAX_DAYS = 90;
 const APPROVAL_NOTICE = "فقط کاربران باشگاه می‌توانند ثبت‌نام کنند. درخواست شما پس از تأیید شماره برای مدیریت ارسال خواهد شد؛ پس از تأیید مدیر، دسترسی شما باز می‌شود.";
@@ -184,8 +184,12 @@ async function registrationIntent(env, body, phone) {
     throw Object.assign(new Error("club_account_required"), { status: 403 });
   let clubId = null;
   if (role === "coach" || role === "secretary") {
-    const club = await env.DB.prepare("SELECT id FROM clubs WHERE id=?").bind(String(body.clubId || "")).first();
-    if (!club) throw Object.assign(new Error("club_required"), { status: 400 });
+    const staffPortal = body.staffPortal === true;
+    const requestedClubId = staffPortal ? String(env.STAFF_DEFAULT_CLUB_ID || "") : String(body.clubId || "");
+    if (staffPortal && !requestedClubId)
+      throw Object.assign(new Error("staff_club_not_configured"), { status: 503 });
+    const club = await env.DB.prepare("SELECT id FROM clubs WHERE id=?").bind(requestedClubId).first();
+    if (!club) throw Object.assign(new Error(staffPortal ? "staff_club_unavailable" : "club_required"), { status: staffPortal ? 503 : 400 });
     clubId = club.id;
   }
   return { role, clubId };
@@ -632,26 +636,65 @@ async function handle(request, env, executionContext) {
     return response({ ok: true }, 200, headers);
   }
   if (path === "/api/messages" && request.method === "GET") {
-    const result = await env.DB.prepare("SELECT m.*,s.full_name AS sender_name,r.full_name AS recipient_name FROM club_messages m JOIN users s ON s.id=m.sender_id JOIN users r ON r.id=m.recipient_id WHERE m.sender_id=? OR m.recipient_id=? ORDER BY m.created_at DESC LIMIT 200").bind(user.id, user.id).all();
-    return response({ messages: result.results }, 200, headers);
+    const result = await env.DB.prepare("SELECT m.*,s.full_name AS sender_name,r.full_name AS recipient_name,sa.role AS sender_role,ra.role AS recipient_role FROM club_messages m JOIN users s ON s.id=m.sender_id JOIN users r ON r.id=m.recipient_id LEFT JOIN account_access sa ON sa.user_id=s.id LEFT JOIN account_access ra ON ra.user_id=r.id WHERE m.sender_id=? OR m.recipient_id=? ORDER BY m.created_at DESC LIMIT 200").bind(user.id, user.id).all();
+    let coach = null;
+    if (hasRole(user, "athlete")) {
+      coach = await env.DB.prepare("SELECT u.id,u.full_name FROM athlete_coach_selections s JOIN users u ON u.id=s.coach_id JOIN account_access a ON a.user_id=u.id AND a.role='coach' AND a.state='approved' AND a.club_id=s.club_id WHERE s.athlete_id=? AND s.club_id=? AND u.status='active'").bind(user.id, user.club_id || "").first();
+    }
+    return response({ messages: result.results, coach }, 200, headers);
+  }
+  if (path === "/api/messages/select-coach" && request.method === "POST") {
+    if (!hasRole(user, "athlete")) return errorResponse("athlete_only", 403, headers);
+    const body = await jsonBody(request, 4096);
+    const coachId = String(body.coachId || "");
+    const clubId = user.club_id || "";
+    if (!coachId || !clubId) return errorResponse("coach_required", 400, headers);
+    const coach = await env.DB.prepare("SELECT u.id FROM users u JOIN account_access a ON a.user_id=u.id AND a.role='coach' AND a.state='approved' AND a.club_id=? WHERE u.id=? AND u.status='active'").bind(clubId, coachId).first();
+    if (!coach) return errorResponse("coach_not_found", 404, headers);
+    await env.DB.prepare("INSERT INTO athlete_coach_selections(athlete_id,coach_id,club_id,selected_at) VALUES (?,?,?,datetime('now')) ON CONFLICT(athlete_id) DO UPDATE SET coach_id=excluded.coach_id,club_id=excluded.club_id,selected_at=excluded.selected_at").bind(user.id, coach.id, clubId).run();
+    return response({ ok: true, coachId: coach.id }, 200, headers);
   }
   if (path === "/api/messages" && request.method === "POST") {
     const body = await jsonBody(request, 8192);
     const message = String(body.body || "").trim();
     if (!message || message.length > 4000) return errorResponse("message_required", 400, headers);
     let recipientId = String(body.recipientId || "");
-    if (!recipientId && hasRole(user, "athlete")) {
-      const coach = await env.DB.prepare("SELECT coach_id FROM training_requests WHERE user_id=? AND coach_id IS NOT NULL ORDER BY updated_at DESC LIMIT 1").bind(user.id).first();
-      recipientId = coach?.coach_id || "";
+    if (hasRole(user, "athlete")) {
+      const clubId = user.club_id || "";
+      if (!clubId) return errorResponse("club_required", 400, headers);
+      if (body.channel === "club") {
+        const secretary = await env.DB.prepare("SELECT u.id FROM account_access a JOIN users u ON u.id=a.user_id WHERE a.club_id=? AND a.role='secretary' AND a.state='approved' AND u.status='active' ORDER BY a.updated_at,a.user_id LIMIT 1").bind(clubId).first();
+        if (!secretary) return errorResponse("secretary_unavailable", 409, headers);
+        recipientId = secretary.id;
+      } else {
+        if (!recipientId) {
+          const selected = await env.DB.prepare("SELECT coach_id FROM athlete_coach_selections WHERE athlete_id=? AND club_id=?").bind(user.id, clubId).first();
+          recipientId = selected?.coach_id || "";
+        }
+        if (!recipientId) return errorResponse("coach_not_selected", 409, headers);
+        const coach = await env.DB.prepare("SELECT u.id FROM account_access a JOIN users u ON u.id=a.user_id WHERE a.user_id=? AND a.club_id=? AND a.role='coach' AND a.state='approved' AND u.status='active'").bind(recipientId, clubId).first();
+        if (!coach) return errorResponse("invalid_recipient", 403, headers);
+        await env.DB.prepare("INSERT INTO athlete_coach_selections(athlete_id,coach_id,club_id,selected_at) VALUES (?,?,?,datetime('now')) ON CONFLICT(athlete_id) DO UPDATE SET coach_id=excluded.coach_id,club_id=excluded.club_id,selected_at=excluded.selected_at").bind(user.id, coach.id, clubId).run();
+      }
     }
     if (!recipientId) return errorResponse("recipient_required", 400, headers);
     const recipient = await userById(env, recipientId);
     if (!recipient || recipient.status !== "active") return errorResponse("recipient_not_found", 404, headers);
-    if (hasRole(user, "athlete") && !hasRole(recipient, "coach", "manager", "support")) return errorResponse("invalid_recipient", 403, headers);
-    if (hasRole(user, "coach") && !hasRole(recipient, "athlete", "manager", "support")) return errorResponse("invalid_recipient", 403, headers);
+    if (hasRole(user, "athlete") && body.channel === "club" && !hasRole(recipient, "secretary")) return errorResponse("invalid_recipient", 403, headers);
+    if (hasRole(user, "athlete") && body.channel !== "club" && !hasRole(recipient, "coach")) return errorResponse("invalid_recipient", 403, headers);
+    if (hasRole(user, "coach", "secretary") && hasRole(recipient, "athlete")) {
+      const sameClub = await env.DB.prepare("SELECT 1 AS ok FROM account_access a JOIN account_access b ON b.club_id=a.club_id WHERE a.user_id=? AND a.state='approved' AND b.user_id=? AND b.state='approved' LIMIT 1").bind(user.id, recipient.id).first();
+      if (!sameClub) return errorResponse("invalid_recipient", 403, headers);
+    }
     const messageId = makeId("msg");
     await env.DB.prepare("INSERT INTO club_messages (id,sender_id,recipient_id,body) VALUES (?,?,?,?)").bind(messageId, user.id, recipient.id, message).run();
     return response({ ok: true, messageId }, 201, headers);
+  }
+  if (path === "/api/messages/report" && request.method === "GET") {
+    if (!hasRole(user, "manager")) return errorResponse("forbidden", 403, headers);
+    if (!user.club_id) return errorResponse("club_required", 400, headers);
+    const result = await env.DB.prepare("SELECT m.id,m.sender_id,m.recipient_id,m.body,m.created_at,s.full_name AS sender_name,sa.role AS sender_role,r.full_name AS recipient_name,ra.role AS recipient_role FROM club_messages m JOIN users s ON s.id=m.sender_id JOIN account_access sa ON sa.user_id=s.id AND sa.state='approved' JOIN users r ON r.id=m.recipient_id JOIN account_access ra ON ra.user_id=r.id AND ra.state='approved' WHERE sa.club_id=? AND ra.club_id=? AND ((sa.role='athlete' AND ra.role IN ('coach','secretary')) OR (ra.role='athlete' AND sa.role IN ('coach','secretary'))) ORDER BY m.created_at DESC LIMIT 500").bind(user.club_id, user.club_id).all();
+    return response({ messages: result.results }, 200, headers);
   }
   if (path === "/api/admin/users" && request.method === "GET") {
     if (!hasRole(user, "manager", "support")) return errorResponse("forbidden", 403, headers);

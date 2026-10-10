@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261010-athlete-api-outage";
+const CACHE_NAME = "mg-fitclub-v20261010-athlete-messages";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -40,6 +40,12 @@ const APP_SHELL = [
   "./journal-motion.js?v=20261008-no-preview",
   "./dashboard.html",
   "./coach-dashboard.html",
+  "./coach-directory.html",
+  "./coach-directory.js?v=20261009-workout-order",
+  "./coach-profile.html",
+  "./coach-profile.js?v=20261010-message-selection",
+  "./coach-market.css",
+  "./admin.html",
   "./admin-dashboard.html",
   "./education.html",
   "./education-studio.html",

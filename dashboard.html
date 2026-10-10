@@ -2330,8 +2330,8 @@
           <div class="market-shortcut"><a href="coach-directory.html">مشاهدهٔ مربیان باشگاه</a></div>
           <div class="chat">
             <div>
-              <strong>با مربی خود در ارتباط باش</strong>
-              <p>پیام جدیدی برای مربی‌ات بفرست.</p>
+              <strong>پیام‌ها و ارتباط با مربی یا باشگاه</strong>
+              <p>گفت‌وگوهای خود را از اینجا پیگیری کن.</p>
             </div>
             <a href="#" data-pane-link="chat">✈ ارسال پیام</a>
           </div>
@@ -2409,14 +2409,19 @@
         </section>
         <section class="pane" id="chatPane">
           <div class="panel-card">
-            <h2>گفت‌وگو با مربی</h2>
-            <p>پیامت را برای محمد کاشانی بنویس.</p>
+            <h2>پیام‌ها</h2>
+            <p id="chatEmpty" role="status" aria-live="polite"></p>
+            <p><a href="coach-directory.html">مشاهده و انتخاب مربی</a></p>
+            <div id="chatHistory" aria-live="polite"></div>
+            <label for="chatChannel">ارسال پیام به</label>
+            <select id="chatChannel">
+              <option value="club">منشی باشگاه</option>
+              <option value="coach" id="chatCoachOption" disabled>مربی انتخاب‌شده</option>
+            </select>
             <div class="form-row">
-              <input id="chatInput" placeholder="پیام شما..." /><button
-                onclick="sendChat()"
-              >
-                ارسال
-              </button>
+              <input id="chatInput" maxlength="4000" placeholder="پیام شما..." /><button
+                type="button" onclick="sendChat()"
+              >ارسال</button>
             </div>
             <p id="chatStatus"></p>
           </div>
@@ -2707,20 +2712,55 @@
         if (!v) return;
         if (q !== "athlete" && localStorage.getItem("mg_session")) {
           try {
+            const body = { body: v, channel: chatChannel.value };
+            if (chatChannel.value === "coach" && messageCoach) body.recipientId = messageCoach.id;
             await MGApi.request("/api/messages", {
               method: "POST",
-              body: { body: v },
+              body,
             });
-            chatStatus.textContent = "پیام شما برای مربی ارسال شد.";
+            chatStatus.textContent = chatChannel.value === "club" ? "پیام شما برای منشی باشگاه ارسال شد." : "پیام شما برای مربی ارسال شد.";
             chatInput.value = "";
+            await loadChatMessages();
           } catch (error) {
-            chatStatus.textContent = error.message || "ارسال پیام انجام نشد.";
+            const messages = { coach_not_selected: "شما هنوز مربی انتخاب نکرده اید", secretary_unavailable: "در حال حاضر صندوق پیام منشی باشگاه فعال نیست.", invalid_recipient: "گیرندهٔ پیام معتبر نیست.", club_required: "حساب شما هنوز به باشگاه متصل نشده است." };
+            chatStatus.textContent = messages[error.message] || error.message || "ارسال پیام انجام نشد.";
           }
           return;
         }
-        chatStatus.textContent = "پیام شما برای مربی ارسال شد.";
-        chatInput.value = "";
+        chatStatus.textContent = "برای ارسال پیام، ابتدا وارد حساب خود شوید.";
       }
+      let messageCoach = null;
+      async function loadChatMessages() {
+        if (q === "athlete" || !localStorage.getItem("mg_session")) {
+          chatEmpty.textContent = "شما هنوز مربی انتخاب نکرده اید";
+          chatHistory.replaceChildren();
+          chatCoachOption.disabled = true;
+          return;
+        }
+        try {
+          const data = await MGApi.request("/api/messages");
+          messageCoach = data.coach || null;
+          chatCoachOption.disabled = !messageCoach;
+          chatCoachOption.textContent = messageCoach ? `مربی: ${messageCoach.full_name || "مربی انتخاب‌شده"}` : "مربی انتخاب‌شده";
+          if (messageCoach) chatChannel.value = "coach";
+          else if (chatChannel.value === "coach") chatChannel.value = "club";
+          const messages = data.messages || [];
+          chatEmpty.textContent = !messageCoach ? "شما هنوز مربی انتخاب نکرده اید" : messages.length ? "" : "شما هنوز پیامی به مربی یا باشگاه خود ارسال نکرده اید";
+          chatHistory.replaceChildren();
+          for (const message of [...messages].reverse()) {
+            const item = document.createElement("article");
+            item.className = "panel-card";
+            const heading = document.createElement("strong");
+            heading.textContent = `${message.sender_id === window.MGCurrentUser?.id ? "شما" : message.sender_name} ← ${message.recipient_name}`;
+            const body = document.createElement("p"); body.textContent = message.body;
+            const time = document.createElement("small"); time.textContent = message.created_at || "";
+            item.append(heading, body, time); chatHistory.append(item);
+          }
+        } catch (error) {
+          chatEmpty.textContent = "بارگذاری پیام‌ها ممکن نشد؛ اتصال را بررسی و دوباره تلاش کنید.";
+        }
+      }
+      loadChatMessages();
       const track = document.querySelector("#galleryTrack"),
         slides = [...document.querySelectorAll(".gallery-slide")],
         dots = document.querySelector("#galleryDots");

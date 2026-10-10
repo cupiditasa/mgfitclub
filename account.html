@@ -248,11 +248,8 @@
         </button>
       </div>
       <p id="approvalNotice" role="alert" hidden style="color:#e6d891;line-height:1.9;border:1px solid #726c36;padding:12px;border-radius:12px">
-        فقط کاربران باشگاه می‌توانند ثبت‌نام کنند. درخواست شما پس از تأیید شماره برای مدیریت ارسال خواهد شد؛ پس از تأیید مدیر دسترسی شما باز می‌شود.
+        درخواست شما برای باشگاه MG ثبت می‌شود. پس از تأیید شماره، برای بررسی به مدیریت باشگاه MG می‌رود؛ دسترسی پس از تأیید مدیر باز می‌شود.
       </p>
-      <label id="clubLabel" hidden>باشگاه شما
-        <select id="clubChoice" class="field"><option value="">انتخاب باشگاه</option></select>
-      </label>
       <label for="target">شمارهٔ موبایل</label><input
         id="target"
         class="field"
@@ -360,15 +357,6 @@
           roles.classList.remove("open");
           const needsApproval = ["coach", "secretary"].includes(selected);
           $("approvalNotice").hidden = !needsApproval;
-          $("clubLabel").hidden = !needsApproval;
-          if (needsApproval) loadClubs();
-        };
-        const loadClubs = async () => {
-          try {
-            const data = await window.MGApi.request("/api/clubs");
-            $("clubChoice").replaceChildren(new Option("انتخاب باشگاه", ""), ...data.clubs.map(c => new Option(c.name, c.id)));
-            if (!data.clubs.length) set("هنوز باشگاهی ثبت نشده؛ ابتدا پشتیبانی باید حساب باشگاه را بسازد.");
-          } catch (_) { set("دریافت باشگاه‌ها ممکن نشد؛ نقش را دوباره انتخاب کنید."); }
         };
         const login = async () => {
           if (busy) return;
@@ -381,16 +369,13 @@
           action.disabled = true;
           try {
             if (!sent) {
-              if (["coach", "secretary"].includes(selected) && !$("clubChoice").value)
-                return set("باشگاه خود را انتخاب کنید.");
               const d = await req(
                 "/api/auth/request-code",
-                { phone, role: selected, clubId: $("clubChoice").value },
+                { phone, role: selected, staffPortal: isStaffPortal && ["coach", "secretary"].includes(selected) },
               );
               sent = true;
               target.readOnly = true;
               roleToggle.disabled = true;
-              $("clubChoice").disabled = true;
               challengeId = d.challengeId || "";
               code.style.display = "block";
               action.textContent = "ورود";
