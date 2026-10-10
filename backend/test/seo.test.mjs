@@ -34,17 +34,36 @@ test('video sitemap entries use real accessible assets and no invented publicati
   }
   assert.ok(!sitemap.includes('publication_date'));assert.ok(!sitemap.includes('lastmod'));
 });
-test('membership page is discoverable from desktop/mobile navigation and package actions remain consultation-only',()=>{
+test('membership page is discoverable, cash requests are offered, and online payment is not misrepresented as live',()=>{
   const home=read('index.html'),html=read('membership.html');
   assert.match(home,/<a href="membership\.html">پکیج‌های عضویت<\/a>/);
   assert.match(home,/<a href="membership\.html"><span>۰۷<\/span> پکیج‌های عضویت<\/a>/);
   assert.match(html,/<a href="index\.html">صفحه اصلی<\/a>/);
   assert.equal([...html.matchAll(/data-package-label=/g)].length,20);
   assert.equal([...html.matchAll(/<a\b[^>]*data-package-label=/g)].length,20);
-  assert.doesNotMatch(html,/<form\b|zarinpal|payment|checkout/i);
+  assert.match(html,/درخواست پرداخت نقدی/);
+  assert.match(html,/پرداخت آنلاین · به‌زودی/);
+  assert.doesNotMatch(html,/zarinpal|checkout/i);
   const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]));
   for(const [,fragment] of html.matchAll(/href="#([^"]+)"/g))assert.ok(ids.has(fragment),`missing membership anchor #${fragment}`);
   for(const match of html.matchAll(/<a\b[^>]*target="_blank"[^>]*>/g))assert.match(match[0],/rel="[^"]*noopener/);
+});
+test('athlete dashboard uses account-backed identity and membership status, with logout inside settings',()=>{
+  const html=read('dashboard.html');
+  assert.match(html,/data-profile-name/);assert.match(html,/data-profile-avatar/);assert.match(html,/\/api\/me\/profile/);
+  assert.match(html,/MGApi\.dashboard\(\)/);assert.match(html,/membership\.remainingSessions/);
+  assert.doesNotMatch(html,/محمد کاشانی|۶۸ جلسه|۶۸ روز/);
+  const settings=html.match(/<section class="pane" id="settingsPane">([\s\S]*?)<\/section>/)?.[1]||'';
+  assert.match(settings,/onclick="logout\(\)"/);
+  assert.doesNotMatch(html.match(/<aside class="drawer"[\s\S]*?<\/aside>/)?.[0]||'',/<button class="logout"/);
+  assert.match(html,/data-menu="settings"[\s\S]*?<svg/);
+});
+test('secretary membership queue uses live API and confirms receipt before activation',()=>{
+  const html=read('secretary.html');
+  assert.match(html,/\/api\/membership-requests/);
+  assert.match(html,/تأیید دریافت وجه و فعال‌سازی/);
+  assert.match(html,/window\.confirm/);
+  assert.doesNotMatch(html,/درخواست عضویت — الهام مرادی/);
 });
 test('private pages explicitly noindex but remain crawlable so the directive can be read',()=>{
   const files=fs.readdirSync(root).filter(f=>f.endsWith('.html')&&!publicFiles.includes(f)&&!/^google[a-f0-9]+\.html$/.test(f));assert.ok(files.length>=16);

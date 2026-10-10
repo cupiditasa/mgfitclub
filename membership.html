@@ -1073,6 +1073,122 @@
         const whatsapp = new URL('https://wa.me/989178483446');
         whatsapp.searchParams.set('text', message);
         link.href = whatsapp.toString();
+        const category = link.closest('.plan-category')?.dataset.category;
+        if (!['basic','plus','pro','vip','special'].includes(category)) return;
+        link.textContent = 'انتخاب روش پرداخت';
+        link.addEventListener('click', event => {
+          event.preventDefault();
+          const latin = value => String(value).replace(/[۰-۹]/g, digit => '۰۱۲۳۴۵۶۷۸۹'.indexOf(digit));
+          const sessions = latin(packageName).match(/(\d+)\s*جلسه/)?.[1];
+          if (!sessions) return;
+          const card = link.closest('.plan-card');
+          const special = category === 'special' ? (packageName.includes('EMS') ? 'ems' : 'corrective') : category;
+          const quarterPrice = card?.querySelector('.quarterly strong')?.textContent.trim();
+          const monthlyPrice = card?.querySelector('.price')?.textContent.trim();
+          const dialog = document.getElementById('membershipPaymentDialog');
+          const duration = document.getElementById('membershipDurationChoices');
+          const heading = document.getElementById('membershipSelectedPlan');
+          const status = document.getElementById('membershipPaymentStatus');
+          const loginLink = document.getElementById('membershipLoginLink');
+          heading.textContent = packageName;
+          status.textContent = '';
+          loginLink.hidden = true;
+          duration.replaceChildren();
+          const addDuration = (days, label, price) => {
+            const button = document.createElement('button');
+            button.type = 'button'; button.className = 'membership-duration';
+            button.dataset.planKey = `${special}_${sessions}_${days}`;
+            button.setAttribute('aria-pressed', String(days === 30));
+            button.textContent = `${label} · ${price || ''}`;
+            button.onclick = () => {
+              duration.querySelectorAll('button').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
+              dialog.dataset.planKey = button.dataset.planKey;
+            };
+            duration.append(button);
+          };
+          addDuration(30, 'یک‌ماهه', monthlyPrice);
+          if (quarterPrice) addDuration(90, 'سه‌ماهه', quarterPrice);
+          dialog.dataset.planKey = `${special}_${sessions}_30`;
+          dialog.showModal();
+        });
+      });
+    })();
+  </script>
+  <style>
+    .membership-dialog { width:min(92vw,520px); border:1px solid #53613f; border-radius:22px; padding:24px; color:#eff6e7; background:#111a12; box-shadow:0 24px 80px #0009; }
+    .membership-dialog::backdrop { background:#040804bb; backdrop-filter:blur(5px); }
+    .membership-dialog h2 { margin:0 0 8px; }
+    .membership-dialog p { color:#bdc8b3; line-height:1.9; }
+    .membership-duration-list,.membership-payment-actions { display:grid; gap:10px; margin-top:14px; }
+    .membership-duration,.membership-payment-actions button,.membership-dialog .dialog-close,.membership-dialog a { min-height:46px; border:1px solid #47563c; border-radius:12px; padding:10px 14px; color:inherit; background:#1a2519; font:inherit; text-align:center; cursor:pointer; }
+    .membership-duration[aria-pressed="true"] { border-color:#c6ff3f; color:#c6ff3f; }
+    .membership-payment-actions button:first-child { color:#10150b; background:#c6ff3f; border-color:#c6ff3f; font-weight:800; }
+    .membership-payment-actions button:disabled { opacity:.68; cursor:not-allowed; }
+    .membership-dialog [role="status"] { min-height:1.8em; color:#d4ff73; }
+    .membership-dialog a { display:inline-flex; align-items:center; justify-content:center; text-decoration:none; }
+    .membership-dialog [hidden] { display:none !important; }
+    @media (prefers-reduced-motion:reduce) { .membership-dialog::backdrop { backdrop-filter:none; } }
+  </style>
+  <dialog class="membership-dialog" id="membershipPaymentDialog" aria-labelledby="membershipSelectedPlan">
+    <h2 id="membershipSelectedPlan">پکیج عضویت</h2>
+    <p>مدت پکیج را انتخاب کن، سپس روش پرداخت را بزن. درخواست نقدی پس از بررسی منشی فعال می‌شود.</p>
+    <div class="membership-duration-list" id="membershipDurationChoices" aria-label="مدت عضویت"></div>
+    <div class="membership-payment-actions">
+      <button type="button" id="membershipCashRequest">درخواست پرداخت نقدی</button>
+      <button type="button" id="membershipOnlinePayment" aria-describedby="membershipPaymentStatus">پرداخت آنلاین · به‌زودی</button>
+    </div>
+    <p id="membershipPaymentStatus" role="status" aria-live="polite"></p>
+    <a id="membershipLoginLink" href="account.html" hidden>ورود به حساب</a>
+    <button class="dialog-close" type="button" id="membershipDialogClose">بستن</button>
+  </dialog>
+  <script>
+    (() => {
+      const dialog = document.getElementById('membershipPaymentDialog');
+      const status = document.getElementById('membershipPaymentStatus');
+      const publicApiRequest = async (path, options = {}) => {
+        const headers = new Headers(options.headers || {});
+        if (options.body !== undefined) headers.set('content-type', 'application/json');
+        const token = localStorage.getItem('mg_session');
+        if (token) headers.set('authorization', `Bearer ${token}`);
+        const apiBase = document.documentElement.dataset.apiBase || window.MG_API_BASE || 'https://api.mgfitclub.ir';
+        const response = await fetch(apiBase + path, { ...options, cache:'no-store', headers,
+          body: options.body === undefined ? undefined : JSON.stringify(options.body) });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) { const error = new Error(data.error || 'request_failed'); error.status = response.status; throw error; }
+        return data;
+      };
+      document.getElementById('membershipDialogClose').addEventListener('click', () => dialog.close());
+      document.getElementById('membershipOnlinePayment').addEventListener('click', () => {
+        status.textContent = 'درگاه پرداخت آنلاین هنوز راه‌اندازی نشده؛ فعلاً می‌توانی درخواست پرداخت نقدی ثبت کنی.';
+      });
+      document.getElementById('membershipCashRequest').addEventListener('click', async event => {
+        const button = event.currentTarget;
+        const key = dialog.dataset.planKey;
+        if (!localStorage.getItem('mg_session')) {
+          status.textContent = 'برای ثبت درخواست نقدی، ابتدا وارد حساب کاربری شو.';
+          const login = document.getElementById('membershipLoginLink'); login.href = 'account.html?next=membership.html'; login.hidden = false; login.focus();
+          return;
+        }
+        button.disabled = true; button.textContent = 'در حال ثبت درخواست…';
+        try {
+          const profile = await publicApiRequest('/api/me/profile');
+          if (!profile.profile?.first_name?.trim() || !profile.profile?.last_name?.trim()) {
+            status.textContent = 'برای ادامه، نام و نام خانوادگی را در مشخصات حساب تکمیل کن.';
+            const login = document.getElementById('membershipLoginLink'); login.href = 'access-center.html#profile'; login.textContent = 'تکمیل مشخصات حساب'; login.hidden = false; login.focus();
+            return;
+          }
+          const storageKey = `mg_cash_membership_${key}`;
+          const idempotencyKey = sessionStorage.getItem(storageKey) || crypto.randomUUID();
+          sessionStorage.setItem(storageKey, idempotencyKey);
+          const result = await publicApiRequest('/api/membership-requests', { method:'POST', body:{ planKey:key, idempotencyKey } });
+          sessionStorage.removeItem(storageKey);
+          status.textContent = result.duplicate ? 'درخواست قبلی شما برای این انتخاب ثبت شده و هنوز بررسی نشده است.' : 'درخواست نقدی ثبت شد؛ پس از بررسی منشی، عضویت و جلسات در داشبورد فعال می‌شود.';
+        } catch (error) {
+          if (error.status === 401) { location.href = 'account.html?next=membership.html'; return; }
+          const messages = { profile_name_required:'ابتدا نام و نام خانوادگی را در مشخصات حساب تکمیل کن.', club_membership_required:'حساب شما هنوز به باشگاه متصل نیست؛ با پشتیبانی باشگاه تماس بگیر.', membership_plan_not_found:'این بسته فعلاً برای ثبت درخواست فعال نیست.' };
+          status.textContent = messages[error.message] || 'ثبت درخواست انجام نشد؛ اتصال اینترنت و حساب را بررسی و دوباره تلاش کن.';
+          if (error.message === 'profile_name_required') { const login = document.getElementById('membershipLoginLink'); login.href = 'access-center.html#profile'; login.textContent = 'تکمیل مشخصات حساب'; login.hidden = false; }
+        } finally { button.disabled = false; button.textContent = 'درخواست پرداخت نقدی'; }
       });
     })();
   </script>

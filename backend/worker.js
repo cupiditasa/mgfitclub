@@ -11,7 +11,7 @@ const USER_STATUSES = new Set(["active", "blocked", "pending"]);
 const REQUEST_STATUSES = new Set(["submitted", "assigned", "in_progress", "completed", "rejected"]);
 const ENTRY_STATUSES = new Set(["pending", "approved", "rejected", "exited"]);
 const PROGRAM_KINDS = new Set(["training", "food"]);
-const API_VERSION = "20261010-athlete-messages";
+const API_VERSION = "20261010-membership-cash-dashboard";
 const SUPPORT_PHONE = "09174922677";
 const SESSION_MAX_DAYS = 90;
 const APPROVAL_NOTICE = "فقط کاربران باشگاه می‌توانند ثبت‌نام کنند. درخواست شما پس از تأیید شماره برای مدیریت ارسال خواهد شد؛ پس از تأیید مدیر، دسترسی شما باز می‌شود.";
@@ -235,8 +235,11 @@ async function dashboard(user, env) {
       env.DB.prepare("SELECT d.* FROM training_deliverables d JOIN training_requests r ON r.id=d.request_id WHERE r.user_id=? ORDER BY d.created_at DESC LIMIT 20").bind(user.id).all(),
       env.DB.prepare("SELECT * FROM entry_requests WHERE user_id=? ORDER BY created_at DESC LIMIT 20").bind(user.id).all(),
       env.DB.prepare("SELECT COUNT(*) AS count FROM club_messages WHERE recipient_id=?").bind(user.id).first(),
+      env.DB.prepare("SELECT s.id,s.starts_at,s.expires_at,s.sessions_total,p.title AS plan_title,p.duration_days,(SELECT count(*) FROM membership_visits v WHERE v.membership_id=s.id) AS sessions_used FROM memberships s JOIN membership_plans p ON p.id=s.plan_id WHERE s.user_id=? AND s.status='active' AND julianday(s.starts_at)<=julianday('now') AND julianday(s.expires_at)>julianday('now') ORDER BY s.expires_at").bind(user.id).all(),
+      env.DB.prepare("SELECT id,status,created_at FROM membership_requests WHERE user_id=? AND status='submitted' ORDER BY created_at DESC LIMIT 1").bind(user.id).first(),
     ]);
-    return { user: publicUser(user), orders: values[0].results, trainingRequests: values[1].results, deliverables: values[2].results, entryRequests: values[3].results, unreadMessages: values[4]?.count || 0 };
+    const memberships = values[5].results.map((item) => ({ ...item, sessions_remaining: Math.max(0, item.sessions_total - item.sessions_used) }));
+    return { user: publicUser(user), orders: values[0].results, trainingRequests: values[1].results, deliverables: values[2].results, entryRequests: values[3].results, unreadMessages: values[4]?.count || 0, membership: { active: memberships.length > 0, remainingSessions: memberships.reduce((sum, item) => sum + item.sessions_remaining, 0), memberships, pendingRequest: values[6] || null } };
   }
   if (hasRole(user, "coach")) {
     const values = await Promise.all([
@@ -322,8 +325,81 @@ async function handle(request, env, executionContext) {
     return response({ plans: result.results }, 200, headers);
   }
   if (path === "/api/plans/membership" && request.method === "GET") {
-    const result = await env.DB.prepare("SELECT * FROM membership_plans WHERE is_active=1 ORDER BY price").all();
+    const result = await env.DB.prepare("SELECT id,plan_key,title,description,duration_days,schedule_type,price,session_count,category FROM membership_plans WHERE is_active=1 AND plan_key IS NOT NULL ORDER BY price").all();
     return response({ plans: result.results }, 200, headers);
+  }
+  if (path === "/api/membership-requests" || path.startsWith("/api/membership-requests/")) {
+    const memberUser = await currentUser(request, env);
+    if (!memberUser) return errorResponse("unauthorized", 401, headers);
+    if (memberUser.access_state !== "approved") return errorResponse("approval_required", 403, headers);
+  if (path === "/api/membership-requests" && request.method === "POST") {
+    if (!hasRole(memberUser, "athlete")) return errorResponse("athlete_only", 403, headers);
+    const body = await jsonBody(request, 2048);
+    const planKey = String(body.planKey || "").trim();
+    const key = request.headers.get("idempotency-key") || String(body.idempotencyKey || "");
+    if (!/^[a-z0-9_]{4,64}$/.test(planKey)) return errorResponse("membership_plan_required", 400, headers);
+    if (key.length < 16 || key.length > 128) return errorResponse("idempotency_key_required", 400, headers);
+    const plan = await env.DB.prepare("SELECT * FROM membership_plans WHERE plan_key=? AND is_active=1 AND session_count>0").bind(planKey).first();
+    if (!plan) return errorResponse("membership_plan_not_found", 404, headers);
+    const previous = await env.DB.prepare("SELECT id FROM membership_requests WHERE user_id=? AND idempotency_key=?").bind(memberUser.id, key).first();
+    if (previous) return response({ ok: true, duplicate: true, requestId: previous.id }, 200, headers);
+    const profile = await env.DB.prepare("SELECT first_name,last_name,avatar_data FROM user_profiles WHERE user_id=?").bind(memberUser.id).first();
+    if (!profile?.first_name?.trim() || !profile?.last_name?.trim()) return errorResponse("profile_name_required", 409, headers);
+    if (!validPhone(normalizePhone(memberUser.phone))) return errorResponse("verified_phone_required", 409, headers);
+    const access = await env.DB.prepare("SELECT club_id FROM account_access WHERE user_id=? AND role='athlete' AND state='approved'").bind(memberUser.id).first();
+    let clubId = memberUser.club_id || access?.club_id || null;
+    if (!clubId && env.STAFF_DEFAULT_CLUB_ID) {
+      clubId = (await env.DB.prepare("SELECT id FROM clubs WHERE id=?").bind(env.STAFF_DEFAULT_CLUB_ID).first())?.id || null;
+    }
+    if (!clubId) return errorResponse("club_membership_required", 409, headers);
+    const orderId = makeId("order"), requestId = makeId("memberreq");
+    try {
+      await env.DB.batch([
+        env.DB.prepare("INSERT INTO orders(id,user_id,order_type,item_id,amount,status,payment_method) VALUES (?,?, 'membership', ?, ?, 'pending','cash')").bind(orderId, memberUser.id, plan.id, plan.price),
+        env.DB.prepare("INSERT INTO membership_requests(id,order_id,user_id,plan_id,club_id,first_name_snapshot,last_name_snapshot,phone_snapshot,avatar_data_snapshot,idempotency_key,notes) VALUES (?,?,?,?,?,?,?,?,?,?,?)").bind(requestId, orderId, memberUser.id, plan.id, clubId, profile.first_name.trim(), profile.last_name.trim(), normalizePhone(memberUser.phone), profile.avatar_data || null, key, body.notes ? String(body.notes).slice(0, 500) : null),
+      ]);
+    } catch (error) {
+      const duplicate = await env.DB.prepare("SELECT id FROM membership_requests WHERE user_id=? AND idempotency_key=?").bind(memberUser.id, key).first();
+      if (duplicate) return response({ ok: true, duplicate: true, requestId: duplicate.id }, 200, headers);
+      throw error;
+    }
+    await audit(env, memberUser.id, "membership_cash_requested", "membership_request", requestId, { planId: plan.id, clubId });
+    return response({ ok: true, requestId, status: "submitted" }, 201, headers);
+  }
+  if (path === "/api/membership-requests" && request.method === "GET") {
+    if (hasRole(memberUser, "athlete")) {
+      const result = await env.DB.prepare("SELECT r.id,r.status,r.created_at,r.reviewed_at,p.title AS plan_title,p.session_count,p.duration_days,o.amount,o.payment_method FROM membership_requests r JOIN membership_plans p ON p.id=r.plan_id JOIN orders o ON o.id=r.order_id WHERE r.user_id=? ORDER BY r.created_at DESC LIMIT 50").bind(memberUser.id).all();
+      return response({ requests: result.results }, 200, headers);
+    }
+    if (!hasRole(memberUser, "secretary", "manager", "admin")) return errorResponse("forbidden", 403, headers);
+    let result;
+    if (hasRole(memberUser, "admin")) result = await env.DB.prepare("SELECT r.id,r.status,r.created_at,r.reviewed_at,r.first_name_snapshot,r.last_name_snapshot,r.phone_snapshot,r.avatar_data_snapshot,p.title AS plan_title,p.session_count,p.duration_days,o.amount,o.payment_method,u.id AS user_id FROM membership_requests r JOIN membership_plans p ON p.id=r.plan_id JOIN orders o ON o.id=r.order_id JOIN users u ON u.id=r.user_id WHERE r.status='submitted' ORDER BY r.created_at LIMIT 50").all();
+    else result = await env.DB.prepare("SELECT r.id,r.status,r.created_at,r.reviewed_at,r.first_name_snapshot,r.last_name_snapshot,r.phone_snapshot,r.avatar_data_snapshot,p.title AS plan_title,p.session_count,p.duration_days,o.amount,o.payment_method,u.id AS user_id FROM membership_requests r JOIN membership_plans p ON p.id=r.plan_id JOIN orders o ON o.id=r.order_id JOIN users u ON u.id=r.user_id JOIN account_access a ON a.user_id=? AND a.club_id=r.club_id AND a.state='approved' AND a.role=? WHERE r.status='submitted' ORDER BY r.created_at LIMIT 50").bind(memberUser.id, hasRole(memberUser, "secretary") ? "secretary" : "manager").all();
+    return response({ requests: result.results }, 200, headers);
+  }
+  const membershipRequestMatch = path.match(/^\/api\/membership-requests\/([^/]+)$/);
+  if (membershipRequestMatch && request.method === "PATCH") {
+    if (!hasRole(memberUser, "secretary", "manager", "admin")) return errorResponse("forbidden", 403, headers);
+    const body = await jsonBody(request, 1024);
+    if (!["approved", "rejected"].includes(body.status)) return errorResponse("invalid_status", 400, headers);
+    const req = await env.DB.prepare("SELECT r.*,p.duration_days,p.session_count,o.id AS actual_order_id FROM membership_requests r JOIN membership_plans p ON p.id=r.plan_id JOIN orders o ON o.id=r.order_id WHERE r.id=?").bind(membershipRequestMatch[1]).first();
+    if (!req) return errorResponse("membership_request_not_found", 404, headers);
+    if (req.status !== "submitted") return errorResponse("request_already_reviewed", 409, headers);
+    if (!hasRole(memberUser, "admin")) {
+      const clubAccess = await env.DB.prepare("SELECT 1 AS ok FROM account_access WHERE user_id=? AND club_id=? AND role=? AND state='approved'").bind(memberUser.id, req.club_id, hasRole(memberUser, "secretary") ? "secretary" : "manager").first();
+      if (!clubAccess) return errorResponse("forbidden", 403, headers);
+    }
+    const reviewedAt = new Date().toISOString(), membershipId = makeId("membership");
+    const updates = [
+      env.DB.prepare("UPDATE membership_requests SET status=?,reviewed_by=?,reviewed_at=? WHERE id=? AND status='submitted'").bind(body.status, memberUser.id, reviewedAt, req.id),
+      env.DB.prepare("UPDATE orders SET status=?,updated_at=datetime('now') WHERE id=? AND EXISTS(SELECT 1 FROM membership_requests WHERE id=? AND status=? AND reviewed_by=? AND reviewed_at=?)").bind(body.status === "approved" ? "paid" : "cancelled", req.order_id, req.id, body.status, memberUser.id, reviewedAt),
+    ];
+    if (body.status === "approved") updates.push(env.DB.prepare("INSERT INTO memberships(id,user_id,club_id,plan_id,order_id,starts_at,expires_at,sessions_total) SELECT ?,user_id,club_id,plan_id,order_id,?,datetime(?,'+'||?||' days'),? FROM membership_requests WHERE id=? AND status='approved' AND reviewed_by=? AND reviewed_at=?").bind(membershipId, reviewedAt, reviewedAt, req.duration_days, req.session_count, req.id, memberUser.id, reviewedAt));
+    const results = await env.DB.batch(updates);
+    if (results[0].meta.changes !== 1) return errorResponse("request_already_reviewed", 409, headers);
+    await audit(env, memberUser.id, "membership_request_" + body.status, "membership_request", req.id, { planId: req.plan_id, userId: req.user_id, membershipId: body.status === "approved" ? membershipId : null });
+    return response({ ok: true, membershipId: body.status === "approved" ? membershipId : null }, 200, headers);
+  }
   }
   if (path === "/api/clubs" && request.method === "GET") {
     const result = await env.DB.prepare("SELECT id,name FROM clubs ORDER BY name").all();

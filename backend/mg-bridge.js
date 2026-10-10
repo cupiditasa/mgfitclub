@@ -22,7 +22,7 @@ export async function handleMgBridge(request,env,c){
  const snapshot=async b=>{
   const rows=(await db.prepare('SELECT m.member_id,m.user_id,t.id AS trial_id,t.starts_at,t.expires_at,t.sessions,(SELECT count(*) FROM mg_bridge_visits v WHERE v.trial_id=t.id) AS used FROM mg_bridge_members m LEFT JOIN mg_bridge_trials t ON t.bridge_id=m.bridge_id AND t.user_id=m.user_id WHERE m.bridge_id=?').bind(b.id).all()).results;
   const members=[];
-  for(const r of rows){const u=await userById(env,r.user_id);members.push({...r,active:active(u),name:u?.full_name||'',role:u?.effective_role||u?.role});}
+  for(const r of rows){const u=await userById(env,r.user_id);const membership=await db.prepare("SELECT s.id,p.title AS plan_title,s.starts_at,s.expires_at,s.sessions_total,(SELECT count(*) FROM membership_visits v WHERE v.membership_id=s.id) AS sessions_used FROM memberships s JOIN membership_plans p ON p.id=s.plan_id WHERE s.user_id=? AND s.club_id=? AND s.status='active' AND julianday(s.starts_at)<=julianday('now') AND julianday(s.expires_at)>julianday('now') ORDER BY s.expires_at LIMIT 1").bind(r.user_id,b.club_id).first();members.push({...r,active:active(u),name:u?.full_name||'',role:u?.effective_role||u?.role,membership:membership?{...membership,sessions_remaining:Math.max(0,membership.sessions_total-membership.sessions_used)}:null});}
   const days=(await db.prepare('SELECT t.user_id,v.business_day FROM mg_bridge_visits v JOIN mg_bridge_trials t ON t.id=v.trial_id WHERE t.bridge_id=? AND v.business_day>=?').bind(b.id,new Date(Date.now()-35*86400000).toISOString().slice(0,10)).all()).results;
   return {bridgeId:b.id,serial:b.serial,address:b.address,captureSince:b.capture_since,serverTime:now,cacheExpiresAt:new Date(Date.now()+24*3600000).toISOString(),members,days,mode:'operator_review'};
  };
@@ -104,12 +104,20 @@ export async function handleMgBridge(request,env,c){
   if(body.confirmedAdmission!==true)fail('admission_confirmation_required');
   const m=await db.prepare('SELECT user_id FROM mg_bridge_members WHERE bridge_id=? AND member_id=?').bind(b.id,e.member_id).first(),target=m?await userById(env,m.user_id):null;
   if(!active(target))fail('member_not_active',409);
-  const t=await db.prepare('SELECT * FROM mg_bridge_trials WHERE bridge_id=? AND user_id=?').bind(b.id,m.user_id).first();
+  const t=await db.prepare('SELECT *,(SELECT count(*) FROM mg_bridge_visits v WHERE v.trial_id=mg_bridge_trials.id) AS used FROM mg_bridge_trials WHERE bridge_id=? AND user_id=?').bind(b.id,m.user_id).first();
+  const trialWithinPeriod=!!t&&e.occurred_at>=t.starts_at&&e.occurred_at<t.expires_at;
+  const priorTrialVisit=trialWithinPeriod&&await db.prepare('SELECT 1 AS ok FROM mg_bridge_visits WHERE trial_id=? AND business_day=?').bind(t.id,e.business_day).first();
+  const useTrial=trialWithinPeriod&&t.used<t.sessions;
+  const membership=hasRole(target,'athlete')&&!useTrial?await db.prepare("SELECT s.*,(SELECT count(*) FROM membership_visits v WHERE v.membership_id=s.id) AS used FROM memberships s WHERE s.user_id=? AND s.club_id=? AND s.status='active' AND s.starts_at<=? AND s.expires_at>? AND (SELECT count(*) FROM membership_visits v WHERE v.membership_id=s.id)<s.sessions_total AND NOT EXISTS(SELECT 1 FROM membership_visits v WHERE v.membership_id=s.id AND v.business_day=?) ORDER BY s.expires_at LIMIT 1").bind(m.user_id,b.club_id,e.occurred_at,e.occurred_at,e.business_day).first():null;
   // Staff attendance is recorded, never billed as an athlete membership.
   const statements=[db.prepare("UPDATE mg_bridge_events SET state='approved',reviewed_by=?,reviewed_at=? WHERE id=? AND state='pending'").bind(user.id,now,e.id)];
   if(hasRole(target,'athlete')){
-   if(!t||e.occurred_at<t.starts_at||e.occurred_at>=t.expires_at)fail('no_valid_trial',409);
-   statements.push(db.prepare("INSERT INTO mg_bridge_visits(id,trial_id,event_id,business_day,created_at) SELECT ?,?,?,?,? WHERE EXISTS (SELECT 1 FROM mg_bridge_events WHERE id=? AND state='approved' AND reviewed_by=? AND reviewed_at=?) AND NOT EXISTS(SELECT 1 FROM mg_bridge_visits WHERE trial_id=? AND business_day=?) ON CONFLICT DO NOTHING").bind(makeId('visit'),t.id,e.id,e.business_day,now,e.id,user.id,now,t.id,e.business_day));
+   if(useTrial){if(!priorTrialVisit)statements.push(db.prepare("INSERT INTO mg_bridge_visits(id,trial_id,event_id,business_day,created_at) SELECT ?,?,?,?,? WHERE EXISTS (SELECT 1 FROM mg_bridge_events WHERE id=? AND state='approved' AND reviewed_by=? AND reviewed_at=?) AND NOT EXISTS(SELECT 1 FROM mg_bridge_visits WHERE trial_id=? AND business_day=?) ON CONFLICT DO NOTHING").bind(makeId('visit'),t.id,e.id,e.business_day,now,e.id,user.id,now,t.id,e.business_day));}
+   else if(membership)statements.push(db.prepare("INSERT INTO membership_visits(id,membership_id,event_id,business_day,created_at) SELECT ?,?,?,?,? WHERE EXISTS(SELECT 1 FROM mg_bridge_events WHERE id=? AND state='approved' AND reviewed_by=? AND reviewed_at=?) ON CONFLICT DO NOTHING").bind(makeId('membervisit'),membership.id,e.id,e.business_day,now,e.id,user.id,now));
+   else if(t&&t.used>=t.sessions)fail('sessions_exhausted_or_conflict',409);
+   else if(t)fail('no_valid_trial',409);
+   else if(await db.prepare("SELECT 1 AS exhausted FROM memberships s WHERE s.user_id=? AND s.club_id=? AND s.status='active' AND s.starts_at<=? AND s.expires_at>? AND s.sessions_total<=(SELECT count(*) FROM membership_visits v WHERE v.membership_id=s.id) LIMIT 1").bind(m.user_id,b.club_id,e.occurred_at,e.occurred_at).first())fail('sessions_exhausted_or_conflict',409);
+   else fail('no_valid_membership_or_trial',409);
   }
   statements.push(audit(user.id,'station_event_approved',e.id));try{await db.batch(statements)}catch{fail('sessions_exhausted_or_conflict',409)}
   return out({ok:true,mode:'operator_review'});

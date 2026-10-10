@@ -373,6 +373,12 @@
         text-align: center;
         font-size: 21px;
       }
+      .menu .mi { display:inline-flex; align-items:center; justify-content:center; flex:0 0 30px; }
+      .menu .mi svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+      .profile-card .avatar img, .topbar .avatar img { width:100%; height:100%; object-fit:cover; border-radius:inherit; }
+      .profile-card .avatar img[hidden], .topbar .avatar img[hidden] { display:none; }
+      .settings-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:18px; }
+      .settings-actions .logout { position:static; transform:none; min-height:44px; border-radius:12px; }
       .logout {
         margin-top: 20px;
         width: 100%;
@@ -2276,7 +2282,7 @@
           ☰
         </button>
         <div>
-          <h1>محمد کاشانی</h1>
+          <h1 data-profile-name>ورزشکار</h1>
           <p>ورزشکار · باشگاه MG</p>
         </div>
         <section class="hero-card">
@@ -2284,7 +2290,7 @@
             <strong>آماده‌ای قوی‌تر بشی؟</strong
             ><span>برنامه امروزت را ادامه بده و پیشرفتت را ببین.</span>
           </div>
-          <div class="avatar">م</div>
+          <div class="avatar" data-profile-avatar aria-hidden="true"><span>و</span><img alt="" hidden></div>
         </section>
       </header>
       <main class="content">
@@ -2294,14 +2300,14 @@
             <a class="quick orbit-item orbit-1" href="#" data-pane-link="club"
               ><span class="qicon">♙</span>
               <h3>عضویت</h3>
-              <small>وضعیت اشتراک</small></a
+              <small data-membership-summary>در حال دریافت وضعیت عضویت…</small></a
             ><a
               class="quick orbit-item orbit-2"
               href="#"
               data-pane-link="sessions"
               ><span class="qicon">◷</span>
               <h3>جلسات باقی‌مانده</h3>
-              <small>۶۸ جلسه</small></a
+              <small data-sessions-summary>در حال دریافت موجودی جلسات…</small></a
             ><a
               class="quick orbit-item orbit-3"
               href="education.html?demo=athlete"
@@ -2387,24 +2393,15 @@
         <section class="pane" id="clubPane">
           <div class="panel-card">
             <h2>عضویت در باشگاه</h2>
-            <p>
-              پلن سه‌ماههٔ شما فعال است و ۶۸ روز تا پایان اعتبار باقی مانده.
-            </p>
-            <a class="primary" href="#" data-pane-link="wallet"
-              >افزایش اعتبار کیف پول</a
-            >
+            <p id="membershipStatus" role="status" aria-live="polite">وضعیت عضویت در حال دریافت است.</p>
+            <a class="primary" href="membership.html">مشاهده و انتخاب پکیج عضویت</a>
           </div>
         </section>
         <section class="pane" id="sessionsPane">
           <div class="panel-card">
             <h2>جلسات باقی‌مانده</h2>
-            <p>
-              از پلن فعلی شما ۶۸ جلسه باقی مانده است. حضور و غیاب تأییدشده از
-              همین بخش ثبت می‌شود.
-            </p>
-            <button class="primary" onclick="requestEntry()">
-              درخواست ورود به باشگاه
-            </button>
+            <p id="sessionsStatus" role="status" aria-live="polite">موجودی جلسات در حال دریافت است.</p>
+            <a class="primary" href="membership.html">مشاهده و انتخاب پکیج عضویت</a>
           </div>
         </section>
         <section class="pane" id="chatPane">
@@ -2429,13 +2426,8 @@
         <section class="pane" id="walletPane">
           <div class="panel-card">
             <h2>کیف پول</h2>
-            <p>اعتبار فعلی کیف پول: <b>۷۵۰,۰۰۰ ریال</b></p>
-            <button
-              class="primary"
-              onclick="alert('درخواست افزایش اعتبار ثبت شد.')"
-            >
-              افزایش اعتبار
-            </button>
+            <p>نمایش موجودی کیف پول هنوز به حسابداری متصل نشده است.</p>
+            <button class="primary" type="button" disabled>افزایش اعتبار · به‌زودی</button>
           </div>
         </section>
         <section class="pane" id="profilePane">
@@ -2446,6 +2438,14 @@
               کنید.
             </p>
             <a href="access-center.html#profile">ویرایش نام، نام خانوادگی و عکس پروفایل</a>
+          </div>
+        </section>
+        <section class="pane" id="settingsPane">
+          <div class="panel-card">
+            <h2>تنظیمات حساب</h2>
+            <p>نام، شماره و تصویر این بخش از مشخصات ذخیره‌شدهٔ حساب شما خوانده می‌شود.</p>
+            <a class="primary" href="access-center.html#profile">ویرایش نام، نام خانوادگی و عکس پروفایل</a>
+            <div class="settings-actions"><button class="logout" type="button" onclick="logout()">خروج از حساب</button></div>
           </div>
         </section>
       </main>
@@ -2460,9 +2460,8 @@
         <button class="close" id="closeDrawer">×</button>
       </div>
       <div class="profile-card">
-        <div class="avatar">م</div>
-        <strong>محمد کاشانی</strong><span>ورزشکار</span>
-        <div class="wallet"><span>اعتبار کیف پول</span><b>۷۵۰,۰۰۰ ریال</b></div>
+        <div class="avatar" data-profile-avatar aria-hidden="true"><span>و</span><img alt="" hidden></div>
+        <strong data-profile-name>ورزشکار</strong><span data-profile-phone>مشخصات حساب شما</span>
       </div>
       <section class="theme-switcher" aria-labelledby="themeSwitcherTitle">
         <div class="theme-switcher-head">
@@ -2499,19 +2498,17 @@
       </section>
       <nav class="menu">
         <button class="active" data-menu="home">
-          <span class="mi">⌂</span>داشبورد کاربری</button
+          <span class="mi" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span>داشبورد کاربری</button
         ><button data-menu="gallery">
-          <span class="mi">▧</span>گالری باشگاه</button
+          <span class="mi" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></span>گالری باشگاه</button
         ><button data-menu="profile">
-          <span class="mi">♙</span>مشخصات کاربری (ویرایش)</button
+          <span class="mi" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>مشخصات کاربری (ویرایش)</button
         ><button data-menu="wallet">
-          <span class="mi">▣</span>اعتبار کیف پول</button
+          <span class="mi" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 9h18M16 15h2"/></svg></span>اعتبار کیف پول</button
         ><button data-menu="chat">
-          <span class="mi">☏</span>گفت‌وگو با مربی</button
-        ><button data-menu="home"><span class="mi">◉</span>سؤالات متداول</button
-        ><button data-menu="home"><span class="mi">?</span>تماس با ما</button>
+          <span class="mi" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 8.7 3.9a8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/></svg></span>گفت‌وگو با مربی</button
+        ><button data-menu="settings"><span class="mi" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.4.8l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.4-.8l-1.7.7-1.4-2.4 1.4-1.1a8 8 0 0 1 0-1.7l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.4-.8l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.4.8l1.7-.7 1.4 2.4-1.4 1.1a8 8 0 0 1 0 1.7z"/></svg></span>تنظیمات حساب</button>
       </nav>
-      <button class="logout" onclick="logout()">↪ خروج از حساب</button>
     </aside>
     <script src="mg-api.js?v=20261010-offline-continuity"></script>
     <script>
@@ -2604,6 +2601,7 @@
         chat: "chatPane",
         wallet: "walletPane",
         profile: "profilePane",
+        settings: "settingsPane",
       };
       function showPane(name) {
         Object.values(panes).forEach((id) =>
@@ -2688,21 +2686,66 @@
         alert("درخواست ورود برای منشی ارسال شد.");
       }
       async function hydrateAthleteDashboard() {
-        if (q === "athlete" || !localStorage.getItem("mg_session")) return;
+        const membershipStatus = document.getElementById("membershipStatus");
+        const sessionsStatus = document.getElementById("sessionsStatus");
+        const membershipSummary = document.querySelector("[data-membership-summary]");
+        const sessionsSummary = document.querySelector("[data-sessions-summary]");
+        if (q === "athlete" || !localStorage.getItem("mg_session")) {
+          document.querySelectorAll("[data-profile-name]").forEach((node) => node.textContent = "ورزشکار");
+          document.querySelectorAll("[data-profile-phone]").forEach((node) => node.textContent = "برای نمایش مشخصات وارد حساب شوید");
+          if (membershipStatus) membershipStatus.textContent = "برای مشاهدهٔ وضعیت عضویت، ابتدا وارد حساب خود شوید.";
+          if (sessionsStatus) sessionsStatus.textContent = "برای مشاهدهٔ جلسات باقی‌مانده، ابتدا وارد حساب خود شوید.";
+          if (membershipSummary) membershipSummary.textContent = "ورود برای مشاهدهٔ وضعیت";
+          if (sessionsSummary) sessionsSummary.textContent = "ورود برای مشاهدهٔ جلسات";
+          return;
+        }
         try {
-          const data = await MGApi.dashboard();
+          const [data, profileData] = await Promise.all([MGApi.dashboard(), MGApi.request("/api/me/profile")]);
           const user = data.user || {};
-          const name = user.full_name || user.phone || "ورزشکار";
-          document.querySelector(".topbar h1")?.replaceChildren(name);
-          document.querySelector(".profile-card strong")?.replaceChildren(name);
-          if (user.role)
-            document.querySelector(".profile-card > span")?.replaceChildren(
-              user.role === "athlete" ? "ورزشکار" : user.role,
-            );
+          const profile = profileData.profile || {};
+          const first = String(profile.first_name || "").trim();
+          const last = String(profile.last_name || "").trim();
+          const name = first && last ? `${first} ${last}` : "نام و نام خانوادگی ثبت نشده";
+          document.querySelectorAll("[data-profile-name]").forEach((node) => node.textContent = name);
+          document.querySelectorAll("[data-profile-phone]").forEach((node) => node.textContent = user.phone || "شمارهٔ ثبت‌شده موجود نیست");
+          document.querySelectorAll("[data-profile-avatar]").forEach((avatar) => {
+            const initial = avatar.querySelector("span"), image = avatar.querySelector("img");
+            if (profile.avatar_data && /^data:image\/(jpeg|png|webp);base64,/.test(profile.avatar_data)) {
+              image.src = profile.avatar_data; image.hidden = false; if (initial) initial.hidden = true;
+            } else {
+              image.removeAttribute("src"); image.hidden = true; if (initial) { initial.hidden = false; initial.textContent = first.charAt(0) || "؟"; }
+            }
+          });
+          const membership = data.membership || {};
+          const activePlans = membership.memberships || [];
+          const sessions = Number(membership.remainingSessions || 0);
+          if (membership.active) {
+            const planNames = [...new Set(activePlans.map((item) => item.plan_title).filter(Boolean))];
+            const expiry = activePlans[0]?.expires_at ? new Date(activePlans[0].expires_at).toLocaleDateString("fa-IR") : "";
+            if (membershipSummary) membershipSummary.textContent = sessions ? `${sessions.toLocaleString("fa-IR")} جلسهٔ باقی‌مانده` : "اعتبار زمانی فعال · جلسه‌ای باقی نمانده";
+            if (sessionsSummary) sessionsSummary.textContent = `${sessions.toLocaleString("fa-IR")} جلسه`;
+            if (membershipStatus) membershipStatus.textContent = `${planNames.join("، ") || "عضویت فعال"} فعال است${expiry ? ` و اعتبار آن تا ${expiry}` : ""}.`;
+            if (sessionsStatus) sessionsStatus.textContent = sessions ? `${sessions.toLocaleString("fa-IR")} جلسه از عضویت‌های فعال شما باقی مانده است.` : "عضویت شما فعال است، اما جلسات آن به پایان رسیده؛ برای تمدید پکیج‌ها را ببینید.";
+          } else if (membership.pendingRequest) {
+            if (membershipSummary) membershipSummary.textContent = "در انتظار تأیید منشی";
+            if (sessionsSummary) sessionsSummary.textContent = "عضویت هنوز فعال نشده";
+            if (membershipStatus) membershipStatus.textContent = "درخواست پرداخت نقدی شما ثبت شده و پس از بررسی منشی نتیجه در همین‌جا به‌روزرسانی می‌شود.";
+            if (sessionsStatus) sessionsStatus.textContent = "تا زمان تأیید منشی و فعال‌شدن پکیج، جلسهٔ قابل استفاده‌ای ثبت نشده است.";
+          } else {
+            if (membershipSummary) membershipSummary.textContent = "عضویت فعالی ندارید · مشاهدهٔ پکیج‌ها";
+            if (sessionsSummary) sessionsSummary.textContent = "برای استفاده ابتدا عضو شوید";
+            if (membershipStatus) membershipStatus.textContent = "در حال حاضر عضویت فعالی ندارید. برای انتخاب پکیج و ثبت درخواست، صفحهٔ عضویت را ببینید.";
+            if (sessionsStatus) sessionsStatus.textContent = "هنوز عضویت فعالی ندارید؛ بعد از انتخاب و تأیید پکیج، تعداد جلسات اینجا نمایش داده می‌شود.";
+          }
         } catch (error) {
           if (error.status === 401) {
             localStorage.removeItem("mg_session");
             location.href = "account.html";
+          } else {
+            if (membershipStatus) membershipStatus.textContent = "وضعیت عضویت فعلاً بارگذاری نشد؛ اتصال را بررسی و دوباره تلاش کنید.";
+            if (sessionsStatus) sessionsStatus.textContent = "موجودی جلسات فعلاً دریافت نشد؛ عددی به‌صورت حدسی نمایش داده نمی‌شود.";
+            if (membershipSummary) membershipSummary.textContent = "وضعیت در دسترس نیست";
+            if (sessionsSummary) sessionsSummary.textContent = "وضعیت در دسترس نیست";
           }
         }
       }

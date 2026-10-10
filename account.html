@@ -326,6 +326,9 @@
             if (!r.ok) throw Error(d.error || "خطای سرویس");
             return d;
           };
+        const postLoginPath = (role) => String(location.search || location.href || "").includes("next=membership.html") && role === "athlete"
+          ? "/membership.html"
+          : "/" + (routes[role] || routes.athlete);
         Array.from(roles.querySelectorAll?.("[data-role]") || []).forEach((option) => {
           option.hidden = isStaffPortal ? option.dataset.role === "athlete" : option.dataset.role !== "athlete";
         });
@@ -394,7 +397,7 @@
               const actualRole = d.user?.role || "athlete";
               localStorage.setItem("mg_role", actualRole);
               await window.MGApi.rememberVerifiedUser(d.user);
-              location.href = "/" + (routes[actualRole] || routes.athlete);
+              location.href = postLoginPath(actualRole);
             }
           } catch (e) {
             set(window.MGApi.errorMessage(e));
@@ -421,7 +424,7 @@
                 location.replace("https://mgfitclub.ir/account.html");
                 return;
               }
-              location.replace("/" + (routes[user.role] || routes.athlete));
+              location.replace(postLoginPath(user.role));
               return;
             }
             action.textContent = "دریافت کد ورود";

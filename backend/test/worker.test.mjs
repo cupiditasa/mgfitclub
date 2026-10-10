@@ -32,9 +32,11 @@ class D1Mock {
     this.db.exec(fs.readFileSync(new URL("../schema.sql", import.meta.url), "utf8"));
     this.db.exec(fs.readFileSync(new URL("../migrations/001-runtime.sql", import.meta.url), "utf8"));
     this.db.exec(fs.readFileSync(new URL("../migrations/003-club-access.sql", import.meta.url), "utf8"));
+    this.db.exec(fs.readFileSync(new URL("../migrations/007-mg-bridge.sql", import.meta.url), "utf8"));
     this.db.exec(fs.readFileSync(new URL("../migrations/011-coach-marketplace.sql", import.meta.url), "utf8"));
     this.db.exec(fs.readFileSync(new URL("../migrations/012-athlete-workouts-and-intake.sql", import.meta.url), "utf8"));
     this.db.exec(fs.readFileSync(new URL("../migrations/017-athlete-coach-selection.sql", import.meta.url), "utf8"));
+    this.db.exec(fs.readFileSync(new URL("../migrations/018-cash-memberships.sql", import.meta.url), "utf8"));
   }
   prepare(sql) {
     return new D1Statement(this.db, sql);
@@ -342,7 +344,7 @@ test("health and role-aware test login", async () => {
   const { env } = envFactory();
   const health = await call(env, "/health");
   assert.equal(health.status, 200);
-  assert.equal(health.body.version, "20261010-athlete-messages");
+  assert.equal(health.body.version, "20261010-membership-cash-dashboard");
   assert.deepEqual(health.body.otp, { provider: "sms.ir", method: "verify", templateId: 791767, parameter: "CODE" });
   const login = await call(env, "/api/auth/test-login", {
     method: "POST",
@@ -605,6 +607,39 @@ test("training request is idempotent and entry request is not duplicated", async
   });
   assert.equal(duplicate.status, 200);
   assert.equal(duplicate.body.duplicate, true);
+});
+
+test("cash membership request requires a complete athlete profile and secretary approval activates the exact package", async () => {
+  const { env, DB } = envFactory();
+  env.STAFF_DEFAULT_CLUB_ID = "club_test";
+  DB.prepare("INSERT INTO account_access(user_id,role,club_id,state) VALUES ('u_athlete','athlete',NULL,'approved'),('u_secretary','secretary','club_test','approved')").run();
+  const athlete = await otpLogin(env, "09170000002");
+  const summary = await call(env, "/api/dashboard", { headers: { authorization: "Bearer " + athlete.token } });
+  assert.equal(summary.body.membership.active, false);
+  assert.equal(summary.body.membership.remainingSessions, 0);
+  const key = "test-cash-membership-0001";
+  const incomplete = await post(env, "/api/membership-requests", { planKey: "basic_12_30", idempotencyKey: key }, athlete.token);
+  assert.equal(incomplete.status, 409, JSON.stringify(incomplete.body));
+  assert.equal(incomplete.body.error, "profile_name_required");
+  assert.equal((await post(env, "/api/me/profile", { firstName: "آزاده", lastName: "آزمایشی" }, athlete.token, "PATCH")).status, 200);
+  const requested = await post(env, "/api/membership-requests", { planKey: "basic_12_30", idempotencyKey: key }, athlete.token);
+  assert.equal(requested.status, 201, JSON.stringify(requested.body));
+  assert.equal((await post(env, "/api/membership-requests", { planKey: "pro_24_90", idempotencyKey: key }, athlete.token)).body.requestId, requested.body.requestId);
+  DB.prepare("INSERT INTO test_accounts(username,password_hash,role,user_id) VALUES (?,?,?,?)").bind("secretary", "23a1f74bc589fe525387f8d2c40f1e552a564fe5de00af935bb7a0592fc976c6", "athlete", "u_secretary").run();
+  const secretary = await call(env, "/api/auth/test-login", { method: "POST", body: JSON.stringify({ username: "secretary", password: "athlete" }), headers: { "content-type": "application/json" } });
+  assert.equal(secretary.body.user.role, "secretary");
+  const queue = await call(env, "/api/membership-requests", { headers: { authorization: "Bearer " + secretary.body.token } });
+  assert.equal(queue.body.requests.length, 1);
+  assert.equal(queue.body.requests[0].first_name_snapshot, "آزاده");
+  assert.equal(queue.body.requests[0].phone_snapshot, "09170000002");
+  const approved = await post(env, `/api/membership-requests/${requested.body.requestId}`, { status: "approved" }, secretary.body.token, "PATCH");
+  assert.equal(approved.status, 200, JSON.stringify(approved.body));
+  const updated = await call(env, "/api/dashboard", { headers: { authorization: "Bearer " + athlete.token } });
+  assert.equal(updated.body.membership.active, true);
+  assert.equal(updated.body.membership.remainingSessions, 12);
+  assert.equal(updated.body.membership.memberships[0].plan_title, "عمومی Basic · ۱۲ جلسه · یک‌ماهه");
+  assert.equal(DB.prepare("SELECT status FROM orders WHERE id=(SELECT order_id FROM membership_requests WHERE id=?)").bind(requested.body.requestId).first().status, "paid");
+  assert.equal((await post(env, `/api/membership-requests/${requested.body.requestId}`, { status: "approved" }, secretary.body.token, "PATCH")).status, 409);
 });
 
 test("athlete coach/club messages reach staff inbox and appear in the club-only manager report", async () => {
