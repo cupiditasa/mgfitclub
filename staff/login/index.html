@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>ورود کارکنان | MG FitClub</title>
+  </head>
+  <body>
+    <p>در حال باز کردن صفحهٔ ورود کارکنان…</p>
+    <script>
+      fetch("/account.html", { cache: "no-store" })
+        .then((response) => {
+          if (!response.ok) throw new Error("Login page unavailable");
+          return response.text();
+        })
+        .then((html) => {
+          document.open();
+          document.write(html);
+          document.close();
+        })
+        .catch(() => {
+          document.body.textContent = "صفحهٔ ورود بارگذاری نشد. لطفاً اتصال اینترنت را بررسی و دوباره تلاش کنید.";
+        });
+    </script>
+  </body>
+</html>

@@ -169,7 +169,7 @@
   };
 
   const page = location.pathname?.split("/").pop();
-  if (page && page !== "account.html") {
+  if (page && page !== "account.html" && !/^\/staff\/login\/?$/.test(String(location.pathname || ""))) {
     const guard = document.createElement("script");
     guard.src = "access-control.js?v=20261005-bridge";
     guard.onerror = () => {

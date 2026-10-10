@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <base href="/" />
     <meta name="theme-color" content="#080a08" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -272,14 +273,14 @@
         autocomplete="one-time-code"
       /><button id="action" class="button" type="button">دریافت کد ورود</button>
       <p id="status" role="status" aria-live="polite"></p>
-      <a id="staffEntry" class="staff-entry" href="https://staff.mgfitclub.ir/account.html">ورود ادمین</a>
+      <a id="staffEntry" class="staff-entry" href="https://mgfitclub.ir/staff/login">ورود ادمین</a>
       <a id="athleteEntry" class="staff-entry" href="https://mgfitclub.ir/account.html" hidden>ورود ورزشکار</a>
     </main>
     <script>
       (() => {
         const API = "https://api.mgfitclub.ir",
-          STAFF_ORIGIN = "https://staff.mgfitclub.ir",
-          isStaffHost = String(location.hostname || "").toLowerCase() === "staff.mgfitclub.ir",
+          STAFF_LOGIN_URL = "https://mgfitclub.ir/staff/login",
+          isStaffPortal = String(location.hostname || "").toLowerCase() === "staff.mgfitclub.ir" || /^\/staff\/login\/?$/.test(String(location.pathname || "")),
           $ = (id) => document.getElementById(id),
           target = $("target"),
           code = $("code"),
@@ -299,7 +300,7 @@
         let sent = false,
           busy = false,
           challengeId = "",
-          selected = isStaffHost ? "manager" : "athlete";
+          selected = isStaffPortal ? "manager" : "athlete";
         const names = {
             admin: "مدیریت کل",
             athlete: "ورزشکار",
@@ -328,12 +329,12 @@
             return d;
           };
         Array.from(roles.querySelectorAll?.("[data-role]") || []).forEach((option) => {
-          option.hidden = isStaffHost ? option.dataset.role === "athlete" : option.dataset.role !== "athlete";
+          option.hidden = isStaffPortal ? option.dataset.role === "athlete" : option.dataset.role !== "athlete";
         });
         Array.from(roles.querySelectorAll?.(".role") || []).forEach((option) => option.classList.toggle("active", option.dataset.role === selected));
-        roleToggle.hidden = !isStaffHost;
-        roles.hidden = !isStaffHost;
-        if (isStaffHost) {
+        roleToggle.hidden = !isStaffPortal;
+        roles.hidden = !isStaffPortal;
+        if (isStaffPortal) {
           $("loginInstructions").textContent = "نقش سازمانی خود را انتخاب کنید، سپس شمارهٔ موبایل و کد ورود را وارد کنید.";
           roleToggle.textContent = "انتخاب نقش: " + names[selected];
           $("staffEntry").hidden = true;
@@ -406,7 +407,7 @@
               localStorage.setItem("mg_session", d.token);
               const actualRole = d.user?.role || "athlete";
               localStorage.setItem("mg_role", actualRole);
-              location.href = routes[actualRole] || routes.athlete;
+              location.href = "/" + (routes[actualRole] || routes.athlete);
             }
           } catch (e) {
             set(window.MGApi.errorMessage(e));
@@ -423,17 +424,17 @@
           try {
             const user = await window.MGApi.restoreSession();
             if (user) {
-              if (!isStaffHost && user.role !== "athlete") {
+              if (!isStaffPortal && user.role !== "athlete") {
                 await window.MGApi.logout();
-                location.replace(STAFF_ORIGIN + "/account.html");
+                location.replace(STAFF_LOGIN_URL);
                 return;
               }
-              if (isStaffHost && user.role === "athlete") {
+              if (isStaffPortal && user.role === "athlete") {
                 await window.MGApi.logout();
                 location.replace("https://mgfitclub.ir/account.html");
                 return;
               }
-              location.replace(routes[user.role] || routes.athlete);
+              location.replace("/" + (routes[user.role] || routes.athlete));
               return;
             }
             action.textContent = "دریافت کد ورود";
