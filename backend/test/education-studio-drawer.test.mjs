@@ -7,7 +7,7 @@ const html=fs.readFileSync(new URL('../../education-studio.html',import.meta.url
 test('mobile movement library stays off-canvas until opened and does not occupy model layout',()=>{
  assert.match(html,/\.layout\{display:grid;grid-template-columns:minmax\(0,1fr\);min-width:0\}/);
  assert.match(html,/\.library:not\(\.open\)\{visibility:hidden;pointer-events:none;transform:translateX\(110%\)!important\}/);
- assert.match(html,/\.library\.open\{visibility:visible;pointer-events:auto;transform:translateX\(0\)!important/);
+ assert.match(html,/\.library\.open\{visibility:visible;opacity:1!important;pointer-events:auto;transform:translateX\(0\)!important/);
  assert.match(html,/\.scrim:not\(\.hidden\)\{z-index:60/);
  assert.match(html,/id="burger"[^>]*aria-controls="library"[^>]*aria-expanded="false"/);
 });

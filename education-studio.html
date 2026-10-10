@@ -17,6 +17,7 @@
   --line:rgba(233,244,238,.11); --line2:rgba(233,244,238,.06); --line3:rgba(233,244,238,.032);
   --lime:#c9f24f; --lime2:#a4d92e; --mint:#7fe8c9; --coral:#ff8f66; --blue:#8fbcff; --amber:#e9c46a; --violet:#b9a0ff; --rose:#ff5f8a;
   --ok:#72e0a4;
+  /* Keep primary actions in the MG lime family; use palette accents for secondary states. */
   --grad:linear-gradient(120deg,var(--lime),var(--mint));
   --sh-1:0 2px 8px rgba(0,0,0,.4);
   --sh-2:0 22px 60px -28px rgba(0,0,0,.9);
@@ -63,6 +64,8 @@ button,input,select{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none}
 :focus-visible{outline:2.5px solid var(--lime);outline-offset:3px;border-radius:10px}
 .hidden{display:none!important}
+:root[data-mg-theme^="modern-light"]{--grad:linear-gradient(120deg,#d4e99e,#b8e63f)}
+:root[data-mg-theme^="modern-dark"]{--grad:linear-gradient(120deg,#d8f89a,#b8e63f)}
 ::-webkit-scrollbar{width:9px;height:9px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(233,244,238,.14);border-radius:9px;border:2px solid transparent;background-clip:content-box}
@@ -71,10 +74,9 @@ button{cursor:pointer;border:0;background:none}
 .workspace-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:760px;margin:12px auto 18px;padding:7px;border:1px solid var(--line);border-radius:18px;background:rgba(255,255,255,.035);box-shadow:var(--sh-2)}
 .workspace-tab{display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:10px 16px;border:1px solid transparent;border-radius:13px;color:var(--muted);font-size:14px;font-weight:800;transition:background .2s,color .2s,border-color .2s,box-shadow .2s}
 .workspace-tab:hover{color:var(--ink);background:rgba(255,255,255,.045)}
-.workspace-tab[aria-selected=true]{color:#101812;background:var(--grad);border-color:rgba(201,242,79,.55);box-shadow:0 8px 24px -12px rgba(201,242,79,.75)}
+  .workspace-tab[aria-selected=true]{color:var(--mg-on-primary,#101812);background:var(--grad);border-color:rgba(201,242,79,.55);box-shadow:0 8px 24px -12px rgba(201,242,79,.48)}
 .workspace-tab svg{width:19px;height:19px;flex:0 0 auto}
 .workspace-intro{max-width:760px;margin:0 auto 22px;text-align:center;color:var(--muted);font-size:12px;line-height:1.9}
-.navlinks{display:none!important}
 body[data-workspace="learn"] #planner,body[data-workspace="learn"] #steps,body[data-workspace="learn"] .hero{display:none!important}
 body[data-workspace="plan"] #studio,body[data-workspace="plan"] #steps,body[data-workspace="plan"] .hero{display:none!important}
 body[data-workspace="plan"] #planner{display:block;margin-top:0}
@@ -185,13 +187,19 @@ h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;back
 .segbtn{border:1px solid var(--line);border-radius:10px;padding:5px 11px;font-size:10.5px;color:var(--muted);transition:.2s;font-weight:600}
 .segbtn:hover{color:var(--ink);border-color:rgba(147,172,164,.5)}
 .segbtn[aria-pressed=true]{color:#0a1512;background:var(--grad);border-color:transparent;font-weight:800;box-shadow:0 6px 16px -6px rgba(201,242,79,.7)}
-.chiprow{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px;scrollbar-width:none;min-height:42px;align-items:center}
-.chiprow::-webkit-scrollbar{display:none}
+.chiprow{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;width:100%;max-width:100%;min-width:0;box-sizing:border-box;
+  padding:3px 2px 9px;margin-bottom:3px;min-height:44px;align-items:center;flex:0 0 auto;touch-action:pan-x;
+  overscroll-behavior-inline:contain;scrollbar-width:thin;scrollbar-color:var(--mg-accent,var(--lime)) transparent;scroll-snap-type:x proximity}
+.chiprow::-webkit-scrollbar{height:6px}
+.chiprow::-webkit-scrollbar-track{background:color-mix(in srgb,var(--mg-border) 50%,transparent);border-radius:99px}
+.chiprow::-webkit-scrollbar-thumb{background:var(--mg-accent,var(--lime));border:0;border-radius:99px}
+.chiprow-hint{display:flex;align-items:center;gap:6px;min-height:24px;margin:-2px 2px 3px;color:var(--muted);font-size:10px;line-height:1.5}
+.chiprow-hint svg{width:15px;height:15px;flex:0 0 auto;color:var(--mg-accent,var(--lime))}
 .chip{flex:0 0 auto;white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:10.5px;
-  color:var(--muted);transition:.2s;font-weight:600;background:rgba(255,255,255,.018)}
+  color:var(--muted);transition:color .2s,border-color .2s,background .2s;font-weight:600;background:rgba(255,255,255,.018);scroll-snap-align:start}
 .chip:hover{color:var(--ink);border-color:rgba(147,172,164,.5);transform:translateY(-1px)}
-.chip[aria-pressed=true]{background:rgba(201,242,79,.14);border-color:rgba(201,242,79,.6);color:var(--lime);font-weight:800;
-  box-shadow:0 0 16px -4px rgba(201,242,79,.5)}
+.chip[aria-pressed=true]{background:var(--mg-accent-soft,rgba(201,242,79,.14));border-color:var(--mg-accent,var(--lime));color:var(--mg-accent,var(--lime));font-weight:800;
+  box-shadow:0 2px 10px -6px color-mix(in srgb,var(--mg-accent,var(--lime)) 60%,transparent)}
 .chip .n{opacity:.6;font:600 9.5px var(--fontnum);margin-inline-start:5px}
 .exercise-list{display:grid;gap:8px;overflow-y:auto;overflow-x:hidden;padding-inline-end:6px;flex:1 1 auto;min-height:140px}
 .exercise-list.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -537,9 +545,16 @@ button.badge:disabled{opacity:.55;cursor:wait}
   .exercise-list{grid-template-columns:repeat(2,minmax(0,1fr))}
   .exercise-list.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-@media(max-width:1020px){
+@media(max-width:1200px){
+  .topbar{flex-wrap:wrap}
   .burger{display:grid}
-  .navlinks{display:none}
+  .navlinks{order:5;flex:1 0 100%;width:100%;max-width:100%;margin:0;padding:0 1px 3px;overflow-x:auto;overflow-y:hidden;
+    scrollbar-width:thin;scrollbar-color:var(--mg-accent,var(--lime)) transparent;overscroll-behavior-inline:contain;touch-action:pan-x}
+  .navlinks::-webkit-scrollbar{height:4px}
+  .navlinks::-webkit-scrollbar-thumb{background:var(--mg-accent,var(--lime));border-radius:99px}
+  .navlink{flex:0 0 auto;padding:8px 11px}
+}
+@media(max-width:1020px){
   .layout{display:grid;grid-template-columns:minmax(0,1fr);min-width:0}
   .stage,.inspector{min-width:0}
   /* On small screens the library is a true off-canvas drawer, never a grid column. */
@@ -550,7 +565,7 @@ button.badge:disabled{opacity:.55;cursor:wait}
     transition:transform .32s var(--ease),visibility .32s step-end;}
   .library:not(.open){visibility:hidden;pointer-events:none;transform:translateX(110%)!important}
   html[dir=ltr] .library:not(.open){transform:translateX(-110%)!important}
-  .library.open{visibility:visible;pointer-events:auto;transform:translateX(0)!important;transition:transform .32s var(--ease),visibility 0s}
+  .library.open{visibility:visible;opacity:1!important;pointer-events:auto;transform:translateX(0)!important;transition:transform .32s var(--ease),visibility 0s,opacity .2s ease}
   .library-close{display:grid}
   .library .secthead{flex-wrap:nowrap;min-height:38px}
   .library .secthead h2{flex:1;min-width:0}
@@ -616,12 +631,14 @@ button.badge:disabled{opacity:.55;cursor:wait}
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
   </button>
   <a class="brand" href="index.html"><span class="brandmark">MG</span><span><span class="brandtitle">حرکت‌یار سه‌بعدی</span><span class="brandmeta">استودیوی هوشمند آموزش حرکت · MG FitClub شیراز</span></span></a>
-  <nav class="navlinks" aria-label="بخش‌ها">
-    <a class="navlink active" href="#studio" data-sec="studio">استودیو سه‌بعدی</a>
-    <a class="navlink" href="#details" data-sec="details">جزئیات حرکت</a>
-    <a class="navlink" href="#steps" data-sec="steps">گام‌های اجرا</a>
-   <a class="navlink" href="#planner" data-sec="planner">مسیر تمرین</a>
-   <a class="navlink" href="index.html">صفحه اصلی</a>
+  <nav class="navlinks" aria-label="ناوبری سایت">
+    <a class="navlink" href="index.html">صفحهٔ اصلی</a>
+    <a class="navlink" href="membership.html">پکیج‌های عضویت</a>
+    <a class="navlink" href="news.html">اخبار ورزشی</a>
+    <a class="navlink" href="mg-journal.html">مجله</a>
+    <a class="navlink" href="app.html">اپلیکیشن</a>
+    <a class="navlink active" href="#studio" data-sec="studio">آموزش حرکت‌ها</a>
+    <a class="navlink" href="#planner" data-sec="planner">ساخت برنامهٔ تمرینی</a>
   </nav>
   <div class="topnav">
     <span class="statuspill"><i></i><span id="libStatus">۱۵۵ حرکت آماده</span></span>
@@ -680,7 +697,11 @@ button.badge:disabled{opacity:.55;cursor:wait}
       <button class="segbtn" data-view="list" aria-pressed="true">فهرست</button>
       <button class="segbtn" data-view="grid" aria-pressed="false">شبکه</button>
     </div>
-    <div class="chiprow" id="catFilter" role="group" aria-label="گروه عضلانی"></div>
+    <div class="chiprow" id="catFilter" role="group" aria-label="گروه عضلانی" tabindex="0"></div>
+    <small class="chiprow-hint" id="categoryScrollHint">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6M11 6l-6 6 6 6"/></svg>
+      برای دیدن همهٔ گروه‌ها، فهرست را افقی بکشید.
+    </small>
     <div class="chiprow" id="lvlFilter" role="group" aria-label="سطح">
       <button class="chip" data-lvl="all" aria-pressed="true">همهٔ سطوح</button>
       <button class="chip" data-lvl="مقدماتی" aria-pressed="false">مقدماتی</button>
