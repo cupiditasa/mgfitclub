@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>بررسی مدل‌های آناتومی MG</title>
+<style>
+:root{color-scheme:dark;font:15px/1.6 system-ui,"Segoe UI",sans-serif;background:#0a1110;color:#eef4ec}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 20%,#1c3028,#0a1110 72%)}header{padding:16px 22px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #304337}h1{font-size:18px;margin:0 auto 0 0}.tools,.meshlist{display:flex;gap:8px;flex-wrap:wrap}button{background:#18241d;border:1px solid #516543;color:#e8f4e1;border-radius:10px;padding:9px 13px;cursor:pointer}button.active{background:#b8e63f;color:#10200b;border-color:#d4ff70}main{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:14px;padding:14px;max-width:1500px;margin:auto}.stage{position:relative;height:min(78vh,820px);min-height:480px;border:1px solid #2d4537;border-radius:18px;overflow:hidden;background:radial-gradient(ellipse at center,#25342c,#0a1110 70%)}canvas{width:100%;height:100%;display:block}.hud{position:absolute;inset:12px 14px auto;pointer-events:none;color:#d9ecc7;text-shadow:0 1px 4px #000}.side{border:1px solid #2d4537;border-radius:18px;padding:14px;background:#101b16}.side h2{font-size:15px;margin:0 0 10px}.meshlist{max-height:68vh;overflow:auto;align-content:flex-start}.meshlist button{width:100%;text-align:right;font-size:12px}.note{color:#b4c6b1;font-size:12px;margin-top:14px}.status{color:#b8e63f}@media(max-width:800px){main{grid-template-columns:1fr}.stage{height:65vh;min-height:380px}.meshlist{max-height:220px}}
+</style>
+<style>
+.mesh-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}
+.mesh-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;width:100%}
+.mesh-row button{min-height:42px}
+.mesh-row [data-isolate]{padding-inline:9px;white-space:nowrap}
+.mesh-row .mesh-toggle.active{background:#203026;color:#e8f4e1;border-color:#5c764b}
+.mesh-row .mesh-toggle:not(.active){background:#101713;color:#bbcab6;border-color:#3b4b40}
+#meshDetail{margin:10px 0;padding:10px;border:1px solid #304337;border-radius:10px;color:#d9ecc7;font-size:12px;overflow-wrap:anywhere}
+button:focus-visible{outline:3px solid #f2ce58;outline-offset:2px}.credit{margin:10px 0 0;padding:10px;border-top:1px solid #304337;color:#b4c6b1;font-size:12px;overflow-wrap:anywhere}.credit a{color:#d4ff70}
+</style>
+</head>
+<body>
+<header><h1>مقایسهٔ مدل‌های آناتومی</h1><div class="tools"><button class="active" data-model="current">مدل فعلی · ۵٫۴MB</button><button data-model="phase21">نسخهٔ پایه · ۷٫۴۴MB</button><button data-model="phase23c">بهینه‌شده · ۶٫۷۴MB · بازبینی</button><button data-action="reset">بازنشانی نما</button></div></header>
+<main><section class="stage"><canvas id="view"></canvas><div class="hud"><strong id="modelTitle">مدل فعلی MG</strong><div id="modelStats" class="status">در حال آماده‌سازی…</div><small>برای چرخش درگ کنید · اسکرول برای بزرگ‌نمایی</small></div></section><aside class="side"><h2>بخش‌های جداشدهٔ مدل</h2><div id="meshList" class="meshlist"></div><p class="note">خاموش/روشن کردن هر بخش فقط برای ممیزی بصری است. نام‌های عمومی به معنی نام‌گذاری علمی عضله نیستند.</p><p class="credit">مدل پایه: <em>Male Full Body Ecorche</em> از Diego Luján García (diegoluga)، شناسهٔ Sketchfab: ab11ebff89224f03bd75efede1164cf6، مجوز <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>. این نسخه فقط برای بازبینی است؛ مدل فعلی سایت تغییر نمی‌کند. <a href="https://sketchfab.com/3d-models/male-full-body-ecorche-ab11ebff89224f03bd75efede1164cf6" target="_blank" rel="noreferrer">صفحهٔ منبع</a></p></aside></main>
+<script type="module">
+import * as THREE from '../../vendor/three/three.module.js';
+import {GLTFLoader} from '../../vendor/three/examples/jsm/loaders/GLTFLoader.js';
+import {MeshoptDecoder} from '../../vendor/three/examples/jsm/libs/meshopt_decoder.module.js';
+import {alignModelUpAxis} from '../model-axis.mjs';
+import {calculateCameraFitDistance} from '../model-camera-fit.mjs';
+const meshList=document.querySelector('#meshList');
+const meshActions=document.createElement('div');meshActions.className='mesh-actions';meshActions.innerHTML='<button type="button" data-show-all>نمایش همه</button><button type="button" data-hide-all>مخفی‌سازی همه</button>';meshList.before(meshActions);
+const meshDetail=document.createElement('p');meshDetail.id='meshDetail';meshDetail.setAttribute('role','status');meshDetail.setAttribute('aria-live','polite');meshDetail.textContent='برای دیدن جزئیات، یک بخش را انتخاب کنید.';meshList.after(meshDetail);
+let meshRows=[],loadSequence=0;
+function disposeModel(model){
+ const geometries=new Set(),materials=new Set(),textures=new Set();
+ model.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const m of(Array.isArray(o.material)?o.material:[o.material]))if(m){materials.add(m);for(const value of Object.values(m))if(value?.isTexture)textures.add(value)}});
+ for(const texture of textures)texture.dispose();for(const material of materials)material.dispose();for(const geometry of geometries)geometry.dispose();
+}
+function updateMeshButtons(){for(const row of meshRows){row.toggle.classList.toggle('active',row.mesh.visible);row.toggle.setAttribute('aria-pressed',String(row.mesh.visible));row.toggle.setAttribute('aria-label',`وضعیت نمایش ${row.label}: ${row.mesh.visible?'نمایش':'پنهان'}`);row.toggle.textContent=`${row.label} · ${row.mesh.visible?'نمایش':'پنهان'}`}}
+function showMeshDetail(mesh,index){
+ const bounds=new THREE.Box3().setFromObject(mesh),size=bounds.getSize(new THREE.Vector3()),geometry=mesh.geometry;
+ const triangleCount=Math.floor((geometry.index?.count??geometry.attributes.position?.count??0)/3);
+ const materialNames=(Array.isArray(mesh.material)?mesh.material:[mesh.material]).filter(Boolean).map(m=>m.name||'بدون نام').join('، ');
+ meshDetail.textContent=`بخش ${index+1}: ${mesh.name||geometry.name||'Mesh'} · ${triangleCount.toLocaleString('fa-IR')} مثلث · ابعاد نمایشی X ${size.x.toFixed(2)}، Y ${size.y.toFixed(2)}، Z ${size.z.toFixed(2)} · متریال: ${materialNames||'نامشخص'}؛ این اطلاعات برچسب علمی عضله نیست.`;
+}
+meshActions.querySelector('[data-show-all]').onclick=()=>{for(const row of meshRows)row.mesh.visible=true;updateMeshButtons();meshDetail.textContent=`همهٔ ${meshRows.length.toLocaleString('fa-IR')} بخش نمایش داده شدند.`};
+meshActions.querySelector('[data-hide-all]').onclick=()=>{for(const row of meshRows)row.mesh.visible=false;updateMeshButtons();meshDetail.textContent=`همهٔ ${meshRows.length.toLocaleString('fa-IR')} بخش پنهان شدند.`};
+const canvas=document.querySelector('#view'),renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(34,1,.1,100),root=new THREE.Group();scene.add(root);
+scene.add(new THREE.HemisphereLight(0xd5efdf,0x141c17,2));const key=new THREE.DirectionalLight(0xffe7ca,3);key.position.set(2,4,4);scene.add(key);const rim=new THREE.DirectionalLight(0xb8e63f,2);rim.position.set(-3,2,-4);scene.add(rim);
+const floor=new THREE.Mesh(new THREE.CircleGeometry(1.3,64),new THREE.MeshBasicMaterial({color:0x15231b}));floor.rotation.x=-Math.PI/2;floor.position.y=-.015;scene.add(floor);
+let current=null,yaw=0,pitch=.08,distance=4,drag=null,currentSize=null,fitDistance=4,zoomed=false;
+const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
+const configs={current:{url:'../mg-male-anatomy.glb',title:'مدل فعلی سایت · TECG 284'},phase21:{url:'./candidate-fullbody-ecorche-phase21-256-webp78-meshopt.glb',title:'Male Full Body Ecorche · نسخهٔ پایه · WebP 256px'},phase23c:{url:'./candidate-fullbody-ecorche-phase23c-decimate90-ccby-meshopt.glb',title:'Male Full Body Ecorche · کاهش هندسهٔ ۱۰٪ · نسخهٔ بازبینی'}};
+async function load(key){
+ const requestId=++loadSequence,c=configs[key];document.querySelector('#modelStats').textContent='در حال بارگذاری…';
+ const gltf=await loader.loadAsync(c.url);if(requestId!==loadSequence){disposeModel(gltf.scene);return}
+ if(current){root.remove(current);disposeModel(current)}current=gltf.scene;
+ const initialBox=new THREE.Box3().setFromObject(current),initialSize=initialBox.getSize(new THREE.Vector3());
+ const verticalAxis=alignModelUpAxis(current,initialSize);
+ current.updateMatrixWorld(true);
+ const box=new THREE.Box3().setFromObject(current),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3()),scale=2.1/size.y;
+ current.scale.setScalar(scale);current.position.set(-center.x*scale,-box.min.y*scale,-center.z*scale);root.add(current);
+ const meshes=[];current.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;meshes.push(o)}});
+ currentSize={width:size.x*scale,height:size.y*scale,depth:size.z*scale};fitDistance=calculateCameraFitDistance({...currentSize,aspect:camera.aspect});
+ distance=fitDistance;zoomed=false;yaw=0;pitch=.08;document.querySelector('#modelTitle').textContent=c.title;
+ document.querySelector('#modelStats').textContent=`${meshes.length} مش · ارتفاع نمایشی ثابت · اصلاح محور ${verticalAxis.toUpperCase()}`;
+ meshList.replaceChildren();meshRows=[];meshes.forEach((m,i)=>{const row=document.createElement('div');row.className='mesh-row';const label=`بخش ${new Intl.NumberFormat('fa-IR').format(i+1)}`,rawName=m.name||m.geometry.name||'Mesh';const toggle=document.createElement('button');toggle.type='button';toggle.className='mesh-toggle active';toggle.title=rawName;toggle.setAttribute('aria-pressed','true');toggle.onclick=()=>{m.visible=!m.visible;updateMeshButtons();showMeshDetail(m,i)};const isolate=document.createElement('button');isolate.type='button';isolate.dataset.isolate='';isolate.textContent='فقط این بخش';isolate.setAttribute('aria-label',`نمایش جداگانهٔ ${label}`);isolate.onclick=()=>{for(const item of meshes)item.visible=item===m;updateMeshButtons();showMeshDetail(m,i)};row.append(toggle,isolate);meshList.append(row);meshRows.push({mesh:m,index:i,label,rawName,toggle});});updateMeshButtons();meshDetail.textContent='نام‌ها و ابعاد برای ممیزی هندسی‌اند و شناسهٔ علمی عضله محسوب نمی‌شوند.';
+ document.querySelectorAll('[data-model]').forEach(b=>b.classList.toggle('active',b.dataset.model===key));
+}
+function resize(){const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;if(currentSize&&!zoomed)distance=fitDistance=calculateCameraFitDistance({...currentSize,aspect:camera.aspect});camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(canvas);resize();
+canvas.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,yaw,pitch};canvas.setPointerCapture(e.pointerId)});canvas.addEventListener('pointermove',e=>{if(!drag)return;yaw=drag.yaw+(e.clientX-drag.x)*.006;pitch=Math.max(-.6,Math.min(.65,drag.pitch+(e.clientY-drag.y)*.004))});canvas.addEventListener('pointerup',()=>drag=null);canvas.addEventListener('wheel',e=>{e.preventDefault();zoomed=true;distance=Math.max(2.2,Math.min(Math.max(7,fitDistance),distance+e.deltaY*.003))},{passive:false});
+document.querySelectorAll('[data-model]').forEach(b=>b.onclick=()=>load(b.dataset.model).catch(e=>document.querySelector('#modelStats').textContent='خطای بارگذاری مدل: '+e.message));document.querySelector('[data-action="reset"]').onclick=()=>{yaw=0;pitch=.08;zoomed=false;distance=fitDistance};
+function frame(){requestAnimationFrame(frame);camera.position.set(Math.sin(yaw)*Math.cos(pitch)*distance,1.02+Math.sin(pitch)*distance,Math.cos(yaw)*Math.cos(pitch)*distance);camera.lookAt(0,1.02,0);renderer.render(scene,camera)}frame();load('current').catch(e=>document.querySelector('#modelStats').textContent='خطای بارگذاری مدل: '+e.message);
+</script>
+</body></html>

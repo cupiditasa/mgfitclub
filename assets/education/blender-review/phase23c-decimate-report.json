@@ -1,0 +1,45 @@
+{
+  "source": "candidate-fullbody-ecorche-phase21-256-webp78-meshopt.glb",
+  "output": "candidate-fullbody-ecorche-phase23c-decimate90-ccby-meshopt.glb",
+  "requested_modifier_ratio": 0.9,
+  "selected_mesh_objects": 16,
+  "import_result": [
+    "FINISHED"
+  ],
+  "export_result": [
+    "FINISHED"
+  ],
+  "before": {
+    "bytes": 7439012,
+    "mesh_count": 16,
+    "material_count": 16,
+    "image_count": 28,
+    "triangle_count": 480338,
+    "extensions_used": [
+      "EXT_meshopt_compression",
+      "EXT_texture_webp"
+    ],
+    "asset_copyright": "Male Full Body Ecorche by Diego Lujan Garcia (diegoluga), CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/); Sketchfab model ab11ebff89224f03bd75efede1164cf6; 256px WebP optimized review copy by MG FitClub",
+    "asset_extras": {}
+  },
+  "after": {
+    "bytes": 6743520,
+    "mesh_count": 16,
+    "material_count": 16,
+    "image_count": 28,
+    "triangle_count": 432286,
+    "extensions_used": [
+      "EXT_meshopt_compression",
+      "EXT_texture_webp"
+    ],
+    "asset_copyright": "Male Full Body Ecorche by Diego Lujan Garcia (diegoluga), CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/); Sketchfab model ab11ebff89224f03bd75efede1164cf6; 256px WebP optimized review copy by MG FitClub",
+    "asset_extras": {}
+  },
+  "size_delta_bytes": -695492,
+  "size_delta_percent": -9.349,
+  "triangle_ratio_observed": 0.89996,
+  "review_only": true,
+  "visual_review_status": "pending",
+  "license_attribution_preserved": true,
+  "note": "Source GLB was read-only. Candidate is not approved for deployment until appearance and interaction are visually reviewed in the education studio."
+}
