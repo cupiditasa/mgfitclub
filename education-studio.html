@@ -1107,7 +1107,8 @@ class Studio{
   }
   updateAnatomyHotspots(){
     if(!this.anatomyMode||!this.anatomyHotspots)return;
-    const facing=Math.cos(this.cam.yaw)>=0?'front':'back',canLabel=Math.abs(Math.cos(this.cam.yaw))>.34;
+    const facing=anatomyFaceAtYaw(this.cam.yaw),canLabel=Boolean(facing);
+    if(this.selectedAnatomyRegion&&this.selectedAnatomyFace!==facing)this.clearAnatomySelection();
     const rect=this.view.getBoundingClientRect();if(!rect.width||!rect.height)return;
     this.anatomyContainer.updateWorldMatrix(true,true);this.camera.updateMatrixWorld();
     for(const item of this.anatomyHotspotEntries){
@@ -1131,7 +1132,7 @@ class Studio{
   }
   selectAnatomyRegion(key,face,point,normal){
     const info=ANATOMY_REGION_INFO[key];if(!info)return;
-    this.selectedAnatomyRegion=key;
+    this.selectedAnatomyRegion=key;this.selectedAnatomyFace=face;
     if(point&&normal){this.markAnatomyPoint(point,normal);this.highlightAnatomyRegion(point,key);}
     else if(info.anchors[face]){
       const anchor=this.anatomyContainer.localToWorld(new this.T.Vector3(...info.anchors[face]));
@@ -1157,6 +1158,12 @@ class Studio{
       });
       list.appendChild(button);
     }
+  }
+  clearAnatomySelection(){
+    this.selectedAnatomyRegion=null;this.selectedAnatomyFace=null;
+    this.anatomyPanel.hidden=true;this.anatomyHighlightState.active.value=0;
+    if(this.anatomyMarker)this.anatomyMarker.visible=false;
+    this.anatomyHotspotEntries.forEach(item=>item.button.setAttribute('aria-pressed','false'));
   }
   async ensureAnatomy(){
     if(this.anatomyPromise)return this.anatomyPromise;
@@ -1205,7 +1212,7 @@ class Studio{
       this.setEquip('none'); this.setView('front');
     }else{
       const d=byKey(key); this.setEquip(d.anim&&POSES[d.k]?POSES[d.k].eq:'none');
-      this.selectedAnatomyRegion=null;this.anatomyHotspotEntries.forEach(item=>item.button.setAttribute('aria-pressed','false'));
+      this.clearAnatomySelection();
     }
     $('.stage').classList.toggle('anatomy-mode',this.anatomyMode);
     const button=$('#anatomyModeBtn');
@@ -1904,6 +1911,8 @@ class Studio{
   }
   setView(v){
     const distance=this.anatomyMode?4.05:this.defaultDistance();
+    const nextYaw=v==='front'?0:v==='back'?Math.PI:v==='side'?-1.38:this.camGoal.yaw;
+    if(this.anatomyMode&&this.selectedAnatomyRegion&&(v==='free'||anatomyFaceAtYaw(nextYaw)!==this.selectedAnatomyFace))this.clearAnatomySelection();
     if(v==='front')this.camGoal={yaw:0,pitch:.16,dist:distance};
     else if(v==='back')this.camGoal={yaw:Math.PI,pitch:.16,dist:distance};
     else if(v==='side')this.camGoal={yaw:-1.38,pitch:.10,dist:distance+.15};

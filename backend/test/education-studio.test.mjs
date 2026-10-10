@@ -38,6 +38,23 @@ test('static anatomy view hides the exercise-mode muscle labels to avoid duplica
  assert.match(updateLabels[1],/if\(this\.anatomyMode\|\|!labelsOn/);
 });
 
+test('anatomy hotspots and selected guidance stay synchronized with the visible camera side',()=>{
+ const updateHotspots=html.match(/updateAnatomyHotspots\(\)\{([\s\S]*?)\n  \}/);
+ assert.ok(updateHotspots,'anatomy hotspot updater is present');
+ assert.match(updateHotspots[1],/const facing=anatomyFaceAtYaw\(this\.cam\.yaw\),canLabel=Boolean\(facing\)/);
+ assert.match(updateHotspots[1],/this\.selectedAnatomyFace!==facing\)this\.clearAnatomySelection\(\)/);
+ const selectRegion=html.match(/selectAnatomyRegion\(key,face,point,normal\)\{([\s\S]*?)\n  \}/);
+ assert.ok(selectRegion,'anatomy region selector is present');
+ assert.match(selectRegion[1],/this\.selectedAnatomyRegion=key;this\.selectedAnatomyFace=face/);
+ const clearRegion=html.match(/clearAnatomySelection\(\)\{([\s\S]*?)\n  \}/);
+ assert.ok(clearRegion,'anatomy selection reset is present');
+ assert.match(clearRegion[1],/this\.anatomyPanel\.hidden=true/);
+ assert.match(clearRegion[1],/this\.anatomyHighlightState\.active\.value=0/);
+ const setView=html.match(/setView\(v\)\{([\s\S]*?)\n  \}/);
+ assert.ok(setView,'anatomy view control is present');
+ assert.match(setView[1],/v==='free'\|\|anatomyFaceAtYaw\(nextYaw\)!==this\.selectedAnatomyFace/);
+});
+
 test('procedural male avatar uses a tapered head and responsive framing without changing anatomy framing',()=>{
  assert.match(html,/const head=lathe\(\[\[\.002,0\],\[\.034,\.004\],\[\.058,\.015\]/);
  assert.match(html,/defaultDistance\(\)\{\s*const aspect=this\.view\.clientWidth\/Math\.max\(1,this\.view\.clientHeight\);\s*return aspect<\.82\?4\.20:3\.65;/);
