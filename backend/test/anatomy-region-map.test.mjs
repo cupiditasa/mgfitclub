@@ -6,6 +6,7 @@ const regions = ANATOMY_REGION_INFO;
 
 test('selects each region at its labeled front/back anchor', () => {
   for (const [key, info] of Object.entries(regions)) {
+    if (info.hotspot === false) continue;
     for (const [face, point] of Object.entries(info.anchors)) {
       assert.equal(pickAnatomyRegion({ x: point[0], y: point[1], z: point[2] }, face, regions), key);
     }
@@ -18,11 +19,18 @@ test('uses the nearest region rather than a fixed height band', () => {
   assert.equal(pickAnatomyRegion({ x: 0.14, y: 1.45, z: -0.09 }, 'back', regions), 'lats');
 });
 
-test('supports finer named landmarks for major muscle subdivisions', () => {
+test('fine descriptive landmarks resolve to visible selectable regions only', () => {
   for (const [key, info] of Object.entries(regions)) {
     assert.ok(ANATOMY_REGION_RADII[key], `missing hit radius for ${key}`);
     for (const [face, point] of Object.entries(info.anchors)) {
-      assert.equal(pickAnatomyRegion({ x: point[0], y: point[1], z: point[2] }, face, regions), key);
+      const picked = pickAnatomyRegion({ x: point[0], y: point[1], z: point[2] }, face, regions);
+      if (info.hotspot === false) {
+        assert.ok(picked, `${key} should map to a visible parent region`);
+        assert.notEqual(regions[picked]?.hotspot, false, `${key} must not return hidden region ${picked}`);
+        assert.ok(info.muscles.some(muscle => regions[picked]?.muscles.includes(muscle)), `${key} should map to a related visible region`);
+      } else {
+        assert.equal(picked, key);
+      }
     }
   }
 });
@@ -44,7 +52,13 @@ test('every visible anatomy region has tested hit radii and valid exercise mappi
       assert.ok(['front', 'back'].includes(face), `invalid face for ${key}`);
       assert.equal(point.length, 3, `invalid anchor dimensions for ${key}`);
       assert.ok(point.every(Number.isFinite), `non-finite anchor for ${key}`);
-      assert.equal(pickAnatomyRegion({ x: point[0], y: point[1], z: point[2] }, face, regions), key);
+      const picked = pickAnatomyRegion({ x: point[0], y: point[1], z: point[2] }, face, regions);
+      if (info.hotspot === false) {
+        assert.notEqual(regions[picked]?.hotspot, false, `${key} must resolve to a visible region`);
+        assert.ok(info.muscles.some(muscle => regions[picked]?.muscles.includes(muscle)), `${key} must resolve to a related region`);
+      } else {
+        assert.equal(picked, key);
+      }
     }
   }
   for (const [face, keys] of Object.entries(ANATOMY_REGIONS_BY_VIEW)) {

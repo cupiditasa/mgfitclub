@@ -112,6 +112,10 @@ export function pickAnatomyRegion(point, face, regionInfo) {
   let bestKey = null;
   let bestDistance = Infinity;
   for (const [key, info] of Object.entries(regionInfo || {})) {
+    // Fine anatomical landmarks are descriptive metadata only until the GLB
+    // provides verified selectable boundaries for them. Keep picking aligned
+    // with the broader hotspots actually rendered by the UI.
+    if (info?.hotspot === false) continue;
     const anchor = info?.anchors?.[face];
     const radii = ANATOMY_REGION_RADII[key];
     if (!anchor || !radii || anchor.length < 3) continue;

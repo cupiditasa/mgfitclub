@@ -15,7 +15,7 @@ test('mobile movement library stays off-canvas until opened and does not occupy 
 test('mobile movement drawer synchronizes accessibility, focus, resize, backdrop and Escape state',()=>{
  const module=html.match(/<script type="module">\s*([\s\S]*?)\s*<\/script>/);
  assert.ok(module,'education studio module script is present');
- const source=module[1].replace(/^import\s.+?;\s*/, '');
+ const source=module[1].replace(/^import\s.+?;\s*/gm, '');
  const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
  assert.doesNotThrow(()=>new AsyncFunction(source));
  assert.match(source,/drawerQuery\.addEventListener\('change',syncDrawerMode\)/);
