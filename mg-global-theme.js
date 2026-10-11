@@ -1,6 +1,7 @@
 (() => {
   const storageKey = "mg_dashboard_theme";
   const cookieKey = "mg_theme_pref";
+  const defaultMigrationKey = "mg_theme_default_dark_migrated";
   const choices = [
     { id: "modern-light", label: "روشن · لایم، طلایی و نقره‌ای" },
     { id: "modern-light-coral", label: "روشن · لایم و مرجانی" },
@@ -24,6 +25,22 @@
     if (!/(?:^|\.)mgfitclub\.ir$/i.test(location.hostname)) return;
     document.cookie = `${cookieKey}=${encodeURIComponent(theme)}; Path=/; Domain=.mgfitclub.ir; Max-Age=31536000; SameSite=Lax; Secure`;
   };
+  const migrateLegacyDefault = () => {
+    let migrated = false;
+    try { migrated = localStorage.getItem(defaultMigrationKey) === "1"; } catch {}
+    migrated ||= document.cookie.split(";").some((part) => part.trim() === `${defaultMigrationKey}=1`);
+    if (migrated) return;
+    let stored = "";
+    try { stored = localStorage.getItem(storageKey) || ""; } catch {}
+    const cookieTheme = readCookie();
+    if (cookieTheme === "modern-light" || (!validThemes.has(cookieTheme) && stored === "modern-light")) {
+      try { localStorage.setItem(storageKey, "modern-dark"); } catch {}
+      writeCookie("modern-dark");
+    }
+    try { localStorage.setItem(defaultMigrationKey, "1"); } catch {}
+    if (/(?:^|\.)mgfitclub\.ir$/i.test(location.hostname))
+      document.cookie = `${defaultMigrationKey}=1; Path=/; Domain=.mgfitclub.ir; Max-Age=31536000; SameSite=Lax; Secure`;
+  };
   const saveTheme = (theme) => {
     try { localStorage.setItem(storageKey, theme); } catch {}
     writeCookie(theme);
@@ -33,7 +50,7 @@
     const link = document.createElement("link");
     link.rel = "stylesheet";
     const scriptUrl = document.currentScript?.src || new URL("mg-global-theme.js", document.baseURI).href;
-    link.href = new URL("mg-global-theme.css?v=20261011-sitewide", scriptUrl).href;
+    link.href = new URL("mg-global-theme.css?v=20261011-dark-default", scriptUrl).href;
     link.dataset.mgGlobalTheme = "true";
     document.head?.appendChild(link);
   };
@@ -47,7 +64,7 @@
       themeColor.name = "theme-color";
       document.head.appendChild(themeColor);
     }
-    if (themeColor) themeColor.content = browserColors.get(theme) || browserColors.get("modern-light");
+    if (themeColor) themeColor.content = browserColors.get(theme) || browserColors.get("modern-dark");
     document.querySelectorAll("[data-mg-theme-choice]").forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.mgThemeChoice === theme));
     });
@@ -66,9 +83,10 @@
       const localTheme = localStorage.getItem(storageKey);
       if (validThemes.has(localTheme)) return localTheme;
     } catch {}
-    return "modern-light";
+    return "modern-dark";
   };
 
+  migrateLegacyDefault();
   ensureStylesheet();
   const initialTheme = currentTheme();
   document.documentElement.dataset.mgTheme = initialTheme;
@@ -80,6 +98,7 @@
     swatch.className = "mg-theme-picker__swatch";
     swatch.setAttribute("aria-hidden", "true");
     swatch.append(document.createElement("i"), document.createElement("i"), document.createElement("i"));
+    if (theme === "modern-dark") swatch.append(document.createElement("i"));
     return swatch;
   };
   const bindExistingChoices = () => {

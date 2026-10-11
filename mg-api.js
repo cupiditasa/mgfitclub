@@ -12,15 +12,36 @@
   const mgThemeValues = new Set([
     "modern-light", "modern-light-coral", "modern-dark", "modern-dark-coral", "classic",
   ]);
+  const mgThemeDefaultMigrationKey = "mg_theme_default_dark_migrated";
   const mgThemePageName = location.pathname.split("/").filter(Boolean).pop() || "index.html";
   if (mgThemePages.has(mgThemePageName)) {
+    const cookieValue = (name) => {
+      const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+      if (!match) return "";
+      try { return decodeURIComponent(match[1]); } catch { return ""; }
+    };
+    let migrated = cookieValue(mgThemeDefaultMigrationKey) === "1";
+    try { migrated ||= localStorage.getItem(mgThemeDefaultMigrationKey) === "1"; } catch {}
+    if (!migrated) {
+      let oldChoice = "";
+      try { oldChoice = localStorage.getItem("mg_dashboard_theme") || ""; } catch {}
+      const currentCookieTheme = cookieValue("mg_theme_pref");
+      if (currentCookieTheme === "modern-light" || (!mgThemeValues.has(currentCookieTheme) && oldChoice === "modern-light")) {
+        try { localStorage.setItem("mg_dashboard_theme", "modern-dark"); } catch {}
+        if (/(?:^|\.)mgfitclub\.ir$/i.test(location.hostname))
+          document.cookie = "mg_theme_pref=modern-dark; Path=/; Domain=.mgfitclub.ir; Max-Age=31536000; SameSite=Lax; Secure";
+      }
+      try { localStorage.setItem(mgThemeDefaultMigrationKey, "1"); } catch {}
+      if (/(?:^|\.)mgfitclub\.ir$/i.test(location.hostname))
+        document.cookie = `${mgThemeDefaultMigrationKey}=1; Path=/; Domain=.mgfitclub.ir; Max-Age=31536000; SameSite=Lax; Secure`;
+    }
     const cookieTheme = document.cookie.match(/(?:^|;\s*)mg_theme_pref=([^;]*)/)?.[1];
     let storedTheme = "";
     try { storedTheme = localStorage.getItem("mg_dashboard_theme") || ""; } catch {}
     let theme = "";
     try { theme = decodeURIComponent(cookieTheme || ""); } catch {}
     if (!mgThemeValues.has(theme)) theme = storedTheme;
-    if (!mgThemeValues.has(theme)) theme = "modern-light";
+    if (!mgThemeValues.has(theme)) theme = "modern-dark";
     document.documentElement.dataset.mgTheme = theme;
     if (document.body) document.body.dataset.mgTheme = theme;
     else document.addEventListener("DOMContentLoaded", () => {
@@ -30,13 +51,13 @@
     if (!document.querySelector("link[data-mg-global-theme]")) {
       const themeCss = document.createElement("link");
       themeCss.rel = "stylesheet";
-      themeCss.href = "mg-global-theme.css?v=20261011-sitewide";
+      themeCss.href = "mg-global-theme.css?v=20261011-dark-default";
       themeCss.dataset.mgGlobalTheme = "true";
       document.head.appendChild(themeCss);
     }
     if (!document.querySelector("script[data-mg-global-theme]")) {
       const themeScript = document.createElement("script");
-      themeScript.src = "mg-global-theme.js?v=20261011-sitewide";
+      themeScript.src = "mg-global-theme.js?v=20261011-dark-default";
       themeScript.dataset.mgGlobalTheme = "true";
       document.head.appendChild(themeScript);
     }

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fa" dir="rtl" data-mg-theme="modern-light">
+<html lang="fa" dir="rtl" data-mg-theme="modern-dark">
   <head>
     <meta charset="utf-8" />
     <meta
@@ -9,8 +9,22 @@
     <title>داشبورد ورزشکار | MG FitClub</title>
     <script>
       try {
+        const migrationKey = "mg_theme_default_dark_migrated";
         const cookieTheme = document.cookie.match(/(?:^|;\s*)mg_theme_pref=([^;]*)/)?.[1];
-        const savedDashboardTheme = decodeURIComponent(cookieTheme || localStorage.getItem("mg_dashboard_theme") || "");
+        const savedLocalTheme = localStorage.getItem("mg_dashboard_theme") || "";
+        const alreadyMigrated = document.cookie.split(";").some((part) => part.trim() === `${migrationKey}=1`) || localStorage.getItem(migrationKey) === "1";
+        if (!alreadyMigrated) {
+          const currentCookieTheme = decodeURIComponent(cookieTheme || "");
+          const validSavedThemes = ["modern-light", "modern-light-coral", "modern-dark", "modern-dark-coral", "classic"];
+          if (currentCookieTheme === "modern-light" || (!validSavedThemes.includes(currentCookieTheme) && savedLocalTheme === "modern-light")) {
+            localStorage.setItem("mg_dashboard_theme", "modern-dark");
+            document.cookie = "mg_theme_pref=modern-dark; Path=/; Domain=.mgfitclub.ir; Max-Age=31536000; SameSite=Lax; Secure";
+          }
+          localStorage.setItem(migrationKey, "1");
+          document.cookie = `${migrationKey}=1; Path=/; Domain=.mgfitclub.ir; Max-Age=31536000; SameSite=Lax; Secure`;
+        }
+        const migratedCookieTheme = document.cookie.match(/(?:^|;\s*)mg_theme_pref=([^;]*)/)?.[1];
+        const savedDashboardTheme = decodeURIComponent(migratedCookieTheme || localStorage.getItem("mg_dashboard_theme") || "");
         if (["modern-light", "modern-light-coral", "modern-dark", "modern-dark-coral", "classic"].includes(savedDashboardTheme))
           document.documentElement.dataset.mgTheme = savedDashboardTheme;
       } catch {}
@@ -2187,6 +2201,7 @@
     .theme-swatch-dark i:first-child { background:#0d1510; }
     .theme-swatch-dark i:nth-child(2) { background:#c6ff3f; }
     .theme-swatch-dark i:nth-child(3) { background:#f0c866; }
+    .theme-swatch-dark i:nth-child(4) { background:#aeb9b2; }
     .theme-swatch-dark-coral i:first-child { background:#0d1510; }
     .theme-swatch-dark-coral i:nth-child(2) { background:#c6ff3f; }
     .theme-swatch-dark-coral i:nth-child(3) { background:#ff91a3; }
@@ -2260,7 +2275,7 @@
   </style>
   <meta name="robots" content="noindex, follow">
 </head>
-  <body class="mg-athlete-dashboard" data-mg-theme="modern-light">
+  <body class="mg-athlete-dashboard" data-mg-theme="modern-dark">
     <video
       class="dashboard-bg"
       muted
@@ -2469,9 +2484,9 @@
           <span id="themeSelectionStatus" aria-live="polite">روشن جدید</span>
         </div>
         <div class="theme-options" role="group" aria-labelledby="themeSwitcherTitle">
-          <button class="theme-option" type="button" data-mg-theme-choice="modern-light" aria-pressed="true">
+          <button class="theme-option" type="button" data-mg-theme-choice="modern-light" aria-pressed="false">
             <span class="theme-swatch theme-swatch-light" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="theme-option-label"><strong>روشن · طلایی و نقره‌ای</strong><small>تم جدید · پیش‌فرض</small></span>
+            <span class="theme-option-label"><strong>روشن · طلایی و نقره‌ای</strong><small>نسخه روشن</small></span>
             <span class="theme-option-check" aria-hidden="true">✓</span>
           </button>
           <button class="theme-option" type="button" data-mg-theme-choice="modern-light-coral" aria-pressed="false">
@@ -2479,9 +2494,9 @@
             <span class="theme-option-label"><strong>روشن · مرجانی</strong><small>لایم با تأکید مرجانی</small></span>
             <span class="theme-option-check" aria-hidden="true">✓</span>
           </button>
-          <button class="theme-option" type="button" data-mg-theme-choice="modern-dark" aria-pressed="false">
-            <span class="theme-swatch theme-swatch-dark" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="theme-option-label"><strong>تیره · طلایی و نقره‌ای</strong><small>نسخهٔ تیرهٔ تم جدید</small></span>
+          <button class="theme-option" type="button" data-mg-theme-choice="modern-dark" aria-pressed="true">
+            <span class="theme-swatch theme-swatch-dark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span class="theme-option-label"><strong>تیره · لایم، طلایی و نقره‌ای</strong><small>تم جدید · پیش‌فرض</small></span>
             <span class="theme-option-check" aria-hidden="true">✓</span>
           </button>
           <button class="theme-option" type="button" data-mg-theme-choice="modern-dark-coral" aria-pressed="false">
@@ -2510,13 +2525,13 @@
         ><button data-menu="settings"><span class="mi" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.4.8l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.4-.8l-1.7.7-1.4-2.4 1.4-1.1a8 8 0 0 1 0-1.7l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.4-.8l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.4.8l1.7-.7 1.4 2.4-1.4 1.1a8 8 0 0 1 0 1.7z"/></svg></span>تنظیمات حساب</button>
       </nav>
     </aside>
-    <script src="mg-api.js?v=20261010-offline-continuity"></script>
+    <script src="mg-api.js?v=20261011-dark-default"></script>
     <script>
       const mgDashboardThemeKey = "mg_dashboard_theme";
       const mgDashboardThemeLabels = {
         "modern-light": "روشن · طلایی و نقره‌ای",
         "modern-light-coral": "روشن · مرجانی",
-        "modern-dark": "تیره · طلایی و نقره‌ای",
+        "modern-dark": "تیره · لایم، طلایی و نقره‌ای",
         "modern-dark-coral": "تیره · مرجانی",
         classic: "کلاسیک",
       };
@@ -2548,7 +2563,7 @@
           }
         }
       }
-      let initialMgDashboardTheme = "modern-light";
+      let initialMgDashboardTheme = "modern-dark";
       try {
         const cookieTheme = document.cookie.match(/(?:^|;\s*)mg_theme_pref=([^;]*)/)?.[1];
         const saved = decodeURIComponent(cookieTheme || localStorage.getItem(mgDashboardThemeKey) || "");

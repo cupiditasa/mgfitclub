@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261011-global-themes";
+const CACHE_NAME = "mg-fitclub-v20261011-dark-default";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -12,9 +12,9 @@ const APP_SHELL = [
   "./account.html",
   "./dashboard-switch.js?v=20261008",
   "./dashboard-switch.css?v=20261008",
-  "./mg-api.js?v=20261010-offline-continuity",
-  "./mg-global-theme.css?v=20261011-sitewide",
-  "./mg-global-theme.js?v=20261011-sitewide",
+  "./mg-api.js?v=20261011-dark-default",
+  "./mg-global-theme.css?v=20261011-dark-default",
+  "./mg-global-theme.js?v=20261011-dark-default",
   "./access-control.js?v=20261010-athlete-api-outage",
   "./device-verification.html",
   "./device-verification.js?v=20260928",

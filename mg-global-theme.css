@@ -348,6 +348,7 @@ body.mg-home[data-mg-theme^="modern-"] .mg-digital__all:focus-visible { outline:
 .mg-theme-picker__option[data-theme="modern-dark"] .mg-theme-picker__swatch i:nth-child(1) { background: #0d1510; }
 .mg-theme-picker__option[data-theme="modern-dark"] .mg-theme-picker__swatch i:nth-child(2) { background: #c6ff3f; }
 .mg-theme-picker__option[data-theme="modern-dark"] .mg-theme-picker__swatch i:nth-child(3) { background: #f0c866; }
+.mg-theme-picker__option[data-theme="modern-dark"] .mg-theme-picker__swatch i:nth-child(4) { background: #aeb9b2; }
 .mg-theme-picker__option[data-theme="modern-dark-coral"] .mg-theme-picker__swatch i:nth-child(1) { background: #0d1510; }
 .mg-theme-picker__option[data-theme="modern-dark-coral"] .mg-theme-picker__swatch i:nth-child(2) { background: #c6ff3f; }
 .mg-theme-picker__option[data-theme="modern-dark-coral"] .mg-theme-picker__swatch i:nth-child(3) { background: #ff91a3; }
