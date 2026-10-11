@@ -61,7 +61,7 @@ test('news sitemap contains canonical article links', () => {
   assert.match(sitemap, /<lastmod>2026-10-06<\/lastmod>/);
 });
 
-test('editorial seed is isolated, idempotent, sourced and contains twenty unique image-backed articles', async () => {
+test('first editorial seed is isolated, idempotent, sourced and image-backed', async () => {
   const sql = new DatabaseSync(':memory:');
   for (const file of ['migrations/013-news.sql', 'migrations/015-news-article-pages.sql', 'migrations/016-news-editorial.sql', 'migrations/017-news-editorial-seed.sql', 'migrations/018-news-editorial-seed-curation.sql']) {
     sql.exec(fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8'));
@@ -83,6 +83,24 @@ test('editorial seed is isolated, idempotent, sourced and contains twenty unique
   const payload = await api.json();
   assert.equal(payload.articles.length, 20);
   assert.ok(payload.articles.every((row) => row.articleUrl.startsWith('https://khabar.mgfitclub.ir/')));
+  sql.close();
+});
+
+test('second editorial edition adds twenty sourced pages with unique generated covers', () => {
+  const sql = new DatabaseSync(':memory:');
+  for (const file of ['migrations/013-news.sql', 'migrations/015-news-article-pages.sql', 'migrations/016-news-editorial.sql', 'migrations/017-news-editorial-seed.sql', 'migrations/018-news-editorial-seed-curation.sql', 'migrations/019-news-editorial-round2.sql']) {
+    sql.exec(fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8'));
+  }
+  const rows = sql.prepare("SELECT slug,title,article_body,keywords,source_refs,image_url,status FROM news_editorial_articles ORDER BY slug").all();
+  assert.equal(rows.length, 40);
+  assert.equal(new Set(rows.map((row) => row.slug)).size, 40);
+  assert.equal(new Set(rows.map((row) => row.image_url)).size, 40);
+  assert.ok(rows.every((row) => row.status === 'published' && row.article_body.includes('## ') && row.article_body.length > 250));
+  assert.ok(rows.every((row) => JSON.parse(row.keywords).length >= 2 && JSON.parse(row.source_refs).length >= 1));
+  for (const row of rows) {
+    const filename = new URL(row.image_url).pathname.split('/').pop();
+    assert.ok(fs.existsSync(new URL(`../../assets/news/editorial/${filename}`, import.meta.url)), `missing cover ${filename}`);
+  }
   sql.close();
 });
 
