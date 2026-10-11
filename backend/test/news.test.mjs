@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
 import { handleNews, handleNewsSiteRequest, parseNewsFeed, translateBatch } from '../news.js';
-import { makeNewsSlug, renderNewsArticle, renderNewsSitemap } from '../news-seo.js';
+import { makeNewsSlug, renderNewsArticle, renderNewsIndex, renderNewsSitemap } from '../news-seo.js';
 
 const source = { key: 'test', name: 'Test feed', category: 'fitness', host: 'news.example', url: 'https://news.example/rss' };
 const now = Date.parse('2026-10-06T12:00:00Z');
@@ -42,8 +42,17 @@ test('news article HTML includes canonical, source attribution, and NewsArticle 
   assert.match(html, /<h1>خبر &lt;تست&gt;<\/h1>/);
   assert.match(html, /https:\/\/example\.com\/story/);
   assert.match(html, /"@type":"NewsArticle"/);
+  assert.match(html, /mg-global-theme\.css\?v=20261011-sitewide/);
+  assert.match(html, /mg-global-theme\.js\?v=20261011-sitewide/);
   assert.equal((html.match(/<p>بند /g) || []).length, 2);
   assert.doesNotMatch(html, /<h1>خبر <تست><\/h1>/);
+});
+
+test('generated news index shares the site theme and public theme preference', () => {
+  const html = renderNewsIndex([{ slug: 'story-12345678', title: 'Story', summary: 'Summary', published_at: 1791284400 }]);
+  assert.match(html, /mg-global-theme\.css\?v=20261011-sitewide/);
+  assert.match(html, /mg-global-theme\.js\?v=20261011-sitewide/);
+  assert.match(html, /story-12345678/);
 });
 
 test('news sitemap contains canonical article links', () => {

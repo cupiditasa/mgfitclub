@@ -10,6 +10,10 @@
   ];
   const validThemes = new Set(choices.map((choice) => choice.id));
   const labels = new Map(choices.map((choice) => [choice.id, choice.label]));
+  const browserColors = new Map([
+    ["modern-light", "#f3f6f0"], ["modern-light-coral", "#f3f6f0"],
+    ["modern-dark", "#0d1510"], ["modern-dark-coral", "#0d1510"], ["classic", "#080a08"],
+  ]);
 
   const readCookie = () => {
     const match = document.cookie.match(/(?:^|;\s*)mg_theme_pref=([^;]*)/);
@@ -17,7 +21,7 @@
     try { return decodeURIComponent(match[1]); } catch { return ""; }
   };
   const writeCookie = (theme) => {
-    if (!/^(?:staff\.)?mgfitclub\.ir$/i.test(location.hostname)) return;
+    if (!/(?:^|\.)mgfitclub\.ir$/i.test(location.hostname)) return;
     document.cookie = `${cookieKey}=${encodeURIComponent(theme)}; Path=/; Domain=.mgfitclub.ir; Max-Age=31536000; SameSite=Lax; Secure`;
   };
   const saveTheme = (theme) => {
@@ -28,7 +32,8 @@
     if (document.querySelector('link[data-mg-global-theme]')) return;
     const link = document.createElement("link");
     link.rel = "stylesheet";
-    link.href = new URL("mg-global-theme.css?v=20261009-palette4", document.baseURI).href;
+    const scriptUrl = document.currentScript?.src || new URL("mg-global-theme.js", document.baseURI).href;
+    link.href = new URL("mg-global-theme.css?v=20261011-sitewide", scriptUrl).href;
     link.dataset.mgGlobalTheme = "true";
     document.head?.appendChild(link);
   };
@@ -36,6 +41,13 @@
     if (!validThemes.has(theme)) return false;
     document.documentElement.dataset.mgTheme = theme;
     if (document.body) document.body.dataset.mgTheme = theme;
+    let themeColor = document.querySelector('meta[name="theme-color"]');
+    if (!themeColor && document.head) {
+      themeColor = document.createElement("meta");
+      themeColor.name = "theme-color";
+      document.head.appendChild(themeColor);
+    }
+    if (themeColor) themeColor.content = browserColors.get(theme) || browserColors.get("modern-light");
     document.querySelectorAll("[data-mg-theme-choice]").forEach((button) => {
       button.setAttribute("aria-pressed", String(button.dataset.mgThemeChoice === theme));
     });

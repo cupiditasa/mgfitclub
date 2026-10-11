@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261010-athlete-messages";
+const CACHE_NAME = "mg-fitclub-v20261011-global-themes";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -13,8 +13,8 @@ const APP_SHELL = [
   "./dashboard-switch.js?v=20261008",
   "./dashboard-switch.css?v=20261008",
   "./mg-api.js?v=20261010-offline-continuity",
-  "./mg-global-theme.css?v=20261009-palette4",
-  "./mg-global-theme.js?v=20261009-palette4",
+  "./mg-global-theme.css?v=20261011-sitewide",
+  "./mg-global-theme.js?v=20261011-sitewide",
   "./access-control.js?v=20261010-athlete-api-outage",
   "./device-verification.html",
   "./device-verification.js?v=20260928",
@@ -22,6 +22,7 @@ const APP_SHELL = [
   "./access-center.js?v=20260928-pilot-review",
   "./access-center.css?v=20260919",
   "./app.html",
+  "./membership.html",
   "./app-install.css?v=20260920",
   "./app-install.js?v=20260920-browsers",
   "./mg-journal.html",

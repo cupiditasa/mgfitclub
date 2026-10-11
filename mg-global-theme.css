@@ -15,6 +15,13 @@
   --mg-on-primary: #18210f;
   --mg-secondary: #805b17;
   --mg-secondary-soft: #f5edd9;
+  --ink: var(--mg-text);
+  --ink-2: var(--mg-surface-soft);
+  --paper: var(--mg-surface-soft);
+  --white: var(--mg-text);
+  --acid: var(--mg-primary);
+  --acid-dark: var(--mg-accent);
+  --dark-line: var(--mg-border);
   --bg0: var(--mg-page);
   --bg1: #edf3e7;
   --bg2: #e4eddb;
@@ -59,6 +66,13 @@
   --mg-on-primary: #17200f;
   --mg-secondary: #f0c866;
   --mg-secondary-soft: #3d321b;
+  --ink: var(--mg-text);
+  --ink-2: var(--mg-surface-soft);
+  --paper: var(--mg-surface-soft);
+  --white: var(--mg-text);
+  --acid: var(--mg-primary);
+  --acid-dark: var(--mg-accent);
+  --dark-line: var(--mg-border);
   --bg1: #111c14;
   --bg2: #18251b;
   --panel: var(--mg-surface);
@@ -138,45 +152,127 @@ body[data-mg-theme^="modern-"] .dashboard-bg-overlay {
   display: none !important;
 }
 
-body[data-mg-theme^="modern-"] :is(
+body:not(.mg-home)[data-mg-theme^="modern-"] :is(
   .hero, .top, .header, .topbar, .content, .shell, .card, .panel, .box, .modal,
   .drawer, .program, .exercise-wrap, .purple, .balance, .summary, .feature,
   .news, .create, .tablebox, .broadcast, .meal, .exercise, .timer, .controls,
   .sub, .parts, .switch, .tabs, .bottom, .w-card, .n-meal, .n-template-card,
   .auth-card, .login-card, .workout-card, .nutrition-card, .notification-panel,
-  .announcement, .toast, dialog
+  .announcement, .toast, dialog, .guide-card, .hint, .faq, .guide, .closing,
+  .site-footer, .exp-hero,
+  .exp-services, .exp-stories, .service-films, .exp-final, .journal-header,
+  .journal-footer, .seo-detail, .plan-category, .testimonials-section, .faq-section
 ) {
   color: var(--mg-text) !important;
   border-color: var(--mg-border) !important;
   background-color: var(--mg-surface) !important;
   box-shadow: 0 14px 36px color-mix(in srgb, var(--mg-text) 10%, transparent);
 }
-body[data-mg-theme^="modern-"] :is(.hero, .topbar, .header, .workout-header) {
+body:not(.mg-home)[data-mg-theme^="modern-"] article {
+  color: var(--mg-text) !important;
+  border-color: var(--mg-border) !important;
+  background-color: var(--mg-surface) !important;
+}
+body:not(.mg-home)[data-mg-theme^="modern-"] :is(.hero, .topbar, .header, .workout-header) {
   background-image: linear-gradient(135deg, var(--mg-surface), var(--mg-surface-soft)) !important;
 }
-body[data-mg-theme^="modern-"] :is(p, small, .muted, .detail, .subtitle, .w-muted, .n-empty, .date, .stats) {
+body:not(.mg-home)[data-mg-theme^="modern-"] :is(p, small, .muted, .detail, .subtitle, .w-muted, .n-empty, .date, .stats) {
   color: var(--mg-muted) !important;
 }
-body[data-mg-theme^="modern-"] :is(a, .accent, .icon, .n-count, .w-count, .workout-header small) {
+body:not(.mg-home)[data-mg-theme^="modern-"] :is(a, .accent, .icon, .n-count, .w-count, .workout-header small) {
   color: var(--mg-accent) !important;
 }
-body[data-mg-theme^="modern-"] :is(input:not([type="checkbox"]), textarea, select, .field, .search) {
+body:not(.mg-home)[data-mg-theme^="modern-"] :is(input:not([type="checkbox"]), textarea, select, .field, .search) {
   color: var(--mg-text) !important;
   border-color: var(--mg-border) !important;
   background: var(--mg-surface-soft) !important;
 }
-body[data-mg-theme^="modern-"] :is(button, .btn, .button, .tab, .role, .back) {
+body:not(.mg-home)[data-mg-theme^="modern-"] :is(button, .btn, .button, .tab, .role, .back) {
   color: var(--mg-text);
   border-color: var(--mg-border);
   background-color: var(--mg-surface-soft);
 }
-body[data-mg-theme^="modern-"] :is(.primary, .btn-primary, .button:not(.ghost), button[type="submit"], .tab.active, .role.active, .day.active, .switch .active, .controls .main) {
+body:not(.mg-home)[data-mg-theme^="modern-"] :is(.primary, .btn-primary, .button:not(.ghost), button[type="submit"], .tab.active, .role.active, .day.active, .switch .active, .controls .main) {
   color: var(--mg-on-primary) !important;
   border-color: var(--mg-primary) !important;
   background: var(--mg-primary) !important;
 }
-body[data-mg-theme^="modern-"] :is(input, textarea, select, button, a):focus-visible {
+body:not(.mg-home)[data-mg-theme^="modern-"] :is(input, textarea, select, button, a):focus-visible {
   outline-color: var(--mg-accent) !important;
+}
+
+/* The public landing page has its own editorial layout and already uses design tokens.
+   Feed those tokens from the shared theme without flattening its video hero. */
+body.mg-home[data-mg-theme^="modern-"] {
+  --ink: var(--mg-page);
+  --ink-2: var(--mg-surface);
+  --paper: var(--mg-surface-soft);
+  --white: var(--mg-text);
+  --muted: var(--mg-muted);
+  --line: color-mix(in srgb, var(--mg-text) 18%, transparent);
+  --dark-line: color-mix(in srgb, var(--mg-text) 18%, transparent);
+  --acid: var(--mg-primary);
+  --acid-dark: var(--mg-accent);
+  color: var(--mg-text) !important;
+  background-color: var(--mg-page) !important;
+}
+body.mg-home[data-mg-theme^="modern-"] :is(.hero, .header, .menu, .gallery-modal, .lightbox) {
+  color: var(--mg-text) !important;
+  border-color: var(--mg-border) !important;
+}
+body.mg-home[data-mg-theme^="modern-"] .hero {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.mg-home[data-mg-theme^="modern-"] :is(.intro, .programs, .founder, .location, .register, .footer) {
+  color: var(--mg-text);
+}
+body.mg-home[data-mg-theme^="modern-"] .register {
+  background-color: var(--mg-surface) !important;
+}
+body.mg-home .mg-digital {
+  display: grid;
+  grid-template-columns: minmax(230px, .72fr) minmax(0, 1.6fr);
+  gap: clamp(24px, 5vw, 72px);
+  align-items: start;
+  padding-block: clamp(64px, 9vw, 124px);
+}
+body.mg-home .mg-digital__intro { position: sticky; top: 110px; max-width: 440px; }
+body.mg-home .mg-digital__intro h2 { margin: 18px 0 14px; font-size: var(--h2); line-height: 1.55; }
+body.mg-home .mg-digital__intro p,
+body.mg-home .mg-digital__item p { color: var(--mg-muted); line-height: 1.9; }
+body.mg-home .mg-digital__all,
+body.mg-home .mg-digital__link { color: var(--mg-accent); font-weight: 700; }
+body.mg-home .mg-digital__all { display: inline-flex; gap: 10px; align-items: center; margin-top: 14px; min-height: 44px; }
+body.mg-home .mg-digital__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+body.mg-home .mg-digital__item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-content: start;
+  min-height: 224px;
+  padding: clamp(20px, 2.5vw, 32px);
+  border: 1px solid var(--mg-border);
+  border-radius: 22px;
+  color: var(--mg-text);
+  background: var(--mg-surface);
+  transition: transform .22s ease, border-color .22s ease, background-color .22s ease;
+}
+body.mg-home .mg-digital__item:hover { transform: translateY(-4px); border-color: var(--mg-accent); background: var(--mg-surface-soft); }
+body.mg-home .mg-digital__number { color: var(--mg-muted); font: 600 12px/1.5 var(--fontnum, sans-serif); }
+body.mg-home .mg-digital__icon { color: var(--mg-accent); font-size: 27px; line-height: 1; }
+body.mg-home .mg-digital__item h3 { grid-column: 1 / -1; margin: 22px 0 3px; font-size: 1.15rem; }
+body.mg-home .mg-digital__item p { grid-column: 1 / -1; margin: 4px 0 20px; font-size: .9rem; }
+body.mg-home .mg-digital__link { grid-column: 1 / -1; align-self: end; font-size: .85rem; }
+body.mg-home[data-mg-theme^="modern-"] .mg-digital__item:focus-visible,
+body.mg-home[data-mg-theme^="modern-"] .mg-digital__all:focus-visible { outline: 3px solid var(--mg-accent); outline-offset: 4px; }
+@media (max-width: 760px) {
+  body.mg-home .mg-digital { grid-template-columns: 1fr; }
+  body.mg-home .mg-digital__intro { position: static; max-width: 620px; }
+}
+@media (max-width: 480px) {
+  body.mg-home .mg-digital__grid { grid-template-columns: 1fr; }
+  body.mg-home .mg-digital__item { min-height: 190px; }
 }
 
 .mg-theme-picker {

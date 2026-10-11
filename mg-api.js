@@ -30,13 +30,13 @@
     if (!document.querySelector("link[data-mg-global-theme]")) {
       const themeCss = document.createElement("link");
       themeCss.rel = "stylesheet";
-      themeCss.href = "mg-global-theme.css?v=20261009-palette4";
+      themeCss.href = "mg-global-theme.css?v=20261011-sitewide";
       themeCss.dataset.mgGlobalTheme = "true";
       document.head.appendChild(themeCss);
     }
     if (!document.querySelector("script[data-mg-global-theme]")) {
       const themeScript = document.createElement("script");
-      themeScript.src = "mg-global-theme.js?v=20261009-palette4";
+      themeScript.src = "mg-global-theme.js?v=20261011-sitewide";
       themeScript.dataset.mgGlobalTheme = "true";
       document.head.appendChild(themeScript);
     }
