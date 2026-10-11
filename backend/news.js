@@ -334,6 +334,10 @@ export async function handleNews(request, env, c) {
     const timeWindow = { startUtc: end - block, endUtc: end, nextUtc: nextSync, startHour: new Date(end - block).getUTCHours() };
     return response({ featured: rows[0] || null, stories: rows.slice(1), highlights: { week: [], month: [], quarter: [], year: [] }, archive: [], window: timeWindow, generatedAt: settings?.last_sync_at ? settings.last_sync_at * 1000 : null, live: settings?.last_sync_status === "ok" }, 200, headers);
   }
+  if (path === "/api/news/editorial" && request.method === "GET") {
+    const rows = (await env.DB.prepare("SELECT id,slug,title,summary,category,keywords,image_url AS image,image_alt AS imageAlt,author_name AS author,published_at AS publishedAt,updated_at AS updatedAt FROM news_editorial_articles WHERE status='published' AND published_at<=? ORDER BY published_at DESC,id DESC LIMIT 100").bind(Math.floor(Date.now() / 1000)).all()).results || [];
+    return response({ articles: rows.map((row) => ({ ...row, keywords: JSON.parse(row.keywords || "[]"), publishedAt: Number(row.publishedAt) * 1000, updatedAt: Number(row.updatedAt) * 1000, articleUrl: newsArticleUrl(row) })) }, 200, headers);
+  }
   if (!path.startsWith("/api/support/news/")) return null;
   const user = await currentUser(request, env);
   if (!user) return errorResponse("unauthorized", 401, headers);
@@ -423,19 +427,26 @@ export async function handleNewsSiteRequest(request, env) {
   const headers = { "content-type": "text/html; charset=utf-8", "x-content-type-options": "nosniff", "referrer-policy": "strict-origin-when-cross-origin" };
   if (url.pathname === "/robots.txt") return new Response(`User-agent: *\nAllow: /\nSitemap: ${NEWS_PUBLIC_ORIGIN}/sitemap.xml\n`, { headers: { ...headers, "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=3600" } });
   if (url.pathname === "/sitemap.xml") {
-    const rows = (await env.DB.prepare("SELECT slug,published_at AS publishedAt FROM news_items WHERE slug<>'' ORDER BY published_at DESC LIMIT 5000").all()).results || [];
+    const editorial = (await env.DB.prepare("SELECT slug,published_at AS publishedAt FROM news_editorial_articles WHERE status='published' AND slug<>''").all()).results || [];
+    const feed = (await env.DB.prepare("SELECT slug,published_at AS publishedAt FROM news_items WHERE slug<>''").all()).results || [];
+    const rows = [...editorial, ...feed].sort((a, b) => Number(b.publishedAt) - Number(a.publishedAt)).slice(0, 5000);
     return new Response(renderNewsSitemap(rows), { headers: { ...headers, "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=900" } });
   }
   if (url.pathname === "/" || url.pathname === "") {
-    const rows = (await env.DB.prepare("SELECT slug,title,summary,source_name,image_url,category,published_at FROM news_items ORDER BY published_at DESC,id DESC LIMIT 60").all()).results || [];
-    return new Response(renderNewsIndex(rows), { headers: { ...headers, "cache-control": "public, max-age=300, stale-while-revalidate=3600" } });
+    const editorial = (await env.DB.prepare("SELECT slug,title,summary,author_name AS source_name,image_url,category,published_at,image_alt AS image_alt FROM news_editorial_articles WHERE status='published' AND published_at<=? ORDER BY published_at DESC LIMIT 60").bind(Math.floor(Date.now() / 1000)).all()).results || [];
+    const feed = (await env.DB.prepare("SELECT slug,title,summary,source_name,image_url,category,published_at,'' AS image_alt FROM news_items ORDER BY published_at DESC,id DESC LIMIT 60").all()).results || [];
+    return new Response(renderNewsIndex(editorial, feed), { headers: { ...headers, "cache-control": "public, max-age=300, stale-while-revalidate=3600" } });
   }
   let slug;
   try { slug = decodeURIComponent(url.pathname.slice(1)); } catch { slug = ""; }
   if (!slug || slug.includes("/") || slug.length > 180) return new Response("Not found", { status: 404, headers: { ...headers, "content-type": "text/plain; charset=utf-8", "x-robots-tag": "noindex" } });
-  const story = await env.DB.prepare("SELECT slug,title,summary,article_body AS article_body,source_name,source_url,image_url,category,original_title,published_at,created_at FROM news_items WHERE slug=? LIMIT 1").bind(slug).first();
+  const localStory = await env.DB.prepare("SELECT slug,title,summary,article_body,author_name AS source_name,NULL AS source_url,image_url,image_alt,category,NULL AS original_title,published_at,updated_at AS created_at,keywords,source_refs,'Article' AS schema_type FROM news_editorial_articles WHERE slug=? AND status='published' AND published_at<=? LIMIT 1").bind(slug, Math.floor(Date.now() / 1000)).first();
+  const story = localStory || await env.DB.prepare("SELECT slug,title,summary,article_body AS article_body,source_name,source_url,image_url,'' AS image_alt,category,original_title,published_at,created_at,'[]' AS keywords,'[]' AS source_refs,'NewsArticle' AS schema_type FROM news_items WHERE slug=? LIMIT 1").bind(slug).first();
   if (!story) return new Response("Not found", { status: 404, headers: { ...headers, "content-type": "text/plain; charset=utf-8", "x-robots-tag": "noindex" } });
-  return new Response(renderNewsArticle(story), { headers: { ...headers, "cache-control": "public, max-age=300, stale-while-revalidate=3600" } });
+  const related = localStory
+    ? (await env.DB.prepare("SELECT slug,title FROM news_editorial_articles WHERE status='published' AND published_at<=? AND slug<>? ORDER BY CASE WHEN category=? THEN 0 ELSE 1 END,published_at DESC,id DESC LIMIT 3").bind(Math.floor(Date.now() / 1000), slug, story.category).all()).results || []
+    : [];
+  return new Response(renderNewsArticle(story, related), { headers: { ...headers, "cache-control": "public, max-age=300, stale-while-revalidate=3600" } });
 }
 
 export async function handleNewsScheduled(_controller, env, context) {

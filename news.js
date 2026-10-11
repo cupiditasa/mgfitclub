@@ -1,4 +1,7 @@
 const grid = document.getElementById("story-grid");
+const editorialGrid = document.getElementById("editorial-grid");
+const editorialFeature = document.getElementById("editorial-feature");
+const editorialEmpty = document.getElementById("editorial-empty");
 const empty = document.getElementById("empty");
 const archiveList = document.getElementById("archive-list");
 const featuredImage = document.getElementById("featured-image");
@@ -9,6 +12,8 @@ const meter = document.querySelector(".scroll-meter i");
 
 let edition = null;
 let activeFilter = "all";
+let activeEditorialFilter = "all";
+let editorialStories = [];
 let countdownTimer = null;
 
 const faDigits = "۰۱۲۳۴۵۶۷۸۹";
@@ -81,7 +86,7 @@ function imageStyle(url) {
     const parsed = new URL(url);
     if (parsed.protocol === "https:") safeImage = parsed.href.replace(/["'()\\]/g, (character) => `%${character.charCodeAt(0).toString(16)}`);
   } catch (_) {}
-  if (!safeImage || /mgfitclub\.ir/i.test(safeImage)) {
+  if (!safeImage) {
     return "background-image: linear-gradient(180deg, transparent 35%, rgba(5,7,5,.82)), radial-gradient(circle at 30% 20%, rgba(198,255,63,.18), transparent 42%)";
   }
   return `background-image: linear-gradient(180deg, transparent 35%, rgba(5,7,5,.82)), url(${JSON.stringify(safeImage)})`;
@@ -115,6 +120,29 @@ function cardHtml(story) {
       </div>
     </a>
   `;
+}
+
+function renderEditorialFeature(story) {
+  if (!story || !editorialFeature) return;
+  editorialFeature.hidden = false;
+  editorialFeature.innerHTML = `
+    <a class="editorial-feature__image" href="${escapeHtml(story.articleUrl || "#")}" style='${imageStyle(story.image)}' aria-label="${escapeHtml(story.title)}"></a>
+    <div class="editorial-feature__copy"><span class="editorial-feature__tag">پیشنهاد تحریریه · ${escapeHtml(story.category)}</span>
+      <h3><a href="${escapeHtml(story.articleUrl || "#")}">${escapeHtml(story.title)}</a></h3>
+      <p>${escapeHtml(story.summary)}</p>
+      <div class="editorial-feature__meta"><span>${escapeHtml(story.author || "تحریریه MG FitClub")}</span><span>${relativeTime(story.publishedAt)}</span><a href="${escapeHtml(story.articleUrl || "#")}">خواندن مقاله <span aria-hidden="true">←</span></a></div>
+    </div>`;
+}
+
+function renderEditorial() {
+  const visible = editorialStories.filter((story) => activeEditorialFilter === "all" || story.category === activeEditorialFilter);
+  const rest = activeEditorialFilter === "all" ? visible.slice(1) : visible;
+  if (activeEditorialFilter === "all") renderEditorialFeature(visible[0]);
+  else editorialFeature.hidden = true;
+  editorialGrid.innerHTML = rest.map(cardHtml).join("");
+  editorialEmpty.hidden = rest.length > 0;
+  document.getElementById("editorial-count").textContent = `${toFa(visible.length)} مقالهٔ اختصاصی`;
+  document.getElementById("editorial").setAttribute("aria-busy", "false");
 }
 
 function applyFilter() {
@@ -189,6 +217,22 @@ async function loadNews() {
   render(await res.json());
 }
 
+async function loadEditorial() {
+  const res = await fetch("https://api.mgfitclub.ir/api/news/editorial", { cache: "no-store" });
+  if (!res.ok) throw new Error("editorial news failed");
+  const data = await res.json();
+  editorialStories = Array.isArray(data.articles) ? data.articles : [];
+  renderEditorial();
+}
+
+document.querySelectorAll("[data-editorial-filter]").forEach((button) => {
+  button.addEventListener("click", () => {
+    activeEditorialFilter = button.dataset.editorialFilter;
+    document.querySelectorAll("[data-editorial-filter]").forEach((el) => el.setAttribute("aria-pressed", String(el === button)));
+    renderEditorial();
+  });
+});
+
 document.querySelectorAll("[data-filter]").forEach((button) => {
   button.addEventListener("click", () => {
     activeFilter = button.dataset.filter;
@@ -212,9 +256,16 @@ window.addEventListener("scroll", () => {
   meter.style.height = `${max > 0 ? (window.scrollY / max) * 100 : 0}%`;
 }, { passive: true });
 
-loadNews().catch(() => {
-  setText("live-status", "قطع موقت منابع");
-});
+(async () => {
+  try { await loadEditorial(); }
+  catch (_) {
+    document.getElementById("editorial").setAttribute("aria-busy", "false");
+    document.getElementById("editorial-count").textContent = "اتصال موقتاً در دسترس نیست";
+    editorialEmpty.hidden = false;
+    editorialEmpty.textContent = "مقاله‌های تحریریه موقتاً بارگیری نشدند؛ بخش فید وب جداگانه تلاش می‌کند.";
+  }
+  loadNews().catch(() => setText("live-status", "قطع موقت فید وب"));
+})();
 
 setInterval(() => {
   loadNews().catch(() => {});

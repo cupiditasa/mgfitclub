@@ -101,8 +101,31 @@
         </div>
       </section>
 
-      <section class="edition" id="edition">
-        <div class="section-kicker"><span>01</span> خبر اصلی چهار ساعت</div>
+      <section class="editorial" id="editorial" aria-labelledby="editorial-title" aria-busy="true">
+        <div class="editorial__heading">
+          <div>
+            <div class="section-kicker"><span>01</span> تحریریهٔ MG · راهنماهای منتخب</div>
+            <h2 id="editorial-title">دانش ورزشیِ کاربردی برای تمرین بهتر در شیراز</h2>
+            <p>مقاله‌های اختصاصی MG FitClub؛ با منابع قابل‌پیگیری، تاریخ انتشار روشن و تصویر ویژهٔ هر مطلب.</p>
+          </div>
+          <span class="editorial__count" id="editorial-count">در حال بارگذاری…</span>
+        </div>
+        <article class="editorial-feature" id="editorial-feature" hidden></article>
+        <div class="filters" id="editorial-filters" aria-label="دسته‌بندی مقاله‌های تحریریه">
+          <button type="button" data-editorial-filter="all" aria-pressed="true">همهٔ مقاله‌ها</button>
+          <button type="button" data-editorial-filter="پیلاتس" aria-pressed="false">پیلاتس</button>
+          <button type="button" data-editorial-filter="بدنسازی" aria-pressed="false">بدنسازی بانوان</button>
+          <button type="button" data-editorial-filter="تمرین گروهی" aria-pressed="false">تمرین گروهی</button>
+          <button type="button" data-editorial-filter="TRX" aria-pressed="false">TRX</button>
+          <button type="button" data-editorial-filter="راهنمای شیراز" aria-pressed="false">راهنمای باشگاه در شیراز</button>
+        </div>
+        <div class="editorial-grid" id="editorial-grid" aria-live="polite"></div>
+        <p class="empty" id="editorial-empty" hidden>مقاله‌ای در این دسته پیدا نشد.</p>
+      </section>
+
+      <section class="edition" id="edition" aria-labelledby="feed-title">
+        <div class="section-kicker"><span>02</span> خبرهای گردآوری‌شده از وب</div>
+        <h2 id="feed-title">فید خبری مستقل · همراه با نام ناشر و پیوند منبع</h2>
         <article class="featured" id="featured" aria-live="polite">
           <div class="featured__media">
             <div class="featured__image" id="featured-image"></div>
@@ -123,7 +146,7 @@
         </article>
       </section>
 
-      <section class="filters" aria-label="موضوع خبر">
+      <section class="filters" aria-label="موضوع فید خبری وب">
         <button type="button" data-filter="all" aria-pressed="true">همه</button>
         <button type="button" data-filter="بانوان" aria-pressed="false">بانوان</button>
         <button type="button" data-filter="ورزش" aria-pressed="false">ورزش</button>

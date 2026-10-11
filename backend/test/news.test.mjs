@@ -61,22 +61,58 @@ test('news sitemap contains canonical article links', () => {
   assert.match(sitemap, /<lastmod>2026-10-06<\/lastmod>/);
 });
 
+test('editorial seed is isolated, idempotent, sourced and contains twenty unique image-backed articles', async () => {
+  const sql = new DatabaseSync(':memory:');
+  for (const file of ['migrations/013-news.sql', 'migrations/015-news-article-pages.sql', 'migrations/016-news-editorial.sql', 'migrations/017-news-editorial-seed.sql', 'migrations/018-news-editorial-seed-curation.sql']) {
+    sql.exec(fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8'));
+  }
+  sql.exec(fs.readFileSync(new URL('../migrations/017-news-editorial-seed.sql', import.meta.url), 'utf8'));
+  sql.exec(fs.readFileSync(new URL('../migrations/018-news-editorial-seed-curation.sql', import.meta.url), 'utf8'));
+  const rows = sql.prepare("SELECT slug,title,article_body,keywords,source_refs,image_url,status FROM news_editorial_articles ORDER BY slug").all();
+  assert.equal(rows.length, 20);
+  assert.equal(new Set(rows.map((row) => row.slug)).size, 20);
+  assert.ok(rows.every((row) => row.status === 'published' && row.article_body.includes('## ') && row.image_url.endsWith('.jpg')));
+  assert.ok(rows.every((row) => JSON.parse(row.keywords).length >= 2 && JSON.parse(row.source_refs).length >= 1));
+  assert.ok(rows.some((row) => row.title.includes('پیلاتس')));
+  assert.ok(rows.some((row) => row.title.includes('TRX')));
+  const DB = { prepare(query) { let args = []; return { bind(...values) { args = values; return this; }, all() { return { results: sql.prepare(query).all(...args) }; } }; } };
+  const response = (body, status = 200) => new Response(JSON.stringify(body), { status });
+  const api = await handleNews(new Request('https://api.mgfitclub.ir/api/news/editorial'), { DB }, {
+    path: '/api/news/editorial', headers: {}, response,
+  });
+  const payload = await api.json();
+  assert.equal(payload.articles.length, 20);
+  assert.ok(payload.articles.every((row) => row.articleUrl.startsWith('https://khabar.mgfitclub.ir/')));
+  sql.close();
+});
+
 test('news subdomain renders index, story, robots and sitemap from D1; unknown slugs are 404', async () => {
   const sql = new DatabaseSync(':memory:');
-  for (const file of ['schema.sql', 'migrations/001-runtime.sql', 'migrations/013-news.sql', 'migrations/014-news-instagram.sql', 'migrations/015-news-article-pages.sql']) {
+  for (const file of ['schema.sql', 'migrations/001-runtime.sql', 'migrations/013-news.sql', 'migrations/014-news-instagram.sql', 'migrations/015-news-article-pages.sql', 'migrations/016-news-editorial.sql']) {
     sql.exec(fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8'));
   }
   sql.prepare("INSERT INTO news_items (id,source_url,source_key,source_name,category,title,original_title,summary,original_summary,image_url,published_at,created_at,instagram_status,slug,article_body) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
     .run('test_news_12345678', 'https://example.com/story', 'test', 'Example News', 'ورزش', 'عنوان آزمایشی', 'Original title', 'خلاصهٔ آزمایشی', 'Source summary', 'https://example.com/image.jpg', 1791284400, 1791284400, 'disabled', 'عنوان-آزمایشی-12345678', 'شرح کامل خبر.');
+  sql.prepare("INSERT INTO news_editorial_articles (id,slug,title,summary,article_body,category,keywords,source_refs,image_url,image_alt,author_name,status,published_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
+    .run('local_test', 'pilates-shiraz-test', 'راهنمای پیلاتس در شیراز', 'خلاصهٔ راهنما', '## شروع امن\n\nبرای شروع آرام پیش بروید.', 'پیلاتس', '["باشگاه پیلاتس شیراز"]', '[{"title":"WHO physical activity","url":"https://www.who.int/initiatives/behealthy/physical-activity/","publisher":"WHO","published":"2020"}]', 'https://mgfitclub.ir/assets/news/editorial/test.webp', 'کلاس پیلاتس بانوان', 'تحریریه MG FitClub', 'published', 1791284400);
   const DB = { prepare(query) { let args = []; return { bind(...values) { args = values; return this; }, first() { return sql.prepare(query).get(...args) || null; }, all() { return { results: sql.prepare(query).all(...args) }; } }; } };
   const env = { DB };
   const index = await handleNewsSiteRequest(new Request('https://khabar.mgfitclub.ir/'), env);
   assert.equal(index.status, 200);
-  assert.match(await index.text(), /عنوان آزمایشی/);
+  const indexHtml = await index.text();
+  assert.match(indexHtml, /عنوان آزمایشی/);
+  assert.ok(indexHtml.indexOf('راهنمای پیلاتس در شیراز') < indexHtml.indexOf('عنوان آزمایشی'));
   const story = await handleNewsSiteRequest(new Request('https://khabar.mgfitclub.ir/عنوان-آزمایشی-12345678'), env);
   assert.equal(story.status, 200);
   assert.match(story.headers.get('content-type'), /text\/html/);
   assert.match(await story.text(), /شرح کامل خبر/);
+  const localStory = await handleNewsSiteRequest(new Request('https://khabar.mgfitclub.ir/pilates-shiraz-test'), env);
+  const localHtml = await localStory.text();
+  assert.equal(localStory.status, 200);
+  assert.match(localHtml, /"@type":"Article"/);
+  assert.match(localHtml, /<h2>شروع امن<\/h2>/);
+  assert.match(localHtml, /مطالب مرتبط/);
+  assert.match(localHtml, /https:\/\/www\.who\.int\/initiatives\/behealthy\/physical-activity\//);
   const sitemap = await handleNewsSiteRequest(new Request('https://khabar.mgfitclub.ir/sitemap.xml'), env);
   assert.match(await sitemap.text(), /%D8%B9%D9%86%D9%88%D8%A7%D9%86-%D8%A2%D8%B2%D9%85%D8%A7%DB%8C%D8%B4%DB%8C-12345678/);
   const robots = await handleNewsSiteRequest(new Request('https://khabar.mgfitclub.ir/robots.txt'), env);
@@ -117,7 +153,7 @@ test('old feed entries and links to unrelated hosts are not retained', () => {
 
 test('Instagram OAuth start stores only a hashed, expiring state and requests publishing scopes', async () => {
   const sql = new DatabaseSync(':memory:');
-  for (const file of ['schema.sql', 'migrations/001-runtime.sql', 'migrations/003-club-access.sql', 'migrations/013-news.sql', 'migrations/014-news-instagram.sql', 'migrations/015-news-article-pages.sql']) {
+  for (const file of ['schema.sql', 'migrations/001-runtime.sql', 'migrations/003-club-access.sql', 'migrations/013-news.sql', 'migrations/014-news-instagram.sql', 'migrations/015-news-article-pages.sql', 'migrations/016-news-editorial.sql']) {
     sql.exec(fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8'));
   }
   sql.exec("INSERT INTO users(id,phone,full_name,role) VALUES ('support','09120000000','Support','admin'); INSERT INTO account_access(user_id,role,club_id,state) VALUES ('support','support',NULL,'approved');");
@@ -146,7 +182,7 @@ test('Instagram OAuth start stores only a hashed, expiring state and requests pu
 
 test('manual news sync starts in the background and prevents overlapping runs', async () => {
   const sql = new DatabaseSync(':memory:');
-  for (const file of ['schema.sql', 'migrations/001-runtime.sql', 'migrations/003-club-access.sql', 'migrations/013-news.sql', 'migrations/014-news-instagram.sql', 'migrations/015-news-article-pages.sql']) {
+  for (const file of ['schema.sql', 'migrations/001-runtime.sql', 'migrations/003-club-access.sql', 'migrations/013-news.sql', 'migrations/014-news-instagram.sql', 'migrations/015-news-article-pages.sql', 'migrations/016-news-editorial.sql']) {
     sql.exec(fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8'));
   }
   sql.exec("INSERT INTO users(id,phone,full_name,role) VALUES ('support','09120000000','Support','admin'); INSERT INTO account_access(user_id,role,club_id,state) VALUES ('support','support',NULL,'approved');");
