@@ -15,6 +15,18 @@
   --mg-on-primary: #18210f;
   --mg-secondary: #805b17;
   --mg-secondary-soft: #f5edd9;
+  --mg-success-bg: #176b3a;
+  --mg-on-success: #ffffff;
+  --mg-success-hover: #12532d;
+  --mg-danger-bg: #9b2f43;
+  --mg-on-danger: #ffffff;
+  --mg-danger-hover: #7f2537;
+  --mg-warning-bg: #f0c866;
+  --mg-on-warning: #30250e;
+  --mg-warning-hover: #dfb64f;
+  --mg-selected-bg: #b8e63f;
+  --mg-on-selected: #18210f;
+  --mg-selected-border: #4d6d1c;
   --ink: var(--mg-text);
   --ink-2: var(--mg-surface-soft);
   --paper: var(--mg-surface-soft);
@@ -66,6 +78,18 @@
   --mg-on-primary: #17200f;
   --mg-secondary: #f0c866;
   --mg-secondary-soft: #3d321b;
+  --mg-success-bg: #b8e63f;
+  --mg-on-success: #17200f;
+  --mg-success-hover: #a4d52e;
+  --mg-danger-bg: #ff91a3;
+  --mg-on-danger: #341018;
+  --mg-danger-hover: #ffb0bd;
+  --mg-warning-bg: #f0c866;
+  --mg-on-warning: #30250e;
+  --mg-warning-hover: #ffda84;
+  --mg-selected-bg: #c6ff3f;
+  --mg-on-selected: #17200f;
+  --mg-selected-border: #d6ff78;
   --ink: var(--mg-text);
   --ink-2: var(--mg-surface-soft);
   --paper: var(--mg-surface-soft);
@@ -108,6 +132,21 @@
   --amber: #ff91a3;
   --coral: #ff91a3;
   --rose: #ff91a3;
+}
+
+:root[data-mg-theme="classic"] {
+  --mg-success-bg: #b8e63f;
+  --mg-on-success: #17200f;
+  --mg-success-hover: #a4d52e;
+  --mg-danger-bg: #ff91a3;
+  --mg-on-danger: #341018;
+  --mg-danger-hover: #ffb0bd;
+  --mg-warning-bg: #f0c866;
+  --mg-on-warning: #30250e;
+  --mg-warning-hover: #ffda84;
+  --mg-selected-bg: #c6ff3f;
+  --mg-on-selected: #17200f;
+  --mg-selected-border: #d6ff78;
 }
 
 body[data-mg-theme^="modern-"] {
@@ -199,6 +238,76 @@ body:not(.mg-home)[data-mg-theme^="modern-"] :is(.primary, .btn-primary, .button
 }
 body:not(.mg-home)[data-mg-theme^="modern-"] :is(input, textarea, select, button, a):focus-visible {
   outline-color: var(--mg-accent) !important;
+}
+
+/* Semantic actions keep their meaning and text contrast after the shared button reset. */
+[data-mg-theme] :is(button, input[type="button"], input[type="submit"], .btn, .button, a)[class~="green"],
+[data-mg-theme] :is(button, input[type="button"], input[type="submit"], .btn, .button, a)[class~="success"] {
+  color: var(--mg-on-success) !important;
+  border-color: var(--mg-success-bg) !important;
+  background-color: var(--mg-success-bg) !important;
+}
+[data-mg-theme] :is(button, input[type="button"], input[type="submit"], .btn, .button, a)[class~="danger"] {
+  color: var(--mg-on-danger) !important;
+  border-color: var(--mg-danger-bg) !important;
+  background-color: var(--mg-danger-bg) !important;
+}
+[data-mg-theme] :is(button, input[type="button"], input[type="submit"], .btn, .button, a)[class~="yellow"],
+[data-mg-theme] :is(button, input[type="button"], input[type="submit"], .btn, .button, a)[class~="warning"] {
+  color: var(--mg-on-warning) !important;
+  border-color: var(--mg-warning-bg) !important;
+  background-color: var(--mg-warning-bg) !important;
+}
+[data-mg-theme] :is(button, input[type="button"], input[type="submit"], .btn, .button, a)[class~="green"]:hover:not(:disabled),
+[data-mg-theme] :is(button, input[type="button"], input[type="submit"], .btn, .button, a)[class~="success"]:hover:not(:disabled) {
+  color: var(--mg-on-success) !important;
+  border-color: var(--mg-success-hover) !important;
+  background-color: var(--mg-success-hover) !important;
+}
+[data-mg-theme] :is(button, input[type="button"], input[type="submit"], .btn, .button, a)[class~="danger"]:hover:not(:disabled) {
+  color: var(--mg-on-danger) !important;
+  border-color: var(--mg-danger-hover) !important;
+  background-color: var(--mg-danger-hover) !important;
+}
+[data-mg-theme] :is(button, input[type="button"], input[type="submit"], .btn, .button, a)[class~="yellow"]:hover:not(:disabled),
+[data-mg-theme] :is(button, input[type="button"], input[type="submit"], .btn, .button, a)[class~="warning"]:hover:not(:disabled) {
+  color: var(--mg-on-warning) !important;
+  border-color: var(--mg-warning-hover) !important;
+  background-color: var(--mg-warning-hover) !important;
+}
+[data-mg-theme] :is(button, input[type="button"], input[type="submit"], .btn, .button, a):is(.green, .success, .danger, .yellow, .warning):focus-visible {
+  outline: 3px solid var(--mg-accent, var(--mg-primary, #c6ff3f)) !important;
+  outline-offset: 2px;
+}
+[data-mg-theme] :is(button, input[type="button"], input[type="submit"], .btn, .button, a):is(.green, .success, .danger, .yellow, .warning):disabled {
+  cursor: not-allowed;
+  box-shadow: none;
+  border-style: dashed;
+}
+
+/* Selection remains unmistakable after the page and theme button rules cascade. */
+body[data-mg-theme] .filter-btn[aria-pressed="true"],
+body[data-mg-theme] .membership-duration[aria-pressed="true"] {
+  color: var(--mg-on-selected) !important;
+  border: 2px solid var(--mg-selected-border) !important;
+  background: var(--mg-selected-bg) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mg-selected-border) 34%, transparent) !important;
+  font-weight: 850;
+}
+body[data-mg-theme] .filter-btn[aria-pressed="true"]:focus-visible,
+body[data-mg-theme] .membership-duration[aria-pressed="true"]:focus-visible {
+  outline: 3px solid var(--mg-accent, var(--mg-primary, #c6ff3f)) !important;
+  outline-offset: 3px;
+}
+[data-mg-theme] .floating-chat {
+  color: var(--mg-on-success) !important;
+  border-color: var(--mg-success-bg) !important;
+  background: var(--mg-success-bg) !important;
+}
+[data-mg-theme] .floating-chat:hover {
+  color: var(--mg-on-success) !important;
+  border-color: var(--mg-success-hover) !important;
+  background: var(--mg-success-hover) !important;
 }
 
 /* The public landing page has its own editorial layout and already uses design tokens.

@@ -560,6 +560,48 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
     }
+    /* Keep readable content surfaces aligned with the selected light/dark palette. */
+    body[data-mg-theme^="modern-"] .site-header {
+      color: var(--mg-text) !important;
+      border-color: var(--mg-border) !important;
+      background: color-mix(in srgb, var(--mg-surface) 94%, transparent) !important;
+    }
+    body[data-mg-theme^="modern-"] .site-nav > a:not(.nav-cta) { color: var(--mg-muted) !important; }
+    body[data-mg-theme^="modern-"] .js .site-nav { background: var(--mg-surface) !important; }
+    body[data-mg-theme^="modern-"] :is(.quick-info-inner, .visual-panel, .plan-card, .quarterly, .testimonial, .faq-item, .membership-dialog) {
+      color: var(--mg-text) !important;
+      border-color: var(--mg-border) !important;
+      background: var(--mg-surface) !important;
+    }
+    body[data-mg-theme^="modern-"] .plan-card.featured { background: var(--mg-accent-soft) !important; }
+    body[data-mg-theme^="modern-"] :is(.testimonials-section, .site-footer) {
+      color: var(--mg-text) !important;
+      border-color: var(--mg-border) !important;
+      background: var(--mg-surface-soft) !important;
+    }
+    body[data-mg-theme^="modern-"] .faq-item[open] { background: var(--mg-accent-soft) !important; }
+    body[data-mg-theme^="modern-"] :is(.visual-status, .visual-copy p, .visual-bottom, .price small, .quarterly-label, .testimonial-text, .footer-title, .footer-bottom a) {
+      color: var(--mg-muted) !important;
+    }
+    body[data-mg-theme^="modern-"] .visual-float {
+      color: var(--mg-text) !important;
+      border-color: var(--mg-border) !important;
+      background: var(--mg-surface-soft) !important;
+    }
+    body[data-mg-theme^="modern-"] :is(.filter-btn, .membership-duration, .membership-payment-actions button, .membership-dialog .dialog-close, .membership-dialog a) {
+      color: var(--mg-text) !important;
+      border-color: var(--mg-border) !important;
+      background: var(--mg-surface-soft) !important;
+    }
+    body[data-mg-theme^="modern-"] .filter-btn:hover:not([aria-pressed="true"]) { background: var(--mg-accent-soft) !important; }
+    body[data-mg-theme^="modern-"] .membership-dialog { box-shadow: 0 24px 80px color-mix(in srgb, var(--mg-text) 22%, transparent); }
+    body[data-mg-theme^="modern-"] .membership-dialog::backdrop { background: color-mix(in srgb, var(--mg-page) 76%, transparent); }
+    body[data-mg-theme^="modern-"] .membership-payment-actions button:first-child {
+      color: var(--mg-on-primary) !important;
+      border-color: var(--mg-primary) !important;
+      background: var(--mg-primary) !important;
+    }
+    body[data-mg-theme^="modern-"] .membership-dialog [role="status"] { color: var(--mg-accent) !important; }
   </style>
   <link rel="stylesheet" href="mg-global-theme.css?v=20261011-dark-default" data-mg-global-theme="true">
 </head>
