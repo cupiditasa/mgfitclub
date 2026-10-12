@@ -42,16 +42,16 @@ test('news article HTML includes canonical, source attribution, and NewsArticle 
   assert.match(html, /<h1>خبر &lt;تست&gt;<\/h1>/);
   assert.match(html, /https:\/\/example\.com\/story/);
   assert.match(html, /"@type":"NewsArticle"/);
-  assert.match(html, /mg-global-theme\.css\?v=20261011-sitewide/);
-  assert.match(html, /mg-global-theme\.js\?v=20261011-sitewide/);
+  assert.match(html, /mg-global-theme\.css\?v=20261012-studio-contrast/);
+  assert.match(html, /mg-global-theme\.js\?v=20261012-studio-contrast/);
   assert.equal((html.match(/<p>بند /g) || []).length, 2);
   assert.doesNotMatch(html, /<h1>خبر <تست><\/h1>/);
 });
 
 test('generated news index shares the site theme and public theme preference', () => {
   const html = renderNewsIndex([{ slug: 'story-12345678', title: 'Story', summary: 'Summary', published_at: 1791284400 }]);
-  assert.match(html, /mg-global-theme\.css\?v=20261011-sitewide/);
-  assert.match(html, /mg-global-theme\.js\?v=20261011-sitewide/);
+  assert.match(html, /mg-global-theme\.css\?v=20261012-studio-contrast/);
+  assert.match(html, /mg-global-theme\.js\?v=20261012-studio-contrast/);
   assert.match(html, /story-12345678/);
 });
 

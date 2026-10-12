@@ -574,6 +574,139 @@ body[data-mg-theme="modern-studio"] :is(a, button, input, select, textarea):focu
   outline: 3px solid color-mix(in srgb, var(--mg-secondary) 78%, white) !important;
   outline-offset: 3px;
 }
+
+/* Keep selected controls and filled links legible after legacy page rules load. */
+body[data-mg-theme] :is(
+  .w-days button[aria-selected="true"],
+  .workspace-tab[aria-selected="true"],
+  .segbtn[aria-pressed="true"],
+  .viewtabs button.on,
+  .tabs button[aria-selected="true"]
+) {
+  color: var(--mg-on-selected) !important;
+  border-color: var(--mg-selected-border) !important;
+  background: var(--mg-selected-bg) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--mg-selected-border) 24%, transparent) !important;
+}
+
+body[data-workspace][data-mg-theme="modern-studio"] .cta {
+  color: #fff !important;
+  background: linear-gradient(115deg, #c2410c, #1d4ed8) !important;
+  border: 1px solid #fff8;
+  box-shadow: 0 8px 22px rgba(29, 78, 216, .2);
+}
+body[data-mg-theme="modern-studio"] :is(.nav-cta:hover, .plan-cta:hover, .featured .plan-cta) {
+  color: #fff !important;
+}
+body[data-mg-theme="modern-studio"] .journal-hero-links a:first-child {
+  color: #fff !important;
+}
+body[data-mg-theme="modern-studio"] :is(.archive__item:hover, .pager-card:hover),
+body[data-mg-theme="modern-studio"] :is(.archive__item:hover, .pager-card:hover) :is(p, small, span, b) {
+  color: #fff !important;
+}
+body[data-mg-theme="modern-studio"] .editorial #editorial-filters button[aria-pressed="true"] {
+  color: var(--mg-on-primary) !important;
+}
+body[data-mg-theme="modern-studio"] :is(.ctrl.main, .exercise-item.active .ico, .gstep.on b) {
+  color: #fff !important;
+  border-color: var(--mg-primary) !important;
+  background: linear-gradient(120deg, var(--mg-secondary), var(--mg-primary)) !important;
+}
+body[data-mg-theme="modern-studio"] .anatomy-hotspot:is(:hover, [aria-pressed="true"]) {
+  color: #fff !important;
+  border-color: var(--mg-primary) !important;
+  background: color-mix(in srgb, var(--mg-primary) 78%, var(--mg-text)) !important;
+}
+body[data-mg-theme="modern-studio"] #steel stop:first-child {
+  stop-color: var(--mg-secondary);
+}
+body[data-mg-theme="modern-studio"] #steel stop:last-child {
+  stop-color: var(--mg-primary);
+}
+
+/* Market pages used a private dark palette, so give their whole component token-aware
+   surfaces when the light Studio canvas is active instead of only recoloring the body. */
+body[data-mg-theme="modern-studio"] .market {
+  --accent: var(--mg-accent);
+  color: var(--mg-text) !important;
+}
+body[data-mg-theme="modern-studio"] .market :is(.market-panel, .coach-card, .request-card, .offer-card) {
+  color: var(--mg-text) !important;
+  border-color: var(--mg-border) !important;
+  background: var(--mg-surface) !important;
+  box-shadow: 0 10px 28px rgba(25, 40, 66, .075);
+}
+body[data-mg-theme="modern-studio"] .market :is(input, textarea, select) {
+  color: var(--mg-text) !important;
+  border-color: var(--mg-border) !important;
+  background: var(--mg-surface-soft) !important;
+}
+body[data-mg-theme="modern-studio"] .market .market-head h1 {
+  color: var(--mg-text) !important;
+}
+body[data-mg-theme="modern-studio"] .market .muted {
+  color: var(--mg-muted) !important;
+}
+body[data-mg-theme="modern-studio"] .market button.primary {
+  color: var(--mg-on-primary) !important;
+  border-color: var(--mg-primary) !important;
+  background: var(--mg-primary) !important;
+}
+
+/* These journal overlays intentionally remain dark even when the reading canvas is light. */
+body.journal-page[data-mg-theme^="modern-"] :is(.preloader, .gallery-modal, .story-modal, .journal-menu, .menu, .form) {
+  color: #f7f8f2 !important;
+}
+body.journal-page[data-mg-theme^="modern-"] :is(
+  .preloader, .gallery-modal, .story-modal, .journal-menu, .menu, .form, .gallery, .lightbox, .map--real figcaption
+) {
+  --white: #ffffff;
+  --muted: #d1d5db;
+  --acid: #fb923c;
+  --lime: #fb923c;
+  --line: rgba(255, 255, 255, .2);
+}
+body.journal-page[data-mg-theme^="modern-"] :is(.gallery, .lightbox, .map--real figcaption) {
+  color: #f7f8f2 !important;
+}
+body.journal-page[data-mg-theme^="modern-"] .menu :is(a, p, span) {
+  color: #f7f8f2 !important;
+}
+body.journal-page[data-mg-theme^="modern-"] :is(.gallery, .lightbox) a {
+  color: #fff !important;
+}
+body[data-mg-theme="modern-studio"]:not([data-workspace]) .footer,
+body[data-mg-theme="modern-studio"]:not([data-workspace]) .footer :is(b, a, p, small, span) {
+  color: #fff !important;
+}
+
+/* Generated editorial news pages share this stylesheet but have their own card classes. */
+body[data-mg-theme="modern-studio"] .news-card {
+  color: var(--mg-text) !important;
+  border-color: var(--mg-border) !important;
+  background: var(--mg-surface) !important;
+}
+body[data-mg-theme="modern-studio"] .news-card > a {
+  color: var(--mg-text) !important;
+}
+body[data-mg-theme="modern-studio"] .news-card :is(h3, p, small, span) {
+  color: var(--mg-text) !important;
+}
+body[data-mg-theme="modern-studio"] .news-card :is(small, span) {
+  color: var(--mg-accent) !important;
+}
+body[data-mg-theme="modern-studio"] .feed-section {
+  color: var(--mg-text) !important;
+  border-color: var(--mg-border) !important;
+}
+body[data-mg-theme="modern-studio"] .feed-section > p,
+body[data-mg-theme="modern-studio"] .news-card p {
+  color: var(--mg-muted) !important;
+}
+body[data-mg-theme="modern-studio"] .image-fallback {
+  color: #fff !important;
+}
 @media (max-width: 560px) {
   .mg-theme-picker { left: 10px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
   .mg-theme-picker__trigger { min-width: 44px; min-height: 44px; border-radius: 14px; }

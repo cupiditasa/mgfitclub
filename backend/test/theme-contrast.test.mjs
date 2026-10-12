@@ -5,6 +5,8 @@ import test from 'node:test';
 const root = new URL('../../', import.meta.url);
 const themeCss = fs.readFileSync(new URL('mg-global-theme.css', root), 'utf8');
 const membershipHtml = fs.readFileSync(new URL('membership.html', root), 'utf8');
+const apiScript = fs.readFileSync(new URL('mg-api.js', root), 'utf8');
+const newsSeo = fs.readFileSync(new URL('backend/news-seo.js', root), 'utf8');
 const themes = ['modern-light', 'modern-light-coral', 'modern-dark', 'modern-dark-coral', 'modern-studio', 'classic'];
 
 function propertiesForTheme(theme) {
@@ -66,6 +68,35 @@ test('Studio Cobalt theme keeps body copy legible and gives this palette its own
 
 test('Studio Cobalt preserves readable white text over the homepage video hero', () => {
   assert.match(themeCss, /body\.mg-home\[data-mg-theme="modern-studio"\] \.hero \{[\s\S]*?color:\s*#fffefa !important/);
+});
+
+test('Studio filled actions and selected controls use foregrounds with AA contrast', () => {
+  assert.ok(contrast('#ffffff', '#1d4ed8') >= 4.5);
+  assert.ok(contrast('#ffffff', '#c2410c') >= 4.5);
+  assert.match(themeCss, /\.w-days button\[aria-selected="true"\][\s\S]*?--mg-on-selected/);
+  assert.match(themeCss, /\.workspace-tab\[aria-selected="true"\]/);
+  assert.match(themeCss, /\.segbtn\[aria-pressed="true"\]/);
+  assert.match(themeCss, /\.tabs button\[aria-selected="true"\]/);
+  assert.match(themeCss, /body\[data-workspace\]\[data-mg-theme="modern-studio"\] \.cta[\s\S]*?color:\s*#fff !important[\s\S]*?#c2410c, #1d4ed8/);
+  assert.match(themeCss, /\.featured \.plan-cta[\s\S]*?color: #fff !important/);
+  assert.match(themeCss, /\.archive__item:hover, \.pager-card:hover/);
+  assert.match(themeCss, /#editorial-filters button\[aria-pressed="true"\][\s\S]*?--mg-on-primary/);
+});
+
+test('Studio fixes legacy dark-panel aliases, coach market, and generated editorial cards', () => {
+  assert.match(themeCss, /body\.journal-page\[data-mg-theme\^="modern-"\].*\.preloader/);
+  assert.match(themeCss, /body\.journal-page\[data-mg-theme\^="modern-"\].*\.gallery/);
+  assert.match(themeCss, /body\[data-mg-theme="modern-studio"\]:not\(\[data-workspace\]\) \.footer :is\(b, a, p, small, span\)/);
+  assert.match(themeCss, /body\[data-mg-theme="modern-studio"\] \.market :is\(\.market-panel, \.coach-card, \.request-card, \.offer-card\)/);
+  assert.match(themeCss, /body\[data-mg-theme="modern-studio"\] \.news-card > a/);
+  assert.match(themeCss, /body\[data-mg-theme="modern-studio"\] \.feed-section/);
+  assert.match(newsSeo, /mg-global-theme\.css\?v=20261012-studio-contrast/);
+  assert.match(newsSeo, /mg-global-theme\.js\?v=20261012-studio-contrast/);
+});
+
+test('staff login route is recognized by the shared theme bootstrap', () => {
+  assert.match(apiScript, /mgThemePath === "\/staff\/login" \|\| mgThemePath === "\/staff\/login\/index\.html"/);
+  assert.match(apiScript, /mgThemePages\.has\(mgThemePageName\) \|\| mgThemeStaffLogin/);
 });
 
 test('semantic success, danger, and secondary buttons preserve themed hover, focus, and disabled states', () => {

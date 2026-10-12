@@ -52,7 +52,7 @@
     const link = document.createElement("link");
     link.rel = "stylesheet";
     const scriptUrl = document.currentScript?.src || new URL("mg-global-theme.js", document.baseURI).href;
-    link.href = new URL("mg-global-theme.css?v=20261011-studio-theme", scriptUrl).href;
+    link.href = new URL("mg-global-theme.css?v=20261012-studio-contrast", scriptUrl).href;
     link.dataset.mgGlobalTheme = "true";
     document.head?.appendChild(link);
   };

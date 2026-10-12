@@ -1,0 +1,55 @@
+.mg-panel-tour-trigger {
+  position: fixed;
+  z-index: 2147481800;
+  inset-inline-start: 18px;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid var(--mg-border, #394a3d);
+  border-radius: 999px;
+  color: var(--mg-on-primary, #17200f);
+  background: var(--mg-primary, #c6ff3f);
+  box-shadow: 0 8px 26px #0005;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.mg-panel-tour-trigger:hover { transform: translateY(-2px); box-shadow: 0 12px 30px #0006; }
+.mg-panel-tour-trigger:focus-visible,
+.mg-panel-tour button:focus-visible { outline: 3px solid var(--mg-accent, #d6ff78); outline-offset: 3px; }
+.mg-panel-tour-trigger svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mg-panel-tour[hidden] { display: none !important; }
+.mg-panel-tour { position: fixed; inset: 0; z-index: 2147482501; direction: rtl; color: var(--mg-text, #f2f7ef); font-family: inherit; }
+.mg-panel-tour__backdrop { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: rgb(0 0 0 / .64); cursor: default; }
+.mg-panel-tour__spotlight { position: fixed; z-index: 1; pointer-events: none; border: 2px solid var(--mg-primary, #c6ff3f); border-radius: 16px; box-shadow: 0 0 0 9999px rgb(0 0 0 / .48), 0 0 30px color-mix(in srgb, var(--mg-primary, #c6ff3f) 55%, transparent); transition: left .22s ease, top .22s ease, width .22s ease, height .22s ease; }
+.mg-panel-tour__card { position: fixed; z-index: 2; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); width: min(560px, calc(100vw - 32px)); max-height: min(52vh, 390px); overflow: auto; transform: translateX(-50%); padding: 22px; border: 1px solid var(--mg-border, #394a3d); border-radius: 22px; background: var(--mg-surface, #17221a); color: var(--mg-text, #f2f7ef); box-shadow: 0 24px 90px #0009; }
+.mg-panel-tour__card[data-placement="top"] { top: max(18px, env(safe-area-inset-top)); bottom: auto; }
+.mg-panel-tour__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.mg-panel-tour__mark { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 12px; color: var(--mg-on-primary, #17200f); background: var(--mg-primary, #c6ff3f); font: 900 13px/1 system-ui, sans-serif; }
+.mg-panel-tour__count { color: var(--mg-muted, #bac7b7); font-size: .85rem; }
+.mg-panel-tour__card h2 { margin: 0 0 8px; color: var(--mg-text, #f2f7ef); font-size: 1.2rem; line-height: 1.6; }
+.mg-panel-tour__card p { margin: 0; color: var(--mg-text, #f2f7ef); font-size: .98rem; line-height: 1.9; }
+.mg-panel-tour__actions { display: flex; align-items: center; justify-content: flex-start; gap: 8px; margin-top: 18px; }
+.mg-panel-tour__actions button { min-width: 78px; min-height: 44px; padding: 8px 13px; border: 1px solid var(--mg-border, #394a3d); border-radius: 12px; color: var(--mg-text, #f2f7ef); background: var(--mg-surface-soft, #202d23); font: inherit; font-weight: 700; cursor: pointer; }
+.mg-panel-tour__actions button:disabled { opacity: .5; cursor: not-allowed; }
+.mg-panel-tour__actions .mg-panel-tour__next { border-color: var(--mg-primary, #c6ff3f); color: var(--mg-on-primary, #17200f); background: var(--mg-primary, #c6ff3f); }
+.mg-panel-tour__actions .mg-panel-tour__skip { margin-inline-end: auto; color: var(--mg-muted, #bac7b7); background: transparent; }
+.mg-panel-tour__target { scroll-margin: 30vh 0; }
+body.mg-panel-tour-open { overflow: hidden; }
+@media (max-width: 680px) {
+  .mg-panel-tour-trigger { inset-inline-start: 12px; bottom: max(12px, env(safe-area-inset-bottom)); min-height: 44px; padding: 0 12px; }
+  .mg-panel-tour__card { width: calc(100vw - 24px); max-height: min(58vh, 440px); padding: 17px; border-radius: 18px; }
+  .mg-panel-tour__card[data-placement="top"] { top: max(12px, env(safe-area-inset-top)); }
+  .mg-panel-tour__card h2 { font-size: 1.08rem; }
+  .mg-panel-tour__card p { font-size: .91rem; line-height: 1.8; }
+  .mg-panel-tour__actions { gap: 6px; }
+  .mg-panel-tour__actions button { min-width: 66px; min-height: 46px; padding-inline: 10px; font-size: .88rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mg-panel-tour-trigger, .mg-panel-tour__spotlight { transition: none; }
+}

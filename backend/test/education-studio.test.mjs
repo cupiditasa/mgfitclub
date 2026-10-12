@@ -140,6 +140,9 @@ test('movement categories stay inside a visible, touch-scrollable filter rail',(
 test('modern education palettes keep primary gradients coherent and classic unchanged',()=>{
  assert.match(html,/:root\[data-mg-theme\^="modern-light"\]\{--grad:linear-gradient\(120deg,#d4e99e,#b8e63f\)\}/);
  assert.match(html,/:root\[data-mg-theme\^="modern-dark"\]\{--grad:linear-gradient\(120deg,#d8f89a,#b8e63f\)\}/);
+ assert.match(html,/:root\[data-mg-theme="modern-studio"\]\{--grad:linear-gradient\(120deg,#c2410c,#1d4ed8\);--education-lime-rgb:29,78,216;--education-mint-rgb:194,65,12\}/);
+ assert.match(html,/rgba\(var\(--education-lime-rgb, 201,242,79\),/);
+ assert.match(html,/rgba\(var\(--education-mint-rgb, 127,232,201\),/);
  assert.match(html,/--grad:linear-gradient\(120deg,var\(--lime\),var\(--mint\)\)/);
  assert.match(html,/\.chip\[aria-pressed=true\]\{background:var\(--mg-accent-soft/);
 });

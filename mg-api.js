@@ -9,12 +9,24 @@
     "food-plan-view.html", "nutrition.html", "nutrition-builder.html", "nutrition-view.html",
     "secretary.html", "support.html", "training-request.html", "workout-log.html", "workout-view.html",
   ]);
+  const mgPanelTourPages = new Set([
+    "admin-dashboard.html", "admin-transactions.html", "admin.html", "attendance-pilot.html",
+    "access-center.html", "club-attendance.html", "coach-dashboard.html", "coach-directory.html",
+    "coach-food.html", "coach-market-log.html", "coach-offerings.html", "coach-profile.html",
+    "coach-programs.html", "coach-requests.html", "coach-transactions.html", "coach.html",
+    "dashboard.html", "device-verification.html", "education.html", "exercise-library.html",
+    "food-plan-view.html", "nutrition-builder.html", "nutrition-view.html", "nutrition.html",
+    "secretary.html", "support.html", "training-request.html", "workout-log.html", "workout-view.html",
+  ]);
   const mgThemeValues = new Set([
     "modern-light", "modern-light-coral", "modern-dark", "modern-dark-coral", "modern-studio", "classic",
   ]);
   const mgThemeDefaultMigrationKey = "mg_theme_default_dark_migrated";
   const mgThemePageName = location.pathname.split("/").filter(Boolean).pop() || "index.html";
-  if (mgThemePages.has(mgThemePageName)) {
+  const mgThemePath = location.pathname.replace(/\/+$/, "") || "/";
+  const mgThemeStaffLogin = mgThemePath === "/staff/login" || mgThemePath === "/staff/login/index.html";
+  const mgThemeNewsHost = location.hostname.toLowerCase() === "khabar.mgfitclub.ir";
+  if (mgThemePages.has(mgThemePageName) || mgThemeStaffLogin || mgThemeNewsHost) {
     const cookieValue = (name) => {
       const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
       if (!match) return "";
@@ -51,15 +63,30 @@
     if (!document.querySelector("link[data-mg-global-theme]")) {
       const themeCss = document.createElement("link");
       themeCss.rel = "stylesheet";
-      themeCss.href = "mg-global-theme.css?v=20261011-studio-theme";
+      themeCss.href = "mg-global-theme.css?v=20261012-studio-contrast";
       themeCss.dataset.mgGlobalTheme = "true";
       document.head.appendChild(themeCss);
     }
     if (!document.querySelector("script[data-mg-global-theme]")) {
       const themeScript = document.createElement("script");
-      themeScript.src = "mg-global-theme.js?v=20261011-studio-theme";
+      themeScript.src = "mg-global-theme.js?v=20261012-studio-contrast";
       themeScript.dataset.mgGlobalTheme = "true";
       document.head.appendChild(themeScript);
+    }
+  }
+  if (mgPanelTourPages.has(mgThemePageName)) {
+    if (!document.querySelector("link[data-mg-panel-tour]")) {
+      const tourCss = document.createElement("link");
+      tourCss.rel = "stylesheet";
+      tourCss.href = "panel-tour.css?v=20261012-role-tours-v1";
+      tourCss.dataset.mgPanelTour = "true";
+      document.head.appendChild(tourCss);
+    }
+    if (!document.querySelector("script[data-mg-panel-tour]")) {
+      const tourScript = document.createElement("script");
+      tourScript.src = "panel-tour.js?v=20261012-role-tours-v1";
+      tourScript.dataset.mgPanelTour = "true";
+      document.head.appendChild(tourScript);
     }
   }
   const activeSession = localStorage.getItem("mg_session");
