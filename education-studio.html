@@ -717,7 +717,7 @@ button.badge:disabled{opacity:.55;cursor:wait}
     <article class="panel stage reveal" aria-labelledby="stageFa">
       <div class="stage-head">
         <div><span class="en" id="stageEn">BACK SQUAT</span><h2 id="stageFa" role="button" tabindex="0" title="برای ثبت تکرار ضربه بزن">اسکوات پشت (هالتر)</h2></div>
-        <div class="badges"><button class="badge step" id="anatomyModeBtn" type="button" aria-pressed="false" disabled>نمای آناتومی</button><span class="badge lvl" id="stageLevel">مقدماتی</span><span class="badge live" id="modeBadge"><i></i>انیمیشن سه‌بعدی</span></div>
+        <div class="badges"><button class="badge step" id="anatomyModeBtn" type="button" aria-pressed="false" disabled>در حال بارگذاری آناتومی…</button><span class="badge lvl" id="stageLevel">مقدماتی</span><span class="badge live" id="modeBadge"><i></i>انیمیشن سه‌بعدی</span></div>
       </div>
 
       <div class="stage-view">
@@ -1008,8 +1008,19 @@ async function boot3D(){
         import('./assets/vendor/three/examples/jsm/libs/meshopt_decoder.module.js')
       ]);
       S3D.setAnatomySupport(GLTFLoader,MeshoptDecoder);
-      $('#anatomyModeBtn').disabled=false;
-    }catch(e){console.warn('Optional anatomy model loader unavailable',e);}
+      try{
+        await S3D.ensureAnatomy();
+        S3D.setAnatomyMode(true);
+        $('#anatomyModeBtn').disabled=false;
+      }catch(e){
+        console.warn('Anatomy model unavailable; keeping the animated model as fallback',e);
+        $('#anatomyModeBtn').textContent='تلاش برای بارگذاری آناتومی';
+        $('#anatomyModeBtn').disabled=false;
+      }
+    }catch(e){
+      console.warn('Optional anatomy model loader unavailable',e);
+      $('#anatomyModeBtn').textContent='نمای آناتومی در دسترس نیست';
+    }
     try{
       const {RoomEnvironment}=await import('./assets/vendor/three/examples/jsm/environments/RoomEnvironment.js');
       const pmrem=new THREE.PMREMGenerator(S3D.renderer);
@@ -1218,7 +1229,7 @@ class Studio{
     $('.stage').classList.toggle('anatomy-mode',this.anatomyMode);
     const button=$('#anatomyModeBtn');
     button.setAttribute('aria-pressed',String(this.anatomyMode));
-    button.textContent=this.anatomyMode?'بازگشت به نمایش تمرین':'نمای آناتومی';
+    button.textContent=this.anatomyMode?'نمایش مدل تمرینی':'نمایش مدل آناتومی';
     $('#modelCredit').hidden=!this.anatomyMode;
     $('#stageLevel').hidden=this.anatomyMode;
     $('#stageEn').textContent=this.anatomyMode?'STATIC MUSCLE ANATOMY':byKey(key).en.toUpperCase();
@@ -2365,7 +2376,7 @@ $('#anatomyModeBtn').addEventListener('click',async()=>{
   if(turnOn)button.textContent='در حال بارگذاری مدل…';
   try{if(turnOn)await S3D.ensureAnatomy();S3D.setAnatomyMode(turnOn);}
   catch(error){console.error('Failed to load anatomy model',error);toast('مدل آناتومی بارگذاری نشد؛ اتصال یا فایل مدل را بررسی کنید.',true);}
-  finally{button.disabled=false;if(!S3D.anatomyMode)button.textContent='نمای آناتومی';}
+  finally{button.disabled=false;button.textContent=S3D.anatomyMode?'نمایش مدل تمرینی':'نمایش مدل آناتومی';}
 });
 select('squat',true);
 renderPlan();

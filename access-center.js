@@ -7,6 +7,20 @@
   const el = (tag, text, cls) => { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (cls) e.className = cls; return e; };
   const button = (text, fn, cls) => { const b = el("button", text, cls); b.type = "button"; b.onclick = fn; return b; };
   const input = (labelText, type = "text") => { const label = el("label", labelText); const field = el("input"); field.type = type; label.append(field); return { label, field }; };
+  const icon = (name) => {
+    const paths = {
+      user: ["M20 21a8 8 0 0 0-16 0", "M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8"],
+      image: ["M4 4h16v16H4z", "m4 16 5-5 4 4 3-3 4 4", "M14.5 8.5h.01"],
+      save: ["M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z", "M17 21v-8H7v8", "M7 3v5h8"],
+      trash: ["M3 6h18", "M8 6V4h8v2", "m19 6-1 14H6L5 6", "M10 11v5", "M14 11v5"]
+    };
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("width", "20"); svg.setAttribute("height", "20");
+    svg.setAttribute("fill", "none"); svg.setAttribute("stroke", "currentColor"); svg.setAttribute("stroke-width", "1.7");
+    svg.setAttribute("stroke-linecap", "round"); svg.setAttribute("stroke-linejoin", "round"); svg.setAttribute("aria-hidden", "true");
+    for (const d of paths[name] || []) { const path = document.createElementNS("http://www.w3.org/2000/svg", "path"); path.setAttribute("d", d); svg.append(path); }
+    return svg;
+  };
   const api = (path, method = "GET", body) => MGApi.request(path, { method, ...(body === undefined ? {} : { body }), signal: AbortSignal.timeout(20000) });
   const status = el("p", "", "access-status"); status.setAttribute("role", "status");
   const report = (message, error = false) => { status.textContent = message; status.dataset.error = String(error); };
@@ -155,16 +169,22 @@
   async function profileTab(card) {
     const data = await api("/api/me/profile");
     let avatar = data.profile.avatar_data;
-    card.append(el("h2", "مشخصات شخصی"));
-    const form = el("form"), grid = el("div", undefined, "access-grid");
+    const heading = el("h2", "مشخصات شخصی", "access-profile-heading"); heading.prepend(icon("user")); card.append(heading);
+    card.append(el("p", "نام و تصویر ذخیره‌شده در این بخش در داشبورد و درخواست‌های مرتبط با حساب شما استفاده می‌شود.", "access-muted"));
+    const form = el("form", undefined, "access-profile-form"), editor = el("div", undefined, "access-profile-editor"), grid = el("div", undefined, "access-grid");
     const first = input("نام"), last = input("نام خانوادگی");
     first.field.value = data.profile.first_name; last.field.value = data.profile.last_name;
     first.field.autocomplete = "given-name"; last.field.autocomplete = "family-name";
-    for (const f of [first, last]) { f.field.required = true; f.field.maxLength = 80; grid.append(f.label); }
+    for (const [f, placeholder] of [[first, "نام خود را وارد کنید"], [last, "نام خانوادگی را وارد کنید"]]) { f.field.required = true; f.field.maxLength = 80; f.field.placeholder = placeholder; f.label.classList.add("access-profile-label"); f.label.prepend(icon("user")); grid.append(f.label); }
     if (!data.profile.first_name && data.user.full_name) card.append(el("p", "نام فعلی حساب: " + data.user.full_name, "access-muted"));
     const preview = el("img", undefined, "access-avatar"); preview.alt = "تصویر پروفایل"; preview.hidden = !avatar;
     if (avatar) preview.src = avatar;
-    const photo = input("عکس پروفایل (JPG، PNG یا WebP؛ حداکثر ۵ مگابایت)", "file"); photo.field.accept = "image/jpeg,image/png,image/webp";
+    const photoBox = el("section", undefined, "access-profile-photo");
+    const avatarFrame = el("div", undefined, "access-avatar-frame"), emptyAvatar = el("div", undefined, "access-avatar-empty");
+    emptyAvatar.append(icon("user"), el("span", "بدون تصویر")); emptyAvatar.hidden = !!avatar; avatarFrame.append(emptyAvatar, preview);
+    const photo = input("انتخاب تصویر پروفایل", "file"); photo.label.classList.add("access-photo-picker"); photo.label.prepend(icon("image")); photo.field.accept = "image/jpeg,image/png,image/webp"; photo.field.setAttribute("aria-label", "انتخاب تصویر پروفایل");
+    photoBox.append(avatarFrame, photo.label, el("small", "JPG، PNG یا WebP · حداکثر ۵ مگابایت", "access-photo-help"));
+    editor.append(photoBox, grid);
     photo.field.onchange = async () => {
       const file = photo.field.files[0]; if (!file) return;
       if (!/^(image\/jpeg|image\/png|image\/webp)$/.test(file.type) || file.size > 5 * 1024 * 1024) { report("تصویر معتبر با حجم کمتر از ۵ مگابایت انتخاب کنید.", true); photo.field.value = ""; return; }
@@ -174,17 +194,19 @@
         const ratio = Math.min(1, 384 / Math.max(bitmap.width, bitmap.height));
         const canvas = document.createElement("canvas"); canvas.width = Math.max(1, Math.round(bitmap.width * ratio)); canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
         const ctx = canvas.getContext("2d"); ctx.fillStyle = "#172018"; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height); bitmap.close();
-        avatar = canvas.toDataURL("image/jpeg", .82);
-        if (avatar.length > 160000) avatar = canvas.toDataURL("image/jpeg", .6);
-        preview.src = avatar; preview.hidden = false; report("تصویر آماده است؛ برای ثبت، ذخیره را بزنید.");
-      } catch (_) { report("این تصویر قابل خواندن نیست.", true); } finally { save.disabled = false; }
+        let compact = canvas.toDataURL("image/jpeg", .82);
+        if (compact.length > 160000) compact = canvas.toDataURL("image/jpeg", .6);
+        if (compact.length > 160000) throw new Error("photo_too_large");
+        avatar = compact; preview.src = avatar; preview.hidden = false; emptyAvatar.hidden = true; report("پیش‌نمایش آماده است؛ برای ذخیرهٔ دائمی، دکمهٔ ذخیره را بزنید.");
+      } catch (error) { photo.field.value = ""; report(error.message === "photo_too_large" ? "این تصویر پس از فشرده‌سازی هنوز بزرگ است؛ عکس دیگری انتخاب کنید." : "این تصویر قابل خواندن نیست.", true); } finally { save.disabled = false; }
     };
-    const remove = button("حذف تصویر", () => { avatar = null; preview.hidden = true; photo.field.value = ""; });
-    const save = el("button", "ذخیره مشخصات", "primary"); save.type = "submit";
+    const remove = button("حذف تصویر", () => { avatar = null; preview.hidden = true; emptyAvatar.hidden = false; photo.field.value = ""; report("حذف تصویر پس از ذخیره ثبت می‌شود."); }, "access-profile-remove"); remove.prepend(icon("trash"));
+    const save = el("button", "ذخیره مشخصات", "primary access-profile-save"); save.type = "submit"; save.prepend(icon("save"));
     form.onsubmit = e => { e.preventDefault(); run(save, async () => {
-      await api("/api/me/profile", "PATCH", { firstName: first.field.value, lastName: last.field.value, avatarData: avatar }); report("مشخصات و تصویر شما ذخیره شد.");
+      await api("/api/me/profile", "PATCH", { firstName: first.field.value.trim(), lastName: last.field.value.trim(), avatarData: avatar }); report("نام و تصویر پروفایل ذخیره شد؛ داشبورد را برای مشاهدهٔ تغییر به‌روز کنید.");
     }); };
-    form.append(preview, grid, photo.label, remove, save); card.append(form);
+    const actions = el("div", undefined, "access-profile-actions"); actions.append(remove, save);
+    form.append(editor, actions); card.append(form);
   }
   async function roleTab(card) {
     const data = await api("/api/clubs");

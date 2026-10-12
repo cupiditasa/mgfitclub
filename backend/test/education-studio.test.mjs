@@ -172,6 +172,15 @@ test('live anatomy normalizes its imported long axis before fitting and hit mapp
  assert.ok(normalizeAt>=0&&fitBoundsAt>normalizeAt,'fitting bounds are recomputed after axis normalization');
 });
 
+test('the anatomical model loads and becomes the default view before the mannequin switch is offered',()=>{
+ const bootStart=html.indexOf('async function boot3D(){'),bootEnd=html.indexOf('class Studio{',bootStart);
+ assert.ok(bootStart>=0&&bootEnd>bootStart,'3D initialization is present');
+ const boot=html.slice(bootStart,bootEnd);
+ assert.match(boot,/await S3D\.ensureAnatomy\(\);\s*S3D\.setAnatomyMode\(true\)/);
+ assert.match(html,/this\.anatomyMode\?'نمایش مدل تمرینی':'نمایش مدل آناتومی'/);
+ assert.match(html,/Anatomy model unavailable; keeping the animated model as fallback/);
+});
+
 test('anatomy model comparison normalizes non-Y-up assets before display fitting',()=>{
  const compare=fs.readFileSync(new URL('../../assets/education/blender-review/model-compare.html',import.meta.url),'utf8');
  assert.match(compare,/const initialBox=new THREE\.Box3\(\)\.setFromObject\(current\)/);
