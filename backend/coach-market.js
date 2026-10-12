@@ -63,22 +63,35 @@ export async function handleCoachMarket(request,env,c){
    if(!Number.isInteger(height)||height<80||height>250||!Number.isFinite(weight)||weight<25||weight>350||goal.length<2||goal.length>500||photo.length>160000||!/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(photo))fail('workout_intake_required');
    intake={heightCm:height,weightKg:weight,goal,photoData:photo};
   }
-  const id=makeId('coach_request');
-  await db.batch([db.prepare('INSERT INTO coach_service_requests(id,request_key,club_id,coach_id,athlete_id,kind,package_id,package_name,package_price,notes,height_cm,weight_kg,goal,photo_data,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(athlete_id,request_key) DO NOTHING').bind(id,b.requestKey,user.club_id,coachRow.coach_id,user.id,kind,pkg?.id||null,pkg?.name||null,pkg?.price??null,notes,intake.heightCm,intake.weightKg,intake.goal,intake.photoData,now,now),db.prepare("INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,metadata_json) SELECT ?,?,'coach_request_created','coach_service_request',?,? WHERE EXISTS(SELECT 1 FROM coach_service_requests WHERE id=?)").bind(makeId('audit'),user.id,id,JSON.stringify({kind,coachId:coachRow.coach_id}),id),db.prepare("INSERT INTO athlete_coach_selections(athlete_id,coach_id,club_id,selected_at) VALUES (?,?,?,?) ON CONFLICT(athlete_id) DO UPDATE SET coach_id=excluded.coach_id,club_id=excluded.club_id,selected_at=excluded.selected_at").bind(user.id,coachRow.coach_id,user.club_id,now)]);
+  const id=makeId('coach_request'),cash=kind==='workout'||kind==='nutrition',orderId=kind==='workout'?makeId('order'):null;
+  await db.batch([
+   db.prepare('INSERT INTO coach_service_requests(id,request_key,club_id,coach_id,athlete_id,kind,package_id,package_name,package_price,notes,height_cm,weight_kg,goal,photo_data,payment_method,cash_amount_toman,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(athlete_id,request_key) DO NOTHING').bind(id,b.requestKey,user.club_id,coachRow.coach_id,user.id,kind,pkg?.id||null,pkg?.name||null,pkg?.price??null,notes,intake.heightCm,intake.weightKg,intake.goal,intake.photoData,cash?'cash':null,kind==='workout'?pkg.price:null,now,now),
+   ...(kind==='workout'?[db.prepare("INSERT INTO orders(id,user_id,order_type,item_id,amount,status,payment_method) SELECT ?,athlete_id,'training',package_id,cash_amount_toman*10,'pending','cash' FROM coach_service_requests WHERE id=? AND payment_method='cash' AND order_id IS NULL ON CONFLICT(id) DO NOTHING").bind(orderId,id),db.prepare("UPDATE coach_service_requests SET order_id=?,updated_at=? WHERE id=? AND payment_method='cash' AND order_id IS NULL").bind(orderId,now,id)]:[]),
+   db.prepare("INSERT INTO audit_logs(id,actor_id,action,entity_type,entity_id,metadata_json) SELECT ?,?,'coach_request_created','coach_service_request',?,? WHERE EXISTS(SELECT 1 FROM coach_service_requests WHERE id=?)").bind(makeId('audit'),user.id,id,JSON.stringify({kind,coachId:coachRow.coach_id,paymentMethod:cash?'cash':null}),id),
+   db.prepare("INSERT INTO athlete_coach_selections(athlete_id,coach_id,club_id,selected_at) VALUES (?,?,?,?) ON CONFLICT(athlete_id) DO UPDATE SET coach_id=excluded.coach_id,club_id=excluded.club_id,selected_at=excluded.selected_at").bind(user.id,coachRow.coach_id,user.club_id,now)
+  ]);
   const saved=await db.prepare('SELECT id,status FROM coach_service_requests WHERE athlete_id=? AND request_key=?').bind(user.id,b.requestKey).first();return out({ok:true,request:saved},saved.id===id?201:200);
  }
  if(path==='/api/coach-market/requests'&&request.method==='GET'){
   if(!coach&&!athlete&&!manager&&!support)fail('forbidden',403);
   const where=coach?'r.coach_id=?':athlete?'r.athlete_id=?':manager?'r.club_id=?':'1=1',value=coach||athlete?user.id:manager?user.club_id||'':'';
   if(manager&&!value)fail('club_required',400);
-  const rows=(await db.prepare(`SELECT r.*,a.full_name AS athlete_name,a.phone AS athlete_phone,c.full_name AS coach_name FROM coach_service_requests r JOIN users a ON a.id=r.athlete_id JOIN users c ON c.id=r.coach_id WHERE ${where} ORDER BY CASE r.status WHEN 'pending' THEN 0 WHEN 'approved' THEN 1 ELSE 2 END,r.created_at DESC LIMIT 300`).bind(...(support?[]:[value])).all()).results;
+  const rows=(await db.prepare(`SELECT r.*,o.amount AS order_amount_rial,o.status AS order_status,o.payment_method AS order_payment_method,a.full_name AS athlete_name,a.phone AS athlete_phone,c.full_name AS coach_name FROM coach_service_requests r JOIN users a ON a.id=r.athlete_id JOIN users c ON c.id=r.coach_id LEFT JOIN orders o ON o.id=r.order_id WHERE ${where} ORDER BY CASE r.status WHEN 'pending' THEN 0 WHEN 'approved' THEN 1 ELSE 2 END,r.created_at DESC LIMIT 300`).bind(...(support?[]:[value])).all()).results;
   return out({requests:rows});
  }
  const requestMatch=path.match(/^\/api\/coach-market\/requests\/([A-Za-z0-9_-]+)$/);
  if(requestMatch&&request.method==='PATCH'){
   if(!coach)fail('coach_only',403);const b=await body(),status=String(b.status||'');if(!['approved','rejected'].includes(status))fail('invalid_status');
   const item=await db.prepare('SELECT * FROM coach_service_requests WHERE id=? AND coach_id=?').bind(requestMatch[1],user.id).first();if(!item)fail('request_not_found',404);if(item.status!=='pending')fail('request_already_reviewed',409);
-  await db.batch([db.prepare("UPDATE coach_service_requests SET status=?,reviewed_by=?,reviewed_at=?,updated_at=? WHERE id=? AND coach_id=? AND status='pending'").bind(status,user.id,now,now,item.id,user.id),audit('coach_request_'+status,item.id,{kind:item.kind,athleteId:item.athlete_id})]);return out({ok:true,status});
+  let priceToman=item.cash_amount_toman;
+  const cashNutrition=status==='approved'&&item.kind==='nutrition'&&item.payment_method==='cash';
+  if(cashNutrition){priceToman=Number(b.cashAmountToman);if(!Number.isSafeInteger(priceToman)||priceToman<1||priceToman>1000000000)fail('nutrition_cash_price_required')}
+  const updates=[],orderId=cashNutrition?makeId('order'):null;
+  if(orderId)updates.push(db.prepare("INSERT INTO orders(id,user_id,order_type,item_id,amount,status,payment_method) SELECT ?,athlete_id,'training',?,?,'pending','cash' FROM coach_service_requests WHERE id=? AND coach_id=? AND status='pending' AND payment_method='cash'").bind(orderId,item.id,priceToman*10,item.id,user.id));
+  updates.push(db.prepare("UPDATE coach_service_requests SET status=?,cash_amount_toman=?,order_id=CASE WHEN kind='nutrition' AND ?='approved' THEN ? ELSE order_id END,reviewed_by=?,reviewed_at=?,updated_at=? WHERE id=? AND coach_id=? AND status='pending'").bind(status,priceToman,status,orderId,user.id,now,now,item.id,user.id));
+  if(status==='rejected')updates.push(db.prepare("UPDATE orders SET status='cancelled',updated_at=? WHERE id=(SELECT order_id FROM coach_service_requests WHERE id=? AND status='rejected') AND status='pending'").bind(now,item.id));
+  updates.push(audit('coach_request_'+status,item.id,{kind:item.kind,athleteId:item.athlete_id,paymentMethod:item.payment_method,cashAmountToman:status==='approved'?priceToman:null}));
+  await db.batch(updates);return out({ok:true,status});
  }
  return errorResponse('not_found',404,headers);
 }
