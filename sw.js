@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261011-site-tour";
+const CACHE_NAME = "mg-fitclub-v20261011-studio-theme";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -12,9 +12,9 @@ const APP_SHELL = [
   "./account.html",
   "./dashboard-switch.js?v=20261008",
   "./dashboard-switch.css?v=20261008",
-  "./mg-api.js?v=20261011-dark-default",
-  "./mg-global-theme.css?v=20261011-dark-default",
-  "./mg-global-theme.js?v=20261011-dark-default",
+  "./mg-api.js?v=20261011-studio-theme",
+  "./mg-global-theme.css?v=20261011-studio-theme",
+  "./mg-global-theme.js?v=20261011-studio-theme",
   "./site-tour.css?v=20261011-first-visit",
   "./site-tour.js?v=20261011-first-visit",
   "./access-control.js?v=20261010-athlete-api-outage",

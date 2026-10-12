@@ -31,6 +31,9 @@ test('dark lime, gold and silver is the shared default while alternate palettes 
   assert.match(dashboard, /let initialMgDashboardTheme = "modern-dark";/);
   for (const theme of ['modern-light', 'modern-light-coral', 'modern-dark-coral', 'classic'])
     assert.match(themeScript, new RegExp(`id: "${theme}"`));
-  assert.match(serviceWorker, /mg-fitclub-v20261011-site-tour/);
-  assert.match(serviceWorker, /mg-global-theme\.js\?v=20261011-dark-default/);
+  assert.match(themeScript, /id: "modern-studio", label: "استودیو · عاجی، کبالت و نارنگی"/);
+  assert.match(apiScript, /"modern-studio"/);
+  assert.match(dashboard, /data-mg-theme-choice="modern-studio"/);
+  assert.match(serviceWorker, /mg-fitclub-v20261011-studio-theme/);
+  assert.match(serviceWorker, /mg-global-theme\.js\?v=20261011-studio-theme/);
 });

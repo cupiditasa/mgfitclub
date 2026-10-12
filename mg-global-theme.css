@@ -134,6 +134,71 @@
   --rose: #ff91a3;
 }
 
+/* Studio Cobalt: warm paper, ink-blue structure, and a tangerine spark. */
+:root[data-mg-theme="modern-studio"] {
+  --mg-page: #f5f2e9;
+  --mg-surface: #fffefa;
+  --mg-surface-soft: #ece9df;
+  --mg-text: #192842;
+  --mg-muted: #4f5d73;
+  --mg-border: #cfd5df;
+  --mg-accent: #1d4ed8;
+  --mg-accent-soft: #e5ecff;
+  --mg-primary: #1d4ed8;
+  --mg-on-primary: #ffffff;
+  --mg-secondary: #c2410c;
+  --mg-secondary-soft: #ffeadc;
+  --mg-success-bg: #0f766e;
+  --mg-on-success: #ffffff;
+  --mg-success-hover: #115e59;
+  --mg-danger-bg: #b4233a;
+  --mg-on-danger: #ffffff;
+  --mg-danger-hover: #8e1b2b;
+  --mg-warning-bg: #f3d06b;
+  --mg-on-warning: #30250e;
+  --mg-warning-hover: #e5bd4e;
+  --mg-selected-bg: #1d4ed8;
+  --mg-on-selected: #ffffff;
+  --mg-selected-border: #192842;
+  --accent: var(--mg-accent);
+  --accent-deep: var(--mg-secondary);
+  --line-accent: color-mix(in srgb, var(--mg-accent) 26%, transparent);
+  --ink: var(--mg-text);
+  --ink-2: var(--mg-surface-soft);
+  --paper: var(--mg-surface-soft);
+  --white: var(--mg-text);
+  --acid: var(--mg-primary);
+  --acid-dark: #173b9e;
+  --dark-line: var(--mg-border);
+  --bg0: var(--mg-page);
+  --bg1: #f0eee7;
+  --bg2: #e9e7df;
+  --panel: var(--mg-surface);
+  --panel2: var(--mg-surface-soft);
+  --raise: #ffffff;
+  --muted: var(--mg-muted);
+  --dim: #5f6c80;
+  --faint: #748095;
+  --line: var(--mg-border);
+  --line2: #dce0e6;
+  --line3: #e5e7eb;
+  --lime: var(--mg-accent);
+  --lime2: #1741b4;
+  --mint: var(--mg-secondary);
+  --amber: var(--mg-secondary);
+  --coral: #c2410c;
+  --blue: #1d4ed8;
+  --violet: #5442a8;
+  --rose: #b4233a;
+  --w-accent: var(--mg-accent);
+  --w-line: var(--mg-border);
+  --bg: var(--mg-page);
+  --text: var(--mg-text);
+  color-scheme: light;
+  color: var(--mg-text);
+  background: var(--mg-page) !important;
+}
+
 :root[data-mg-theme="classic"] {
   --mg-success-bg: #b8e63f;
   --mg-on-success: #17200f;
@@ -336,6 +401,22 @@ body.mg-home[data-mg-theme^="modern-"] .hero {
 body.mg-home[data-mg-theme^="modern-"] :is(.intro, .programs, .founder, .location, .register, .footer) {
   color: var(--mg-text);
 }
+body.mg-home[data-mg-theme="modern-studio"] .hero {
+  --mg-text: #fffefa;
+  --white: #fffefa;
+  color: #fffefa !important;
+}
+body.mg-home[data-mg-theme="modern-studio"] .hero :is(h1, h2, h3, p, small, strong, .hero__eyebrow, .hero__brand, .hero__footer) {
+  color: #fffefa !important;
+  text-shadow: 0 1px 18px rgba(5, 15, 35, .48);
+}
+body.mg-home[data-mg-theme="modern-studio"] .hero .button--accent {
+  color: #fff !important;
+}
+body.mg-home[data-mg-theme="modern-studio"] .hero__brand i,
+body.mg-home[data-mg-theme="modern-studio"] .hero__eyebrow span {
+  color: var(--mg-secondary) !important;
+}
 body.mg-home[data-mg-theme^="modern-"] .register {
   background-color: var(--mg-surface) !important;
 }
@@ -461,9 +542,38 @@ body.mg-home[data-mg-theme^="modern-"] .mg-digital__all:focus-visible { outline:
 .mg-theme-picker__option[data-theme="modern-dark-coral"] .mg-theme-picker__swatch i:nth-child(1) { background: #0d1510; }
 .mg-theme-picker__option[data-theme="modern-dark-coral"] .mg-theme-picker__swatch i:nth-child(2) { background: #c6ff3f; }
 .mg-theme-picker__option[data-theme="modern-dark-coral"] .mg-theme-picker__swatch i:nth-child(3) { background: #ff91a3; }
+.mg-theme-picker__option[data-theme="modern-studio"] .mg-theme-picker__swatch i:nth-child(1) { background: #f5f2e9; }
+.mg-theme-picker__option[data-theme="modern-studio"] .mg-theme-picker__swatch i:nth-child(2) { background: #1d4ed8; }
+.mg-theme-picker__option[data-theme="modern-studio"] .mg-theme-picker__swatch i:nth-child(3) { background: #c2410c; }
 .mg-theme-picker__option[data-theme="classic"] .mg-theme-picker__swatch i:nth-child(1) { background: #080a08; }
 .mg-theme-picker__option[data-theme="classic"] .mg-theme-picker__swatch i:nth-child(2) { background: #c6ff3f; }
 .mg-theme-picker__option[data-theme="classic"] .mg-theme-picker__swatch i:nth-child(3) { background: #aab4a4; }
+
+/* A warmer editorial canvas makes this palette unmistakable without changing layout. */
+body[data-mg-theme="modern-studio"] {
+  background-image:
+    radial-gradient(ellipse at 92% 4%, color-mix(in srgb, var(--mg-primary) 9%, transparent), transparent 34rem),
+    radial-gradient(ellipse at 4% 72%, color-mix(in srgb, var(--mg-secondary) 7%, transparent), transparent 30rem);
+  background-attachment: fixed;
+}
+body:not(.mg-home)[data-mg-theme="modern-studio"] :is(
+  .card, .panel, .panel-card, .box, .guide-card, .plan-card, .faq-item,
+  .w-card, .n-meal, .n-template-card, .auth-card, .login-card, article
+) {
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(25, 40, 66, .075);
+}
+body:not(.mg-home)[data-mg-theme="modern-studio"] :is(.hero, .topbar, .header, .workout-header, .site-header) {
+  border-bottom: 2px solid color-mix(in srgb, var(--mg-primary) 24%, var(--mg-border));
+}
+body[data-mg-theme="modern-studio"] :is(.primary, .btn-primary, button[type="submit"], .membership-duration[aria-pressed="true"]) {
+  background-image: linear-gradient(125deg, #1d4ed8, #315fd0) !important;
+  box-shadow: 0 7px 18px rgba(29, 78, 216, .18);
+}
+body[data-mg-theme="modern-studio"] :is(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--mg-secondary) 78%, white) !important;
+  outline-offset: 3px;
+}
 @media (max-width: 560px) {
   .mg-theme-picker { left: 10px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
   .mg-theme-picker__trigger { min-width: 44px; min-height: 44px; border-radius: 14px; }

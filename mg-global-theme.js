@@ -7,13 +7,15 @@
     { id: "modern-light-coral", label: "روشن · لایم و مرجانی" },
     { id: "modern-dark", label: "تیره · لایم، طلایی و نقره‌ای" },
     { id: "modern-dark-coral", label: "تیره · لایم و مرجانی" },
+    { id: "modern-studio", label: "استودیو · عاجی، کبالت و نارنگی" },
     { id: "classic", label: "کلاسیک · ظاهر قبلی" },
   ];
   const validThemes = new Set(choices.map((choice) => choice.id));
   const labels = new Map(choices.map((choice) => [choice.id, choice.label]));
   const browserColors = new Map([
     ["modern-light", "#f3f6f0"], ["modern-light-coral", "#f3f6f0"],
-    ["modern-dark", "#0d1510"], ["modern-dark-coral", "#0d1510"], ["classic", "#080a08"],
+    ["modern-dark", "#0d1510"], ["modern-dark-coral", "#0d1510"],
+    ["modern-studio", "#f5f2e9"], ["classic", "#080a08"],
   ]);
 
   const readCookie = () => {
@@ -50,7 +52,7 @@
     const link = document.createElement("link");
     link.rel = "stylesheet";
     const scriptUrl = document.currentScript?.src || new URL("mg-global-theme.js", document.baseURI).href;
-    link.href = new URL("mg-global-theme.css?v=20261011-dark-default", scriptUrl).href;
+    link.href = new URL("mg-global-theme.css?v=20261011-studio-theme", scriptUrl).href;
     link.dataset.mgGlobalTheme = "true";
     document.head?.appendChild(link);
   };

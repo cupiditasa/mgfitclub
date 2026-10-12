@@ -15,7 +15,7 @@
         const alreadyMigrated = document.cookie.split(";").some((part) => part.trim() === `${migrationKey}=1`) || localStorage.getItem(migrationKey) === "1";
         if (!alreadyMigrated) {
           const currentCookieTheme = decodeURIComponent(cookieTheme || "");
-          const validSavedThemes = ["modern-light", "modern-light-coral", "modern-dark", "modern-dark-coral", "classic"];
+          const validSavedThemes = ["modern-light", "modern-light-coral", "modern-dark", "modern-dark-coral", "modern-studio", "classic"];
           if (currentCookieTheme === "modern-light" || (!validSavedThemes.includes(currentCookieTheme) && savedLocalTheme === "modern-light")) {
             localStorage.setItem("mg_dashboard_theme", "modern-dark");
             document.cookie = "mg_theme_pref=modern-dark; Path=/; Domain=.mgfitclub.ir; Max-Age=31536000; SameSite=Lax; Secure";
@@ -25,7 +25,7 @@
         }
         const migratedCookieTheme = document.cookie.match(/(?:^|;\s*)mg_theme_pref=([^;]*)/)?.[1];
         const savedDashboardTheme = decodeURIComponent(migratedCookieTheme || localStorage.getItem("mg_dashboard_theme") || "");
-        if (["modern-light", "modern-light-coral", "modern-dark", "modern-dark-coral", "classic"].includes(savedDashboardTheme))
+        if (["modern-light", "modern-light-coral", "modern-dark", "modern-dark-coral", "modern-studio", "classic"].includes(savedDashboardTheme))
           document.documentElement.dataset.mgTheme = savedDashboardTheme;
       } catch {}
     </script>
@@ -1815,7 +1815,7 @@
     }
   </style>
   <style id="dashboard-theme-selector">
-    html[data-mg-theme="modern-light"], html[data-mg-theme="modern-light-coral"] { background: #f3f6f0 !important; }
+    html[data-mg-theme="modern-light"], html[data-mg-theme="modern-light-coral"], html[data-mg-theme="modern-studio"] { background: #f5f2e9 !important; }
     html[data-mg-theme="modern-dark"], html[data-mg-theme="modern-dark-coral"] { background: #0d1510 !important; }
     body.mg-athlete-dashboard[data-mg-theme="modern-light"] {
       --mg-page: #f3f6f0;
@@ -1848,6 +1848,15 @@
       color-scheme: inherit;
       color: var(--mg-text);
       background: var(--mg-page) !important;
+    }
+    body.mg-athlete-dashboard[data-mg-theme="modern-studio"] {
+      --purple: #1d4ed8;
+      --purple2: #315fd0;
+      --green: #0f766e;
+      --ink: #192842;
+      --muted: #4f5d73;
+      --mg-shadow: 0 12px 32px rgba(25, 40, 66, .10);
+      color-scheme: light;
     }
     body.mg-athlete-dashboard[data-mg-theme="modern-light-coral"] { --mg-secondary:#a3354d; --mg-accent:#4d6d1c; }
     body.mg-athlete-dashboard[data-mg-theme="modern-dark-coral"] { --mg-secondary:#ff91a3; --mg-accent:#d6ff78; }
@@ -2205,6 +2214,9 @@
     .theme-swatch-dark-coral i:first-child { background:#0d1510; }
     .theme-swatch-dark-coral i:nth-child(2) { background:#c6ff3f; }
     .theme-swatch-dark-coral i:nth-child(3) { background:#ff91a3; }
+    .theme-swatch-studio i:first-child { background:#f5f2e9; }
+    .theme-swatch-studio i:nth-child(2) { background:#1d4ed8; }
+    .theme-swatch-studio i:nth-child(3) { background:#c2410c; }
     .theme-option-label { flex:1; }
     .theme-option-label strong { display:block; font-size:12px; }
     .theme-option-label small { display:block; color:var(--mg-muted, #bac5b3); font-size:10px; }
@@ -2504,6 +2516,11 @@
             <span class="theme-option-label"><strong>تیره · مرجانی</strong><small>لایم با تأکید مرجانی</small></span>
             <span class="theme-option-check" aria-hidden="true">✓</span>
           </button>
+          <button class="theme-option" type="button" data-mg-theme-choice="modern-studio" aria-pressed="false">
+            <span class="theme-swatch theme-swatch-studio" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="theme-option-label"><strong>استودیو · عاجی و کبالت</strong><small>آبی عمیق با تأکید نارنگی</small></span>
+            <span class="theme-option-check" aria-hidden="true">✓</span>
+          </button>
           <button class="theme-option" type="button" data-mg-theme-choice="classic" aria-pressed="false">
             <span class="theme-swatch theme-swatch-classic" aria-hidden="true"><i></i><i></i><i></i></span>
             <span class="theme-option-label"><strong>کلاسیک</strong><small>ظاهر قبلی داشبورد</small></span>
@@ -2525,7 +2542,7 @@
         ><button data-menu="settings"><span class="mi" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.7a8 8 0 0 1-1.4.8l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.4-.8l-1.7.7-1.4-2.4 1.4-1.1a8 8 0 0 1 0-1.7l-1.4-1.1 1.4-2.4 1.7.7a8 8 0 0 1 1.4-.8l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.4.8l1.7-.7 1.4 2.4-1.4 1.1a8 8 0 0 1 0 1.7z"/></svg></span>تنظیمات حساب</button>
       </nav>
     </aside>
-    <script src="mg-api.js?v=20261011-dark-default"></script>
+    <script src="mg-api.js?v=20261011-studio-theme"></script>
     <script>
       const mgDashboardThemeKey = "mg_dashboard_theme";
       const mgDashboardThemeLabels = {
@@ -2533,6 +2550,7 @@
         "modern-light-coral": "روشن · مرجانی",
         "modern-dark": "تیره · لایم، طلایی و نقره‌ای",
         "modern-dark-coral": "تیره · مرجانی",
+        "modern-studio": "استودیو · عاجی، کبالت و نارنگی",
         classic: "کلاسیک",
       };
       function setMgDashboardTheme(theme, persist = true) {

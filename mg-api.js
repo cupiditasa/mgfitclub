@@ -10,7 +10,7 @@
     "secretary.html", "support.html", "training-request.html", "workout-log.html", "workout-view.html",
   ]);
   const mgThemeValues = new Set([
-    "modern-light", "modern-light-coral", "modern-dark", "modern-dark-coral", "classic",
+    "modern-light", "modern-light-coral", "modern-dark", "modern-dark-coral", "modern-studio", "classic",
   ]);
   const mgThemeDefaultMigrationKey = "mg_theme_default_dark_migrated";
   const mgThemePageName = location.pathname.split("/").filter(Boolean).pop() || "index.html";
@@ -51,13 +51,13 @@
     if (!document.querySelector("link[data-mg-global-theme]")) {
       const themeCss = document.createElement("link");
       themeCss.rel = "stylesheet";
-      themeCss.href = "mg-global-theme.css?v=20261011-dark-default";
+      themeCss.href = "mg-global-theme.css?v=20261011-studio-theme";
       themeCss.dataset.mgGlobalTheme = "true";
       document.head.appendChild(themeCss);
     }
     if (!document.querySelector("script[data-mg-global-theme]")) {
       const themeScript = document.createElement("script");
-      themeScript.src = "mg-global-theme.js?v=20261011-dark-default";
+      themeScript.src = "mg-global-theme.js?v=20261011-studio-theme";
       themeScript.dataset.mgGlobalTheme = "true";
       document.head.appendChild(themeScript);
     }

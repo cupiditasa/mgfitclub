@@ -5,7 +5,7 @@ import test from 'node:test';
 const root = new URL('../../', import.meta.url);
 const themeCss = fs.readFileSync(new URL('mg-global-theme.css', root), 'utf8');
 const membershipHtml = fs.readFileSync(new URL('membership.html', root), 'utf8');
-const themes = ['modern-light', 'modern-light-coral', 'modern-dark', 'modern-dark-coral', 'classic'];
+const themes = ['modern-light', 'modern-light-coral', 'modern-dark', 'modern-dark-coral', 'modern-studio', 'classic'];
 
 function propertiesForTheme(theme) {
   const selector = `:root[data-mg-theme="${theme}"]`;
@@ -52,6 +52,20 @@ test('semantic action and selected-state text meet AA in every theme', () => {
         `${theme} ${foreground} on ${background} falls below 4.5:1`);
     }
   }
+});
+
+test('Studio Cobalt theme keeps body copy legible and gives this palette its own visual identity', () => {
+  const vars = propertiesForTheme('modern-studio');
+  assert.ok(contrast(vars['--mg-text'], vars['--mg-page']) >= 4.5);
+  assert.ok(contrast(vars['--mg-muted'], vars['--mg-page']) >= 4.5);
+  assert.equal(vars['--mg-primary'], '#1d4ed8');
+  assert.equal(vars['--mg-secondary'], '#c2410c');
+  assert.match(vars['--accent'], /var\(--mg-accent\)/);
+  assert.match(themeCss, /body\[data-mg-theme="modern-studio"\][\s\S]*?background-attachment:\s*fixed/);
+});
+
+test('Studio Cobalt preserves readable white text over the homepage video hero', () => {
+  assert.match(themeCss, /body\.mg-home\[data-mg-theme="modern-studio"\] \.hero \{[\s\S]*?color:\s*#fffefa !important/);
 });
 
 test('semantic success, danger, and secondary buttons preserve themed hover, focus, and disabled states', () => {

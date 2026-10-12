@@ -158,7 +158,7 @@ test("all protected HTML pages load the guard version and begin cloaked; inline 
     const html = fs.readFileSync(new URL(file, root), "utf8");
     if (html.includes("mg-api.js") && file !== "account.html") {
       assert.ok(html.includes('id="mg-access-cloak"'), file);
-      assert.ok(/mg-api\.js\?v=20261011-dark-default/.test(html), file);
+      assert.ok(/mg-api\.js\?v=20261011-studio-theme/.test(html), file);
     }
     for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
       if (/type=["'](?:application\/(?:ld\+)?json|module)/.test(match[1]) || !match[2].trim()) continue;
