@@ -18,3 +18,14 @@ export function dollIdleMotion(timeSeconds, intensity = 1) {
     gaze: Math.sin(time * 0.58 + 1.2) * 0.0014 * amount
   };
 }
+
+/** Smooths effort-driven facial cues so the training doll never snaps expressions. */
+export function dollEffortMotion(effort) {
+  const amount = clamp01(Number.isFinite(effort) ? effort : 0);
+  const eased = amount * amount * (3 - 2 * amount);
+  return {
+    mouthOpen: clamp01((eased - 0.56) / 0.34),
+    browTension: eased * 0.045,
+    cheekFlush: 0.10 + eased * 0.14
+  };
+}

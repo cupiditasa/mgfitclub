@@ -67,10 +67,10 @@ test('education studio private-save action compiles and posts a curated week pla
 test('male anatomy preview stays readable in surface mode and page copy is not gender-mismatched',()=>{
  assert.doesNotMatch(html,/بدنسازی بانوان|ویژهٔ بانوان|برای بانوان شیراز/);
  assert.match(html,/مدل آناتومی مردانه/);
- assert.match(html,/transmission:\.42/);
+ assert.match(html,/transmission:\.14/);
  assert.doesNotMatch(html,/\bdispersion\s*:/,'Three.js r160 does not support dispersion on this material');
- assert.match(html,/transmission:\.30,thickness:\.24,roughness:\.24/);
- assert.match(html,/color:0xe2b99e/);
+ assert.match(html,/transmission:\.08,thickness:\.12,roughness:\.44/);
+ assert.match(html,/color:0xd49a78/);
  assert.match(html,/pc\.scale\.set\(1\.44,\.64,\.30\)/);
  assert.doesNotMatch(html,/دم‌اسبی ورزشی|دوخت بند سینه|سوتین/);
  assert.match(html,/موی کوتاه ورزشی/);
@@ -110,7 +110,7 @@ test('procedural male avatar uses a tapered head and responsive framing without 
 });
 
 test('animated avatar bridges the shoulder-to-torso seam symmetrically on the moving arm rig',()=>{
- assert.match(html,/const shoulderBlend=sph\(\.044,bodySkin\); shoulderBlend\.scale\.set\(1\.52,\.92,\.62\); shoulderBlend\.position\.set\(-\.036\*side,-\.016,-\.003\); sg\.add\(shoulderBlend\)/);
+ assert.match(html,/const shoulderBlend=sph\(\.047,bodySkin\); shoulderBlend\.scale\.set\(1\.55,\.98,\.70\); shoulderBlend\.position\.set\(-\.033\*side,-\.016,-\.003\); sg\.add\(shoulderBlend\)/);
  assert.match(html,/R\[side<0\?'shoulderBlendL':'shoulderBlendR'\]=shoulderBlend/);
  const armStart=html.indexOf('const mkArm=(side)=>{');
  const blendAt=html.indexOf('const shoulderBlend=',armStart),deltAt=html.indexOf('const delt=sph(',armStart);
