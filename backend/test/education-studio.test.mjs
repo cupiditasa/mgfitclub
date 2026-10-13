@@ -3,9 +3,56 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { alignModelUpAxis } from '../../assets/education/model-axis.mjs';
 import { samplePoseMotion } from '../../assets/education/pose-motion.mjs';
+import { EXERCISE_ADDITIONS } from '../../assets/education/exercise-additions.mjs';
+import { estimateExerciseDuration, formatExerciseDuration, sumExerciseDurations, usesIndependentTiming } from '../../assets/education/exercise-duration.mjs';
+import { normalizeExerciseName } from '../workout-domain.js';
 
 const html=fs.readFileSync(new URL('../../education-studio.html',import.meta.url),'utf8');
 const themes=fs.readFileSync(new URL('../../mg-global-theme.css',import.meta.url),'utf8');
+
+test('education library expands to 175 unique movements with estimates for every prescription',()=>{
+ const start=html.indexOf('const DATA=')+'const DATA='.length;
+ const end=html.indexOf('];',start)+1;
+ assert.ok(start>0&&end>start,'base movement seed is present');
+ const base=JSON.parse(html.slice(start,end));
+ const all=[...base,...EXERCISE_ADDITIONS];
+ assert.equal(EXERCISE_ADDITIONS.length,20);
+ assert.equal(all.length,175);
+ assert.equal(new Set(all.map(item=>item.k)).size,all.length,'movement keys are unique');
+ assert.equal(new Set(all.map(item=>normalizeExerciseName(item.fa))).size,all.length,'Persian exercise names are unique');
+ assert.ok(all.every(item=>estimateExerciseDuration(item)?.minSeconds>0),'all movement prescriptions have an estimate');
+ const counts=JSON.parse(html.match(/const COUNTS=(\{[^\r\n]+\});/)[1]);
+ const byCategory=all.reduce((result,item)=>{const group=item.cat==='پا و پشت پا (همسترینگ)'?'پا و باسن':item.cat;result[group]=(result[group]||0)+1;return result;},{});
+ assert.deepEqual(byCategory,counts,'each scrollable category displays its actual movement count');
+ assert.match(html,/DATA\.push\(\.\.\.EXERCISE_ADDITIONS\)/);
+ assert.match(html,/const categoryOf=e=>/,'the lower-body category filter maps detailed labels consistently');
+ assert.match(html,/id="movementEstimate"/);
+ assert.match(html,/id="weekDuration"/);
+ assert.match(fs.readFileSync(new URL('../../sw.js',import.meta.url),'utf8'),/exercise-additions\.mjs\?v=20261012-exercise-estimates-v1/);
+});
+
+test('duration estimates account for reps, one-side-per-limb, tempo and set rests',()=>{
+ const start=html.indexOf('const DATA=')+'const DATA='.length,end=html.indexOf('];',start)+1;
+ const base=JSON.parse(html.slice(start,end));
+ const bulgarian=estimateExerciseDuration(base.find(item=>item.k==='bulgarian'));
+ assert.deepEqual([bulgarian.minSeconds,bulgarian.maxSeconds],[264,360]);
+ const plank=estimateExerciseDuration(base.find(item=>item.k==='plank'));
+ assert.deepEqual([plank.minSeconds,plank.maxSeconds],[150,270]);
+ const cardio=estimateExerciseDuration(base.find(item=>item.k==='bike'));
+ assert.deepEqual([cardio.minSeconds,cardio.maxSeconds],[900,1800]);
+ const cooldown=estimateExerciseDuration(base.find(item=>item.k==='cooldown'));
+ assert.deepEqual([cooldown.minSeconds,cooldown.maxSeconds],[150,240]);
+ const carry=estimateExerciseDuration(base.find(item=>item.k==='bottomsupcarry'));
+ assert.deepEqual([carry.minSeconds,carry.maxSeconds],[228,330]);
+ assert.equal(usesIndependentTiming(base.find(item=>item.k==='hundred')),true);
+ assert.equal(usesIndependentTiming(base.find(item=>item.k==='bulgarian')),false);
+ const cossack=EXERCISE_ADDITIONS.find(item=>item.k==='cossack-squat');
+ const planned=estimateExerciseDuration(cossack,{sets:4,reps:'۸–۱۰'});
+ assert.deepEqual([planned.minSeconds,planned.maxSeconds],[564,750]);
+ assert.equal(formatExerciseDuration({minSeconds:30,maxSeconds:30}),'حدود ۳۰ ثانیه');
+ const total=sumExerciseDurations([cossack,cossack],key=>EXERCISE_ADDITIONS.find(item=>item.k===key));
+ assert.equal(total.minSeconds,2*estimateExerciseDuration(cossack).minSeconds);
+});
 test('education studio private-save action compiles and posts a curated week plan',()=>{
  const module=html.match(/<script type="module">\s*([\s\S]*?)\s*<\/script>/);
  assert.ok(module,'education studio module script is present');

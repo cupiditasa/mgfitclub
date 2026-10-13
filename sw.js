@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261012-role-tours-v1";
+const CACHE_NAME = "mg-fitclub-v20261012-exercise-estimates-v1";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -54,6 +54,8 @@ const APP_SHELL = [
   "./admin-dashboard.html",
   "./education.html",
   "./education-studio.html",
+  "./assets/education/exercise-additions.mjs?v=20261012-exercise-estimates-v1",
+  "./assets/education/exercise-duration.mjs?v=20261012-exercise-estimates-v1",
   "./secretary.html",
   "./support.html",
   "./athlete-shared-theme.css",
