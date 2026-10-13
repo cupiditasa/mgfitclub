@@ -34,6 +34,6 @@ test('dark lime, gold and silver is the shared default while alternate palettes 
   assert.match(themeScript, /id: "modern-studio", label: "استودیو · عاجی، کبالت و نارنگی"/);
   assert.match(apiScript, /"modern-studio"/);
   assert.match(dashboard, /data-mg-theme-choice="modern-studio"/);
-  assert.match(serviceWorker, /mg-fitclub-v20261012-doll-coach-v3/);
+  assert.match(serviceWorker, /mg-fitclub-v20261013-tailored-garments-v1/);
   assert.match(serviceWorker, /mg-global-theme\.js\?v=20261012-studio-contrast/);
 });

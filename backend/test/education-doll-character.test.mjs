@@ -118,14 +118,19 @@ test('animated doll details stay rigged and the mobile model uses a lighter geom
   assert.match(html, /toeCap=sph\(\.024,sneakerSoleM\)/);
   assert.match(html, /sneakerSoleM/);
   assert.match(html, /doll-character-math\.mjs\?v=20261012-doll-coach-v3/);
-  assert.match(serviceWorker, /mg-fitclub-v20261012-doll-coach-v3/);
+  assert.match(serviceWorker, /mg-fitclub-v20261013-tailored-garments-v1/);
   assert.match(serviceWorker, /doll-character-math\.mjs\?v=20261012-doll-coach-v3/);
 });
 
-test('training doll has a clean athletic silhouette, restrained target cues, and an accessible canvas', () => {
-  assert.match(html, /const trainingTop=lathe\(/);
-  assert.match(html, /const chestPanel=lathe\(/);
-  assert.match(html, /const trainingShorts=lathe\(/);
+test('training doll uses restrained fitted clothing with fabric detail and rigged separate shorts', () => {
+  assert.match(html, /const trainingTop=clothLathe\(/);
+  assert.match(html, /fabricM\.bumpMap=weaveTexture/);
+  assert.match(html, /clothSeam\(\[\[side\*\.132,-\.280/);
+  assert.match(html, /const trainingShorts=clothLathe\(/);
+  assert.match(html, /shortsLeg=clothLathe\(/);
+  assert.match(html, /leg\.tg\.add\(shortsLeg\)/);
+  assert.match(html, /brandCtx\.fillText\('MG'/);
+  assert.doesNotMatch(html, /brandCtx\.fillRect\(/);
   assert.match(html, /let muscleOn=false,labelsOn=false,deepMode=false/);
   assert.match(html, /canvas\.setAttribute\('role','group'\)/);
   assert.match(html, /canvas\.tabIndex=0/);
