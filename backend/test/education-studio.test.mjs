@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { alignModelUpAxis } from '../../assets/education/model-axis.mjs';
+import { GLTFLoader } from '../../assets/vendor/three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from '../../assets/vendor/three/examples/jsm/libs/meshopt_decoder.module.js';
+import { Box3, Vector3 } from '../../assets/vendor/three/three.module.js';
 import { samplePoseMotion } from '../../assets/education/pose-motion.mjs';
 import { EXERCISE_ADDITIONS } from '../../assets/education/exercise-additions.mjs';
 import { estimateExerciseDuration, formatExerciseDuration, sumExerciseDurations, usesIndependentTiming } from '../../assets/education/exercise-duration.mjs';
@@ -222,13 +225,54 @@ test('live anatomy normalizes its imported long axis before fitting and hit mapp
  assert.ok(normalizeAt>=0&&fitBoundsAt>normalizeAt,'fitting bounds are recomputed after axis normalization');
 });
 
-test('the anatomical model loads and becomes the default view before the mannequin switch is offered',()=>{
+test('the animated doll is the default and anatomy assets load only when the user requests anatomy',()=>{
  const bootStart=html.indexOf('async function boot3D(){'),bootEnd=html.indexOf('class Studio{',bootStart);
  assert.ok(bootStart>=0&&bootEnd>bootStart,'3D initialization is present');
  const boot=html.slice(bootStart,bootEnd);
- assert.match(boot,/await S3D\.ensureAnatomy\(\);\s*S3D\.setAnatomyMode\(true\)/);
+ assert.doesNotMatch(boot,/ensureAnatomy|setAnatomyMode\(true\)|GLTFLoader|MeshoptDecoder/,'initial rendering does not download or parse the optional anatomy model');
+ assert.match(boot,/anatomyButton\.disabled=false/);
+ assert.match(boot,/requestIdleCallback/,'secondary environment lighting is scheduled after first render');
+ const ensure=html.match(/async ensureAnatomy\(\)\{([\s\S]*?)\n  \}/);
+ assert.ok(ensure,'on-demand anatomy loader is present');
+ assert.match(ensure[1],/await this\.loadAnatomySupport\(\)/);
+ assert.match(ensure[1],/mg-male-anatomy-web-v1\.glb\?v=20261013-web-load-fix/);
+ assert.match(ensure[1],/loader\.load\(/,'model transfer exposes progress instead of leaving a silent wait');
+ assert.match(ensure[1],/\\u0645\\u062f\\u0644 \\u0622\\u0646\\u0627\\u062a\\u0648\\u0645\\u06cc/,'anatomy progress label is encoded as readable Persian text');
+ assert.match(html,/async loadAnatomySupport\(\)\{[\s\S]*?GLTFLoader\.js[\s\S]*?meshopt_decoder\.module\.js/);
+ const anatomyButton=html.slice(html.indexOf("\$\('#anatomyModeBtn'\)\.addEventListener('click'"));
+ assert.match(anatomyButton,/if\(turnOn\)await S3D\.ensureAnatomy\(\)/,'anatomy is fetched only after the explicit model switch');
  assert.match(html,/this\.anatomyMode\?'نمایش مدل تمرینی':'نمایش مدل آناتومی'/);
- assert.match(html,/Anatomy model unavailable; keeping the animated model as fallback/);
+ assert.match(html,/this\.anatomySupportPromise=null/,'failed support imports can retry on the next user request');
+ const anatomyAsset=fs.readFileSync(new URL('../../assets/education/mg-male-anatomy.glb',import.meta.url));
+ assert.equal(anatomyAsset.toString('ascii',0,4),'glTF','medical anatomy model is a valid GLB asset');
+ assert.ok(anatomyAsset.length<6*1024*1024,'medical anatomy model stays within the current 6 MiB load budget');
+});
+
+test('education planner defers 3D startup and pauses its animation loop outside the learning workspace',()=>{
+ assert.doesNotMatch(html,/await boot3D\(\);/,'module evaluation does not block the initial page on Three.js setup');
+ assert.match(html,/function scheduleStudioBoot\(\)[\s\S]*requestIdleCallback\(boot,\{timeout:650\}\)/);
+ assert.match(html,/if\(workspace==='learn'\)\{scheduleStudioBoot\(\);startStudioFrame\(\);\}[\s\S]*else\{stopStudioFrame\(\);cancelScheduledStudioBoot\(\);\}/);
+ assert.match(html,/function tick\(now\)\{\s*studioFrameHandle=null;\s*if\(document\.body\.dataset\.workspace!=='learn'\|\|document\.visibilityState==='hidden'\)/);
+ assert.match(html,/document\.addEventListener\('visibilitychange'/,'hidden tabs suspend the draw loop and pending 3D startup');
+});
+
+test('optimized medical anatomy asset retains all selectable meshes and parses with the bundled Meshopt decoder',async()=>{
+ const original=fs.readFileSync(new URL('../../assets/education/mg-male-anatomy.glb',import.meta.url));
+ const optimized=fs.readFileSync(new URL('../../assets/education/mg-male-anatomy-web-v1.glb',import.meta.url));
+ assert.ok(optimized.length<original.length*.8,'web model download is at least 20% smaller than the original');
+ const jsonLength=optimized.readUInt32LE(12),gltfJson=JSON.parse(optimized.toString('utf8',20,20+jsonLength));
+ assert.ok(gltfJson.extensionsRequired.includes('EXT_meshopt_compression'));
+ const loader=new GLTFLoader();loader.setMeshoptDecoder(MeshoptDecoder);
+ const originalGltf=await loader.parseAsync(original.buffer.slice(original.byteOffset,original.byteOffset+original.byteLength),'./assets/education/');
+ const gltf=await loader.parseAsync(optimized.buffer.slice(optimized.byteOffset,optimized.byteOffset+optimized.byteLength),'./assets/education/');
+ let meshes=0,triangles=0;
+ gltf.scene.traverse(object=>{if(object.isMesh){meshes++;triangles+=object.geometry.index?object.geometry.index.count/3:object.geometry.attributes.position.count/3;}});
+ const originalSize=new Box3().setFromObject(originalGltf.scene).getSize(new Vector3());
+ const optimizedSize=new Box3().setFromObject(gltf.scene).getSize(new Vector3());
+ assert.equal(meshes,17,'separate anatomy regions remain independently selectable');
+ assert.ok(['x','y','z'].every(axis=>Math.abs(originalSize[axis]-optimizedSize[axis])<.001),'decimation preserves the model silhouette bounds');
+ assert.ok(triangles<400_000&&triangles>250_000,`web model should stay detailed but responsive (${triangles} triangles)`);
+ assert.ok(triangles<500_000,'decoder returns optimized geometry instead of the 1.1M-triangle source');
 });
 
 test('anatomy model comparison normalizes non-Y-up assets before display fitting',()=>{

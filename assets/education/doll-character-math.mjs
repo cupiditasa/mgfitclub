@@ -35,6 +35,12 @@ export function blinkEnvelope(secondsUntilBlink, closeSeconds = 0.075, openSecon
   return clamp01(1 + secondsUntilBlink / openSeconds);
 }
 
+/** Builds an eyelid seal only near closure so the sclera is covered without a visible pad at rest. */
+export function dollEyeClosure(blinkAmount) {
+  const blink = Number.isFinite(blinkAmount) ? clamp01(blinkAmount) : 0;
+  return clamp01((blink - 0.18) / 0.82);
+}
+
 /** Stable, small idle movement so the character feels present without wobbling. */
 export function dollIdleMotion(timeSeconds, intensity = 1) {
   const amount = clamp01(intensity);
@@ -87,8 +93,14 @@ export function dollGripMotion(timeSeconds, effort = 0, digitIndex = 0) {
   const time = Number.isFinite(timeSeconds) ? timeSeconds : 0;
   const index = Number.isFinite(digitIndex) ? digitIndex : 0;
   const tremor = Math.sin(time * 1.7 + index * 0.72) * 0.004 * (1 - amount * 0.82);
-  const curl = amount * 0.018 * (1 + (index - 1.5) * 0.035) + tremor;
-  return Math.max(-0.004, Math.min(0.022, curl));
+  const curl = amount * 0.135 * (1 + (index - 1.5) * 0.008) + tremor;
+  return Math.max(-0.004, Math.min(0.15, curl));
+}
+
+/** Opposes the thumb toward the index finger as hand effort rises. */
+export function dollThumbOpposition(effort = 0) {
+  const amount = clamp01(Number.isFinite(effort) ? effort : 0);
+  return amount * 0.20;
 }
 
 /** Smooths effort-driven facial cues so the training doll never snaps expressions. */

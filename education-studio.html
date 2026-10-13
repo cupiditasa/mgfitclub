@@ -728,7 +728,7 @@ button.badge:disabled{opacity:.55;cursor:wait}
     <article class="panel stage reveal" aria-labelledby="stageFa">
       <div class="stage-head">
         <div><span class="en" id="stageEn">BACK SQUAT</span><h2 id="stageFa" role="button" tabindex="0" title="برای ثبت تکرار ضربه بزن">اسکوات پشت (هالتر)</h2></div>
-        <div class="badges"><button class="badge step" id="anatomyModeBtn" type="button" aria-pressed="false" disabled>در حال بارگذاری آناتومی…</button><span class="badge lvl" id="stageLevel">مقدماتی</span><span class="badge live" id="modeBadge"><i></i>انیمیشن سه‌بعدی</span></div>
+        <div class="badges"><button class="badge step" id="anatomyModeBtn" type="button" aria-pressed="false" disabled>نمایش مدل آناتومی</button><span class="badge lvl" id="stageLevel">مقدماتی</span><span class="badge live" id="modeBadge"><i></i>انیمیشن سه‌بعدی</span></div>
       </div>
 
       <div class="stage-view">
@@ -932,7 +932,7 @@ button.badge:disabled{opacity:.55;cursor:wait}
 import { ANATOMY_REGION_INFO, ANATOMY_REGIONS_BY_VIEW, ANATOMY_REGION_RADII, anatomyFaceAtYaw, pickAnatomyRegion } from './assets/education/anatomy-region-map.mjs?v=20261008-regions';
 import { alignModelUpAxis } from './assets/education/model-axis.mjs?v=20261010-axis-fix';
 import { createSeededRandom } from './assets/education/seeded-random.mjs?v=20261010-procedural-textures';
-import { blinkEnvelope, dollCameraKeyboardInput, dollIdleMotion, dollBreathingMotion, dollGazeMotion, dollHeadCounterTilt, dollGripMotion, dollEffortMotion } from './assets/education/doll-character-math.mjs?v=20261012-doll-coach-v3';
+import { blinkEnvelope, dollEyeClosure, dollCameraKeyboardInput, dollIdleMotion, dollBreathingMotion, dollGazeMotion, dollHeadCounterTilt, dollGripMotion, dollThumbOpposition, dollEffortMotion } from './assets/education/doll-character-math.mjs?v=20261013-doll-hand-v1';
 import { samplePoseMotion } from './assets/education/pose-motion.mjs?v=20261010-pose-transition';
 import { EXERCISE_ADDITIONS } from './assets/education/exercise-additions.mjs?v=20261012-exercise-estimates-v1';
 import { estimateExerciseDuration, formatExerciseDuration, sumExerciseDurations, usesIndependentTiming } from './assets/education/exercise-duration.mjs?v=20261012-exercise-estimates-v1';
@@ -971,7 +971,9 @@ const ANIMN=DATA.filter(e=>e.anim).length;
 /* =====================================================================
    موتور سه‌بعدی
    ===================================================================== */
-let S3D=null, HAS3D=false, THREE=null; window.S3D=null;
+let S3D=null, HAS3D=false, THREE=null;
+let studioBootPromise=null,studioBootSchedule=null,studioFrameHandle=null;
+window.S3D=null;
 
 const POSES={
   squat:{eq:'barbellBack',A:{y:.98,head:[-.03,0],
@@ -1022,35 +1024,57 @@ function lerpPose(A,B,u){
 async function boot3D(){
   try{ THREE=await import('./assets/vendor/three/three.module.js'); }
   catch(e){ $('#viewFallback').classList.remove('hidden'); return; }
+  if(document.body.dataset.workspace!=='learn')return;
   try{ S3D=new Studio(THREE); HAS3D=true; window.S3D=S3D; window.__S3D_READY=true;
-    try{
-      const [{GLTFLoader},{MeshoptDecoder}]=await Promise.all([
-        import('./assets/vendor/three/examples/jsm/loaders/GLTFLoader.js'),
-        import('./assets/vendor/three/examples/jsm/libs/meshopt_decoder.module.js')
-      ]);
-      S3D.setAnatomySupport(GLTFLoader,MeshoptDecoder);
+    const anatomyButton=$('#anatomyModeBtn');
+    anatomyButton.disabled=false;
+    anatomyButton.textContent='\u0646\u0645\u0627\u06cc\u0634 \u0645\u062f\u0644 \u0622\u0646\u0627\u062a\u0648\u0645\u06cc';
+    const hydrateEnvironment=async()=>{
       try{
-        await S3D.ensureAnatomy();
-        S3D.setAnatomyMode(true);
-        $('#anatomyModeBtn').disabled=false;
-      }catch(e){
-        console.warn('Anatomy model unavailable; keeping the animated model as fallback',e);
-        $('#anatomyModeBtn').textContent='تلاش برای بارگذاری آناتومی';
-        $('#anatomyModeBtn').disabled=false;
-      }
-    }catch(e){
-      console.warn('Optional anatomy model loader unavailable',e);
-      $('#anatomyModeBtn').textContent='نمای آناتومی در دسترس نیست';
-    }
-    try{
-      const {RoomEnvironment}=await import('./assets/vendor/three/examples/jsm/environments/RoomEnvironment.js');
-      const pmrem=new THREE.PMREMGenerator(S3D.renderer);
-      S3D.scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;
-      S3D.scene.traverse(o=>{if(o.material&&o.material.envMapIntensity!==undefined)o.material.envMapIntensity=.5});
-    }catch(e){}
+        const {RoomEnvironment}=await import('./assets/vendor/three/examples/jsm/environments/RoomEnvironment.js');
+        const pmrem=new THREE.PMREMGenerator(S3D.renderer);
+        S3D.scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;
+        S3D.scene.traverse(o=>{if(o.material&&o.material.envMapIntensity!==undefined)o.material.envMapIntensity=.5});
+        pmrem.dispose();
+      }catch(e){}
+    };
+    if(typeof requestIdleCallback==='function')requestIdleCallback(()=>{void hydrateEnvironment();},{timeout:1200});
+    else setTimeout(()=>{void hydrateEnvironment();},120);
   }
   catch(e){ console.error(e); $('#viewFallback').classList.remove('hidden'); }
 }
+
+function cancelScheduledStudioBoot(){
+  if(!studioBootSchedule)return;
+  if(studioBootSchedule.idle&&typeof cancelIdleCallback==='function')cancelIdleCallback(studioBootSchedule.id);
+  else clearTimeout(studioBootSchedule.id);
+  studioBootSchedule=null;
+}
+function startStudioFrame(){
+  if(document.body.dataset.workspace!=='learn'||document.visibilityState==='hidden'||studioFrameHandle!==null)return;
+  last=0;studioFrameHandle=requestAnimationFrame(tick);
+}
+function stopStudioFrame(){
+  if(studioFrameHandle!==null)cancelAnimationFrame(studioFrameHandle);
+  studioFrameHandle=null;last=0;
+}
+function scheduleStudioBoot(){
+  if(document.body.dataset.workspace!=='learn'||document.visibilityState==='hidden'||S3D||studioBootPromise||studioBootSchedule)return;
+  const boot=()=>{
+    studioBootSchedule=null;
+    if(document.body.dataset.workspace!=='learn'||document.visibilityState==='hidden')return;
+    studioBootPromise=boot3D().then(()=>{
+      if(S3D){select(key,true);S3D.resize();}
+      startStudioFrame();
+    }).finally(()=>{studioBootPromise=null;});
+  };
+  if(typeof requestIdleCallback==='function')studioBootSchedule={id:requestIdleCallback(boot,{timeout:650}),idle:true};
+  else studioBootSchedule={id:setTimeout(boot,0),idle:false};
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='hidden'){stopStudioFrame();cancelScheduledStudioBoot();return;}
+  if(document.body.dataset.workspace==='learn'){scheduleStudioBoot();startStudioFrame();}
+});
 
 class Studio{
   constructor(THREE){
@@ -1103,7 +1127,7 @@ class Studio{
      this.buildCharacter();
     this.anatomyMode=false; this.anatomyContainer=new THREE.Group();
     this.anatomyContainer.visible=false; this.scene.add(this.anatomyContainer);
-    this.anatomyMeshes=[]; this.anatomyPromise=null; this.selectedAnatomyRegion=null;
+    this.anatomyMeshes=[]; this.anatomyPromise=null; this.anatomySupportPromise=null; this.selectedAnatomyRegion=null;
     this.anatomyHotspots=$('#anatomyHotspots');this.anatomyPanel=$('#anatomyPanel');this.anatomyMarker=null;this.anatomyHotspotEntries=[];
     this.anatomyHighlightState={center:new THREE.Vector3(0,-99,0),radii:new THREE.Vector3(.1,.1,.1),color:new THREE.Color(0xc9f24f),active:{value:0}};
     this.buildEquipment();
@@ -1115,6 +1139,17 @@ class Studio{
     this._ro=new ResizeObserver(()=>this.resize()); this._ro.observe(view); this.resize();
   }
   setAnatomySupport(GLTFLoader,MeshoptDecoder){this.GLTFLoader=GLTFLoader;this.MeshoptDecoder=MeshoptDecoder;}
+  async loadAnatomySupport(){
+    if(this.GLTFLoader&&this.MeshoptDecoder)return;
+    if(!this.anatomySupportPromise){
+      this.anatomySupportPromise=Promise.all([
+        import('./assets/vendor/three/examples/jsm/loaders/GLTFLoader.js'),
+        import('./assets/vendor/three/examples/jsm/libs/meshopt_decoder.module.js')
+      ]).then(([{GLTFLoader},{MeshoptDecoder}])=>this.setAnatomySupport(GLTFLoader,MeshoptDecoder))
+        .catch(error=>{this.anatomySupportPromise=null;throw error;});
+    }
+    await this.anatomySupportPromise;
+  }
   prepareAnatomyMaterial(source){
     const material=source.clone(),state=this.anatomyHighlightState,compile=material.onBeforeCompile.bind(material),cacheKey=material.customProgramCacheKey.bind(material);
     material.onBeforeCompile=(shader,renderer)=>{
@@ -1206,13 +1241,18 @@ class Studio{
     if(this.anatomyMarker)this.anatomyMarker.visible=false;
     this.anatomyHotspotEntries.forEach(item=>item.button.setAttribute('aria-pressed','false'));
   }
-  async ensureAnatomy(){
+async ensureAnatomy(){
     if(this.anatomyPromise)return this.anatomyPromise;
-    if(!this.GLTFLoader||!this.MeshoptDecoder)throw new Error('Anatomy model decoder is unavailable');
     this.anatomyPromise=(async()=>{
+      await this.loadAnatomySupport();
       const loader=new this.GLTFLoader();
       loader.setMeshoptDecoder(this.MeshoptDecoder);
-      const gltf=await loader.loadAsync('./assets/education/mg-male-anatomy.glb');
+      const gltf=await new Promise((resolve,reject)=>loader.load('./assets/education/mg-male-anatomy-web-v1.glb?v=20261013-web-load-fix',resolve,event=>{
+        const button=$('#anatomyModeBtn');
+        button.textContent=event.lengthComputable
+          ?'\u0645\u062f\u0644 \u0622\u0646\u0627\u062a\u0648\u0645\u06cc \u00b7 '+fa(Math.round(event.loaded/event.total*100))+'\u066a'
+          :'\u062f\u0631\u06cc\u0627\u0641\u062a \u0645\u062f\u0644 \u0622\u0646\u0627\u062a\u0648\u0645\u06cc\u2026';
+      },reject));
       const model=gltf.scene;
       const sourceBounds=new this.T.Box3().setFromObject(model);
       const sourceSize=sourceBounds.getSize(new this.T.Vector3());
@@ -1425,18 +1465,23 @@ class Studio{
     this.limbMap={thighM:['quads','hams'],shinM:['calves'],uaM:['biceps','triceps'],faM:['biceps']};
     this.limbMats={thighM,shinM,uaM,faM};
     this.bodyFade=[bodySkin,thighM,shinM,uaM,faM];
-    const weaveCanvas=document.createElement('canvas');weaveCanvas.width=weaveCanvas.height=64;
-    const weaveCtx=weaveCanvas.getContext('2d');weaveCtx.fillStyle='#808080';weaveCtx.fillRect(0,0,64,64);
-    for(let i=0;i<64;i+=4){weaveCtx.fillStyle=i%8?'rgba(224,224,224,.12)':'rgba(36,36,36,.10)';weaveCtx.fillRect(i,0,1,64);
-      weaveCtx.fillStyle=i%8?'rgba(36,36,36,.08)':'rgba(224,224,224,.10)';weaveCtx.fillRect(0,i,64,1);}
+    const weaveCanvas=document.createElement('canvas');weaveCanvas.width=weaveCanvas.height=128;
+    const weaveCtx=weaveCanvas.getContext('2d');weaveCtx.fillStyle='#808080';weaveCtx.fillRect(0,0,128,128);
+    for(let i=0;i<128;i+=4){
+      const stripe=i%8?'rgba(224,224,224,.075)':'rgba(36,36,36,.075)';
+      weaveCtx.fillStyle=stripe;weaveCtx.fillRect(i,0,2,128);
+      weaveCtx.fillStyle=i%8?'rgba(36,36,36,.065)':'rgba(224,224,224,.065)';weaveCtx.fillRect(0,i,128,2);
+      if(i%8===0){weaveCtx.fillStyle='rgba(255,255,255,.045)';weaveCtx.fillRect(i,0,1,128);}
+    }
      const hairM=phy(0x241b26,.50,.32),
-        fabricM=phy(0x252b30,.91,.01), fabricTrimM=phy(0x41494a,.86,.01),
-        stitchM=phy(0x68716d,.88,.01), gearTrimM=phy(0x71827c,.42,.42),
+        fabricM=phy(0x343a37,.98,0), fabricTrimM=phy(0x505a52,.94,0),
+        stitchM=phy(0x778276,.96,0), gearTrimM=phy(0x71827c,.42,.42),
         braM=bodySkin, dark=phy(0x2a2430,.4),
         hairAccentM=phy(0x4b414a,.36,.24), sportAccentM=phy(0x777d71,.76,.02),
-        sneakerM=phy(0x202832,.34,.28), sneakerSoleM=phy(0xd4d9d1,.45,.12);
+        sneakerM=phy(0x202832,.34,.28), sneakerSoleM=phy(0xd4d9d1,.45,.12),
+        sneakerTreadM=phy(0x69716c,.95,0);
     const weaveTexture=new T.CanvasTexture(weaveCanvas);weaveTexture.wrapS=weaveTexture.wrapT=T.RepeatWrapping;
-    weaveTexture.repeat.set(3,3);fabricM.bumpMap=weaveTexture;fabricM.roughnessMap=weaveTexture;fabricM.bumpScale=.0011;fabricM.side=T.DoubleSide;fabricM.needsUpdate=true;
+    weaveTexture.repeat.set(4,3);fabricM.bumpMap=weaveTexture;fabricM.roughnessMap=weaveTexture;fabricM.bumpScale=.00065;fabricM.side=T.DoubleSide;fabricM.needsUpdate=true;
     this.mats={skin:bodySkin,hair:hairM,top:braM,leg:bodySkin,shoe:footSkin};
     const R=this.ref={};
      const lathe=(pts,mat,seg=latheSegments)=>{const P=[[.001,pts[0][1]],...pts,[.001,pts[pts.length-1][1]]];
@@ -1473,7 +1518,8 @@ class Studio{
     for(const s of [-1,1]){const pf=dreg('glutes',cap(.028,.06,anatD('glutes'))); pf.rotation.z=1.2*s; pf.position.set(.055*s,-.01,-.09); hips.add(pf);}
     /* ---------- ستون فقرات و تنه ---------- */
     const spine=this.spineG=new T.Group(); spine.position.y=.05; hips.add(spine);dputParent=spine;
-    const torso=lathe([[.100,-.018],[.140,.005],[.138,.045],[.124,.095],[.110,.150],[.104,.195],[.112,.250],[.124,.305],[.134,.355],[.137,.400],[.128,.445],[.108,.485],[.078,.512]],bodySkin);
+    const torsoProfile=[[.100,-.018],[.140,.005],[.138,.045],[.124,.095],[.109,.150],[.098,.195],[.106,.250],[.120,.305],[.134,.355],[.142,.400],[.132,.445],[.108,.485],[.078,.512]];
+    const torso=lathe(torsoProfile,bodySkin);
     torso.scale.set(1,1,.8); spine.add(torso); R.torso=torso; R.top=torso;
     {const nv=sph(.007,skinD); nv.scale.set(1,1.25,.5); nv.position.set(0,.015,.112); spine.add(nv);}
     const abdomenG=new T.Group();spine.add(abdomenG);R.abdomen=abdomenG;
@@ -1522,8 +1568,12 @@ class Studio{
      for(const s of [-1,1]){const lt=cap(.036,.10,anat('lat_upper')); lt.position.set(.072*s,.01,-.066); lt.rotation.z=.30*s; chestG.add(lt); R[s<0?'latsL':'latsR']=lt;}
      for(const s of [-1,1]){const lf=dreg('lat_lower',cap(.028,.08,anatD('lat_lower'))); lf.rotation.z=.2*s; lf.position.set(.06*s,-.02,-.06); chestG.add(lf);}
        for(const s of [-1,1]){const tp=cap(.022,.070,anat('traps_upper')); tp.position.set(.064*s,.242,-.028); tp.rotation.z=1.32*s; chestG.add(tp); R[s<0?'trapsL':'trapsR']=tp;}
-    const neck=lathe([[.027,-.070],[.034,-.055],[.041,-.022],[.039,.018],[.033,.052],[.029,.070]],bodySkin,32); neck.position.y=.292; neck.scale.y=.72; chestG.add(neck); R.neck=neck;
-    for(const s of [-1,1]){const cl=cap(.0046,.050,bodySkin); cl.rotation.z=1.42*s; cl.rotation.x=-.30; cl.position.set(.036*s,.202,.055); chestG.add(cl);
+    const neck=lathe([[.036,-.078],[.044,-.058],[.042,-.028],[.039,.012],[.036,.050],[.034,.078]],bodySkin,32); neck.position.y=.292; neck.scale.y=.76; chestG.add(neck); R.neck=neck;
+    const sternoclavicular=sph(.006,bodySkin);sternoclavicular.scale.set(1,.90,.95);sternoclavicular.position.set(0,.222,.067);chestG.add(sternoclavicular);
+    for(const s of [-1,1]){
+      const claviclePoints=[[.008*s,.222,.067],[.060*s,.237,.064],[.112*s,.229,.043],[.160*s,.214,.012]];
+      const clavicleCurve=new T.CatmullRomCurve3(claviclePoints.map(point=>V3(...point)));
+      const clavicle=new T.Mesh(new T.TubeGeometry(clavicleCurve,16,.0052,6,false),bodySkin);clavicle.castShadow=true;chestG.add(clavicle);
       dput(cap(.0032,.044,skinD),[.022*s,.194,.078],[.055*s,.176,.062]);   /* شیار زیر ترقوه */
       dput(cap(.0036,.046,skinD),[.006*s,.070,.090],[.044*s,.058,.076]);}  /* شیار زیر سینه */
     for(const s of [-1,1]){const scm=cap(.0048,.058,bodySkin); scm.rotation.x=-.22; scm.rotation.z=-.16*s; scm.position.set(.0175*s,.238,.041); chestG.add(scm);}
@@ -1534,6 +1584,7 @@ class Studio{
     {const jn=sph(.055,headSkin); jn.scale.set(1.10,.56,1.00); jn.position.set(0,.038,.008); headG.add(jn);}   /* فک پهن‌تر */
     const lidM=headSkin, skinT=skinD;
     const lipM=phy(0xb77f72,.54,.08), earInnerM=phy(0xa86e66,.62), scleraM=phy(0xf3eee6,.40), irisM=phy(0x49352e,.34), darkM=phy(0x211920,.45,.3);
+    const nostrilM=phy(0x76564e,.88);nostrilM.transparent=true;nostrilM.opacity=.36;nostrilM.depthWrite=false;
     lipM.transparent=true; lipM.depthWrite=false;
     const eyeRimM=phy(0x9d7464,.82); eyeRimM.transparent=true; eyeRimM.opacity=.34; eyeRimM.depthWrite=false;
     /* چشم‌های ریز و طبیعی */
@@ -1548,15 +1599,20 @@ class Studio{
        this.eyeGaze.push({iris:ir,pupil:pu,highlight:gl,baseX:eyeX,baseY:.1000,side:s});
        const lid=sph(.0090,lidM);  lid.position.set(eyeX,.1084,.0894);  lid.scale.set(1.26,.55,.45); headG.add(lid);
        const lid2=sph(.0082,lidM); lid2.position.set(eyeX,.0928,.0894); lid2.scale.set(1.18,.38,.44); headG.add(lid2);
+       const closedLid=sph(.0094,lidM);closedLid.position.set(eyeX,.1005,.0944);closedLid.scale.set(1.22,.90,.30);closedLid.visible=false;headG.add(closedLid);
        this.eyeLids.push({upper:lid,lower:lid2,upperY:lid.position.y,lowerY:lid2.position.y,
-         upperScaleY:lid.scale.y,lowerScaleY:lid2.scale.y,eyeY:.1000});
+         upperScaleY:lid.scale.y,lowerScaleY:lid2.scale.y,closed:closedLid,closedScaleY:closedLid.scale.y,eyeY:.1000});
        const brow=cap(.0030,.031,darkM); brow.rotation.z=1.54-(.16*s); brow.position.set(.0380*s,.1180,.0905); headG.add(brow);
        this.brows.push({mesh:brow,baseRotation:brow.rotation.z,side:s});
      }
     /* بینی و لب‌های ریز */
     {const bridge=cap(.0042,.025,lidM); bridge.rotation.x=-.32; bridge.position.set(0,.0855,.0915); headG.add(bridge);
      const nb=sph(.0062,lidM); nb.position.set(0,.0740,.0930); nb.scale.set(.86,.86,.80); headG.add(nb);
-     const tip=sph(.0038,skinT); tip.position.set(0,.0712,.0960); tip.scale.set(1.30,.68,.50); headG.add(tip);}
+     const tip=sph(.0038,skinT); tip.position.set(0,.0712,.0960); tip.scale.set(1.30,.68,.50); headG.add(tip);
+     for(const s of [-1,1]){
+       const alarWing=sph(.0036,lidM);alarWing.scale.set(.92,.68,.72);alarWing.position.set(.0042*s,.0724,.0943);headG.add(alarWing);
+       const nostril=sph(.00135,nostrilM);nostril.scale.set(1.15,.52,.28);nostril.position.set(.00215*s,.0697,.0982);headG.add(nostril);
+     }}
     const smile=new T.Group();
     {const up=new T.Mesh(new T.TorusGeometry(.0108,.0024,8,24,Math.PI),lipM); up.position.set(0,.0505,.0908); up.rotation.z=Math.PI; up.rotation.x=-.10; smile.add(up);
      const lo=sph(.0100,lipM); lo.scale.set(1.0,.40,.42); lo.position.set(0,.0450,.0908); smile.add(lo);}
@@ -1570,28 +1626,43 @@ class Studio{
     /* استخوان‌بندی چهرهٔ مردانه */
     for(const s of [-1,1]){
       const ch=sph(.0180,lidM); ch.scale.set(.90,.58,.50); ch.position.set(.0500*s,.0865,.0640); headG.add(ch);
+      const masseter=sph(.0125,lidM);masseter.scale.set(.76,1.14,.46);masseter.position.set(.046*s,.058,.062);headG.add(masseter);
       dput(cap(.0070,.078,lidM),[.090*s,.082,.006],[.022*s,.0515,.0665]);   /* خط فک */
       const ear=sph(.016,headSkin); ear.position.set(.0935*s,.0930,-.006); ear.scale.set(.85,1.15,.50); headG.add(ear);
       const earInner=sph(.006,earInnerM); earInner.position.set(.1000*s,.0930,-.001); earInner.scale.set(.56,1.15,.36); headG.add(earInner);
-      const hel=new T.Mesh(new T.TorusGeometry(.0080,.0019,6,18),skinT); hel.position.set(.0955*s,.0930,-.007); hel.rotation.y=1.25*s; hel.scale.set(1,1.15,.6); headG.add(hel);
+      const helixPoints=[[.0905*s,.0775,.0014],[.101*s,.079,.0016],[.104*s,.090,.0018],[.101*s,.103,.0015],[.092*s,.108,.0008]];
+      const helixCurve=new T.CatmullRomCurve3(helixPoints.map(point=>V3(...point)));
+      const hel=new T.Mesh(new T.TubeGeometry(helixCurve,14,.00125,5,false),skinT);headG.add(hel);
+      const antihelixPoints=[[.0915*s,.080,.003],[.097*s,.085,.0032],[.095*s,.093,.0032],[.097*s,.100,.0025]];
+      const antihelixCurve=new T.CatmullRomCurve3(antihelixPoints.map(point=>V3(...point)));
+      const antihelix=new T.Mesh(new T.TubeGeometry(antihelixCurve,10,.00105,5,false),skinT);headG.add(antihelix);
+      const tragus=sph(.0032,lidM);tragus.scale.set(.72,1.05,.55);tragus.position.set(.085*s,.089,.0025);headG.add(tragus);
     }
     const chin=sph(.022,lidM); chin.scale.set(1.08,.66,.62); chin.position.set(0,.0505,.0705); headG.add(chin);
     /* موی کوتاه ورزشی؛ بدون دم‌اسبی یا حجم بلند پشت سر */
      const hairCap=sph(.101,hairM); hairCap.position.set(0,.125,-.010); hairCap.scale.set(1.00,.92,1.04); headG.add(hairCap);
      const crop=sph(.069,hairM); crop.scale.set(1.02,.42,.98); crop.position.set(0,.194,.030); headG.add(crop);
      for(const s of [-1,1]){
-       const sideCut=sph(.047,hairM); sideCut.scale.set(.55,.78,.88); sideCut.position.set(.071*s,.105,-.030); headG.add(sideCut);
+       const sideCut=sph(.047,hairM); sideCut.scale.set(.55,.78,.88); sideCut.position.set(.071*s,.105,.018); headG.add(sideCut);
      }
      /* A few swept locks and a slim lime headband give the training figure a clear toy-hero silhouette. */
-     for(const x of [-.036,-.018,0,.018,.036]){
-       dput(cap(.0068,.023,hairM),[x-.008,.176,.085],[x+.006,.207,.060]);
-       dput(cap(.0015,.019,hairAccentM),[x-.007,.181,.090],[x+.004,.205,.069]);
+     const hairStrands=[];
+     const hairSweep=(points,r,material)=>{
+       const curve=new T.CatmullRomCurve3(points.map(point=>V3(...point)));
+       const strand=new T.Mesh(new T.TubeGeometry(curve,12,r,6,false),material);
+       strand.castShadow=true;headG.add(strand);hairStrands.push(strand);return strand;
+     };
+     for(const x of [-.027,0,.027]){
+       const sweep=[[x-.007,.176,.077],[x-.001,.193,.092],[x+.007,.207,.080]];
+       hairSweep(sweep,.0028,hairM);
+       hairSweep(sweep.map(([px,y,z])=>[px-.0012,y+.001,z+.001]),.0007,hairAccentM);
      }
+     this.hairStrands=hairStrands;
      const headband=new T.Mesh(new T.TorusGeometry(.094,.0038,8,40),sportAccentM);
      headband.rotation.x=Math.PI/2;headband.position.set(0,.158,.012);headG.add(headband);
      this.tail=[];
     /* ---------- دست‌ها با انگشت ---------- */
-    this.gripDigits=[];
+    this.gripDigits=[];this.thumbDigits=[];
     const mkArm=(side)=>{
        const sg=new T.Group(); sg.position.set(.235*side,.235,0); sg.rotation.order='ZYX'; chestG.add(sg);dputParent=sg;
       /* پوشش پیوستهٔ شانه؛ فاصلهٔ ظاهری تنه تا دلتوئید را در ژست‌های مختلف می‌پوشاند. */
@@ -1609,8 +1680,8 @@ class Studio{
       const tl=dreg('triceps',belly(.022,.11,anatD('triceps'))); tl.position.set(-.009*side,-.14,-.020); sg.add(tl);
        const eg=new T.Group(); eg.position.y=-.30; sg.add(eg);dputParent=eg;
        const ole=sph(.015,bodySkin); ole.scale.set(.9,1.1,.7); ole.position.set(0,-.005,-.042); eg.add(ole);
-       const elbJ=sph(.0295,uaM); elbJ.scale.set(1,1.15,.92); elbJ.position.set(0,-.005,0); eg.add(elbJ);
-       const elbowRing=new T.Mesh(new T.TorusGeometry(.027,.0018,8,24),gearTrimM);
+       const elbJ=sph(.035,uaM); elbJ.scale.set(1.10,1.18,1.10); elbJ.position.set(0,-.005,0); eg.add(elbJ);
+       const elbowRing=new T.Mesh(new T.TorusGeometry(.0305,.0015,8,24),gearTrimM);
        elbowRing.rotation.x=Math.PI/2;elbowRing.position.set(0,-.005,.004);eg.add(elbowRing);
       const faa=lathe([[.035,-.005],[.038,-.07],[.031,-.17],[.023,-.25]],faM); eg.add(faa);
       const flex=belly(.0290,.120,anat('forearm_flexors')); flex.position.set(0,-.062,.022); eg.add(flex); R[side<0?'forearmsL':'forearmsR']=flex;
@@ -1621,11 +1692,16 @@ class Studio{
       {const ole2=sph(.012,skinD); ole2.scale.set(1,.9,.8); ole2.position.set(0,-.004,-.040); eg.add(ole2);}
       const fd=dreg('biceps',belly(.017,.09,anatD('biceps'))); fd.position.set(0,-.09,0); eg.add(fd);
        const hg=new T.Group(); hg.position.y=-.25; eg.add(hg);dputParent=hg;
-       const wrJ=sph(.0205,faM); wrJ.scale.set(1,1.05,.9); wrJ.position.set(0,-.005,0); hg.add(wrJ);
-       const wristBand=new T.Mesh(new T.TorusGeometry(.0175,.0032,8,24),sportAccentM);
+       const wrJ=sph(.0235,faM); wrJ.scale.set(1.02,1.05,1.00); wrJ.position.set(0,-.005,0); hg.add(wrJ);
+       const wristBand=new T.Mesh(new T.TorusGeometry(.0212,.0020,8,24),sportAccentM);
        wristBand.rotation.x=Math.PI/2;wristBand.position.set(0,-.012,0);hg.add(wristBand);
        const hand=sph(.0355,handSkin); hand.scale.set(.90,1.24,.62); hg.add(hand);
-      const thumb=cap(.0090,.028,handSkin); thumb.position.set(-.0255*side,-.011,.021); thumb.rotation.z=.9*side; thumb.rotation.x=.4; hg.add(thumb);
+      const thumbRoot=new T.Group();thumbRoot.position.set(-.0255*side,-.011,.021);thumbRoot.rotation.set(.4,0,.9*side);hg.add(thumbRoot);
+      const thumbProximal=cap(.0090,.026,handSkin);thumbProximal.position.set(0,-.006,0);thumbRoot.add(thumbProximal);
+      const thumbTip=new T.Group();thumbTip.position.set(0,-.017,.004);thumbTip.rotation.z=.22*side;thumbRoot.add(thumbTip);
+      const thumbDistal=cap(.0068,.020,handSkin);thumbDistal.position.set(0,-.004,0);thumbTip.add(thumbDistal);
+      const thumbNail=sph(.0030,skinD);thumbNail.scale.set(1,.55,.35);thumbNail.position.set(0,-.012,.004);thumbTip.add(thumbNail);
+      this.thumbDigits.push({root:thumbRoot,tip:thumbTip,rootZ:thumbRoot.rotation.z,tipZ:thumbTip.rotation.z,side});
       /* چهار انگشت با بند و ناخن‌گونه */
       const fo=[-.0205,-.0068,.0068,.0205], fr=[.0082,.0090,.0084,.0074], fl=[.040,.048,.044,.036];
       for(let i=0;i<4;i++){
@@ -1677,8 +1753,8 @@ class Studio{
       for(const s of [-1,1]){const cd=sph(.020,anat('quads')); cd.scale.set(1,.85,.95); cd.position.set(.030*s,-.010,.030); kg.add(cd);}
       dput(cap(.008,.075,skinD),[.010,-.075,-.044],[-.010,-.150,-.036]);               /* حفرهٔ پشت زانو */
       dput(cap(.017,.075,anat('calves')),[.030*side,-.130,.040],[-.010*side,-.200,.036]); /* درشت‌نی قدامی */
-       const knee=sph(.0395,thighM); knee.scale.set(1.06,1.10,.86); knee.position.set(0,-.008,0); kg.add(knee);
-       const kneeRing=new T.Mesh(new T.TorusGeometry(.034,.0018,8,24),gearTrimM);
+       const knee=sph(.050,thighM); knee.scale.set(1.06,1.08,1.06); knee.position.set(0,-.008,0); kg.add(knee);
+       const kneeRing=new T.Mesh(new T.TorusGeometry(.046,.0018,8,24),gearTrimM);
        kneeRing.rotation.x=Math.PI/2;kneeRing.position.set(0,-.008,.004);kg.add(kneeRing);
       /* لایه عمقی ساق: نعلی + درشت‌نی پشتی + نازک‌نی */
       const sl=dreg('calves',belly(.031,.13,anatD('calves'))); sl.position.set(0,-.15,-.028); kg.add(sl);
@@ -1708,24 +1784,29 @@ class Studio{
        const upper=sph(.043,sneakerM);upper.scale.set(1.20,.54,1.82);upper.position.set(0,-.078,.101);ag.add(upper);
        const toeCap=sph(.024,sneakerSoleM);toeCap.scale.set(1.30,.46,1.00);toeCap.position.set(0,-.064,.153);ag.add(toeCap);
        const heelCounter=sph(.022,sneakerM);heelCounter.scale.set(1.12,.82,.54);heelCounter.position.set(0,-.066,.045);ag.add(heelCounter);
+       const shoeTongue=sph(.018,sneakerM);shoeTongue.scale.set(.72,.20,1.25);shoeTongue.position.set(0,-.052,.087);ag.add(shoeTongue);
+       const shoeCollar=new T.Mesh(new T.TorusGeometry(.021,.0018,6,28),fabricTrimM);
+       shoeCollar.position.set(0,-.061,.041);shoeCollar.scale.set(1.08,.86,1);ag.add(shoeCollar);
        for(let i=0;i<3;i++){
-         const lace=new T.Mesh(new T.CapsuleGeometry(.0022,.014,2,8),sportAccentM);
-         lace.rotation.z=Math.PI/2;lace.position.set(0,-.057,.078+i*.018);ag.add(lace);
+         const laceZ=.070+i*.016;
+         dput(cap(.0011,.018,sportAccentM),[-.014,-.050,laceZ],[.014,-.050,laceZ+.009],ag);
+         dput(cap(.0011,.018,sportAccentM),[.014,-.050,laceZ],[-.014,-.050,laceZ+.009],ag);
        }
-       dput(cap(.0024,.018,sportAccentM),[0,-.054,.067],[0,-.052,.102]);
+       for(let i=0;i<3;i++)dput(cap(.0015,.042,sneakerTreadM),[-.023,-.116,.075+i*.020],[.023,-.116,.075+i*.020],ag);
        return {tg,kg,ag,side};
     };
     this.legL=mkLeg(-1); this.legR=mkLeg(1);
     /* A fitted, matte training kit: quiet fabric, small construction seams, no hard badge. */
-    const trainingTop=clothLathe([[.132,-.345],[.143,-.326],[.151,-.292],[.153,-.248],[.148,-.204],[.142,-.154],[.137,-.101],[.138,-.046],[.143,.012],[.144,.070],[.136,.122],[.116,.168],[.082,.198],[.060,.211]],fabricM);
+    const trainingTopProfile=[[.132,-.345],[.140,-.326],[.148,-.292],[.150,-.248],[.145,-.204],[.136,-.154],[.128,-.101],[.126,-.046],[.137,.012],[.146,.070],[.139,.122],[.116,.168],[.082,.198],[.060,.211]];
+    const trainingTop=clothLathe(trainingTopProfile,fabricM);
     trainingTop.scale.set(1,1,.98);chestG.add(trainingTop);
     const collar=new T.Mesh(new T.TorusGeometry(.060,.0020,6,40),fabricTrimM);
     collar.rotation.x=Math.PI/2;collar.position.set(0,.209,0);collar.scale.z=.98;chestG.add(collar);
     const topHem=new T.Mesh(new T.TorusGeometry(.133,.0018,6,48),fabricTrimM);
     topHem.rotation.x=Math.PI/2;topHem.position.set(0,-.342,0);topHem.scale.z=.98;chestG.add(topHem);
     for(const side of [-1,1]){
-      clothSeam([[side*.132,-.280,.066],[side*.141,-.200,.038],[side*.132,-.105,.055],[side*.125,.030,.072],[side*.070,.180,.084]],chestG,fabricTrimM,.0010);
-      clothSeam([[side*.148,-.270,.018],[side*.143,-.080,.018],[side*.137,.095,.018]],chestG,stitchM,.00075);
+      clothSeam([[side*.148,-.280,.066],[side*.145,-.200,.038],[side*.128,-.105,.055],[side*.140,.030,.072],[side*.070,.180,.084]],chestG,fabricTrimM,.0010);
+      clothSeam([[side*.148,-.270,.018],[side*.127,-.080,.018],[side*.141,.095,.018]],chestG,stitchM,.00075);
     }
     const brandCanvas=document.createElement('canvas');brandCanvas.width=128;brandCanvas.height=64;
     const brandCtx=brandCanvas.getContext('2d');brandCtx.fillStyle='rgba(210,216,210,.74)';brandCtx.font='700 44px Arial,sans-serif';
@@ -1864,6 +1945,11 @@ class Studio{
       digit.proximal.rotation.x=digit.baseProximal+flex;
       digit.distal.rotation.x=digit.baseDistal+flex*1.25;
     }
+    for(const thumb of this.thumbDigits||[]){
+      const opposition=dollThumbOpposition(ef);
+      thumb.root.rotation.z=thumb.rootZ+thumb.side*opposition;
+      thumb.tip.rotation.z=thumb.tipZ+thumb.side*opposition*.72;
+    }
     /* میکرو-بانس فنری بدن */
     this.root.position.y=.010+clamp(vel*.0032,-.006,.010);
     this.armL.sg.rotation.set(...(p.shL||[0,0,0]));
@@ -1894,11 +1980,14 @@ class Studio{
     this._blink-=delta;
     if(this._blink<-.12)this._blink=2.2+this._blinkRandom()*2.5;
     const blink=blinkEnvelope(this._blink);
+    const eyeClosure=dollEyeClosure(blink);
     for(const lids of this.eyeLids||[]){
       lids.upper.position.y=T.MathUtils.lerp(lids.upperY,lids.eyeY,blink);
       lids.lower.position.y=T.MathUtils.lerp(lids.lowerY,lids.eyeY+.0005,blink);
       lids.upper.scale.y=lids.upperScaleY*(1+blink*.42);
       lids.lower.scale.y=lids.lowerScaleY*(1+blink*.75);
+      lids.closed.scale.y=lids.closedScaleY*eyeClosure;
+      lids.closed.visible=eyeClosure>.015;
     }
   }
   /* ---------- صحنهٔ هر فریم ---------- */
@@ -2238,6 +2327,8 @@ function hop(dn){const i=ORDER.indexOf(key);select(ORDER[(i+dn+ORDER.length)%ORD
 
 /* ---------- حلقهٔ اصلی ---------- */
 function tick(now){
+  studioFrameHandle=null;
+  if(document.body.dataset.workspace!=='learn'||document.visibilityState==='hidden'){last=0;return;}
   if(!last)last=now;const dt=Math.min(.05,(now-last)/1000);last=now;
   const d=byKey(key);
   if(playing){
@@ -2262,7 +2353,7 @@ function tick(now){
     $$('#gsteps .gstep').forEach((el,i)=>el.classList.toggle('on',i===ix));
   }
   S3D&&S3D.frame(now,d.anim?u:0,d.anim?d.k:null,playing);
-  requestAnimationFrame(tick);
+  if(document.body.dataset.workspace==='learn'&&document.visibilityState!=='hidden')studioFrameHandle=requestAnimationFrame(tick);
 }
 
 /* ---------- toast ---------- */
@@ -2428,6 +2519,8 @@ function setWorkspace(mode,writeHash=true){
   $('#workspaceIntro').textContent=workspace==='plan'
     ?'گروه عضلانی و هدف را انتخاب کن، برنامهٔ هفتگی را بساز و در صورت ورود به حساب، در برنامه‌های خودت ذخیره کن.'
     :'حرکتی را از فهرست انتخاب کن تا اجرای سه‌بعدی، عضلات درگیر و نکات فرم را ببینی.';
+  if(workspace==='learn'){scheduleStudioBoot();startStudioFrame();}
+  else{stopStudioFrame();cancelScheduledStudioBoot();}
   closeDrawer(false);
   if(writeHash){history.replaceState(null,'',location.pathname+location.search+(workspace==='plan'?'#planner':'#studio'));window.scrollTo({top:0,behavior:'smooth'});}
 }
@@ -2549,7 +2642,6 @@ $('#savePrivateWeek').onclick=async event=>{
 };
 
 /* ---------- راه‌اندازی ---------- */
-await boot3D();
 $('#anatomyModeBtn').addEventListener('click',async()=>{
   if(!S3D)return;
   const button=$('#anatomyModeBtn'),turnOn=!S3D.anatomyMode;
@@ -2564,7 +2656,6 @@ renderPlan();
 renderRails();
 renderWeek();
 drawRest();
-requestAnimationFrame(tick);
 /* حالت دیباگ: ?pose=deadlift&u=1&yaw=0.6 */
 const dbg=new URLSearchParams(location.search);
 if(dbg.get('pose')){
