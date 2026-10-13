@@ -1,5 +1,33 @@
 const clamp01 = value => Math.max(0, Math.min(1, value));
 
+/** Keyboard navigation for the interactive doll camera, with bounded zoom and pitch. */
+export function dollCameraKeyboardInput(key, camera, defaultDistance = 3.65) {
+  if (!camera || typeof camera !== 'object') return null;
+  const state = {
+    yaw: Number.isFinite(camera.yaw) ? camera.yaw : 0,
+    pitch: Number.isFinite(camera.pitch) ? camera.pitch : 0.16,
+    dist: Number.isFinite(camera.dist) ? camera.dist : (Number.isFinite(defaultDistance) ? defaultDistance : 3.65)
+  };
+  switch (key) {
+    case 'ArrowLeft': state.yaw -= 0.16; break;
+    case 'ArrowRight': state.yaw += 0.16; break;
+    case 'ArrowUp': state.pitch = Math.min(1.15, state.pitch + 0.12); break;
+    case 'ArrowDown': state.pitch = Math.max(0.02, state.pitch - 0.12); break;
+    case '+':
+    case '=':
+    case 'Add': state.dist = Math.max(2.7, state.dist - 0.24); break;
+    case '-':
+    case '_':
+    case 'Subtract': state.dist = Math.min(7.2, state.dist + 0.24); break;
+    case 'Home':
+      return { yaw: 0, pitch: 0.16, dist: Number.isFinite(defaultDistance) ? defaultDistance : 3.65 };
+    default: return null;
+  }
+  const tau = Math.PI * 2;
+  state.yaw = ((state.yaw + Math.PI) % tau + tau) % tau - Math.PI;
+  return state;
+}
+
 /** Smoothly closes and opens the eyes around a countdown to the next blink. */
 export function blinkEnvelope(secondsUntilBlink, closeSeconds = 0.075, openSeconds = 0.115) {
   if (!Number.isFinite(secondsUntilBlink) || closeSeconds <= 0 || openSeconds <= 0) return 0;

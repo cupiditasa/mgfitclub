@@ -251,6 +251,7 @@ button.badge:disabled{opacity:.55;cursor:wait}
 .stage-view{position:relative;height:clamp(440px,58vh,620px);margin:10px 6px 0;perspective:1200px}
 #gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 #gl:active{cursor:grabbing}
+#gl:focus-visible{outline:2px solid var(--lime);outline-offset:-4px;border-radius:inherit}
 .view-fallback{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:30px}
 .view-fallback .fb{max-width:340px;border:1px dashed var(--line);border-radius:20px;padding:26px 22px;background:rgba(4,10,13,.5)}
 .view-fallback .fb b{display:block;font-size:14px;margin:12px 0 6px;color:var(--mint)}
@@ -272,10 +273,10 @@ button.badge:disabled{opacity:.55;cursor:wait}
 .drag-hint.off{opacity:0}
 .mchip{position:absolute;z-index:6;transform:translate(-50%,-130%);pointer-events:none;
   display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:5px 12px;font-size:10.5px;font-weight:800;white-space:nowrap;
-  color:#ffd9e6;background:rgba(30,8,18,.82);border:1px solid rgba(255,95,138,.55);box-shadow:0 8px 22px -8px rgba(255,95,138,.6),0 0 0 3px rgba(255,95,138,.08)}
+  color:#fff0bf;background:rgba(25,24,16,.94);border:1px solid rgba(233,196,106,.62);box-shadow:0 8px 22px -8px rgba(233,196,106,.3),0 0 0 3px rgba(233,196,106,.08)}
 .mchip::after{content:"";position:absolute;top:100%;inset-inline-start:50%;transform:translateX(-50%);
-  border:5px solid transparent;border-top-color:rgba(255,95,138,.55)}
-.mchip i{width:7px;height:7px;border-radius:50%;background:var(--rose);box-shadow:0 0 8px var(--rose);animation:pulse 1.6s infinite}
+  border:5px solid transparent;border-top-color:rgba(233,196,106,.62)}
+.mchip i{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 8px var(--amber);animation:pulse 1.6s infinite}
 .model-credit{padding:0 20px 2px;color:var(--dim);font-size:10px;line-height:1.8;text-align:center}
 .model-credit[hidden]{display:none}
 .model-credit a{color:var(--mint);text-decoration:underline;text-underline-offset:2px}
@@ -931,7 +932,7 @@ button.badge:disabled{opacity:.55;cursor:wait}
 import { ANATOMY_REGION_INFO, ANATOMY_REGIONS_BY_VIEW, ANATOMY_REGION_RADII, anatomyFaceAtYaw, pickAnatomyRegion } from './assets/education/anatomy-region-map.mjs?v=20261008-regions';
 import { alignModelUpAxis } from './assets/education/model-axis.mjs?v=20261010-axis-fix';
 import { createSeededRandom } from './assets/education/seeded-random.mjs?v=20261010-procedural-textures';
-import { blinkEnvelope, dollIdleMotion, dollBreathingMotion, dollGazeMotion, dollHeadCounterTilt, dollGripMotion, dollEffortMotion } from './assets/education/doll-character-math.mjs?v=20261012-doll-30stage';
+import { blinkEnvelope, dollCameraKeyboardInput, dollIdleMotion, dollBreathingMotion, dollGazeMotion, dollHeadCounterTilt, dollGripMotion, dollEffortMotion } from './assets/education/doll-character-math.mjs?v=20261012-doll-coach-v3';
 import { samplePoseMotion } from './assets/education/pose-motion.mjs?v=20261010-pose-transition';
 import { EXERCISE_ADDITIONS } from './assets/education/exercise-additions.mjs?v=20261012-exercise-estimates-v1';
 import { estimateExerciseDuration, formatExerciseDuration, sumExerciseDurations, usesIndependentTiming } from './assets/education/exercise-duration.mjs?v=20261012-exercise-estimates-v1';
@@ -959,7 +960,7 @@ const REDUCED=matchMedia('(prefers-reduced-motion:reduce)').matches;
 /* ---------- وضعیت ---------- */
 let key='squat',playing=true,loop=true,speed=1,t=0,dir=1,reps=0,last=0;
 let catFilter='all',lvlFilter='all',listView='list';
-let muscleOn=true,labelsOn=true,deepMode=false;
+let muscleOn=false,labelsOn=false,deepMode=false;
 let plan=JSON.parse(localStorage.getItem('mgfit-plan4')||'[]');
 let favorites=JSON.parse(localStorage.getItem('mgfit-favs4')||'[]');
 let restTotal=45,restLeft=45,restTimer=null;
@@ -1055,9 +1056,17 @@ class Studio{
   constructor(THREE){
     this.T=THREE;
     const canvas=$('#gl'), view=$('.stage-view');
+    const compact3D=matchMedia('(max-width: 720px), (pointer: coarse)').matches||(Number(navigator.deviceMemory)||8)<=4;
+    this.compact3D=compact3D;
+    canvas.setAttribute('role','group');
+    canvas.tabIndex=0;
+    canvas.setAttribute('aria-keyshortcuts','ArrowLeft ArrowRight ArrowUp ArrowDown Home');
+    canvas.setAttribute('aria-describedby','dragHint');
+    canvas.title='برای چرخش از کلیدهای جهت‌نما، برای زوم از + و - و برای بازگشت از Home استفاده کنید.';
+    canvas.setAttribute('aria-label','مدل سه‌بعدی تعاملی مربی ورزشی؛ برای چرخاندن مدل بکشید و حرکت را از فهرست انتخاب کنید.');
     this.canvas=canvas; this.view=view;
     const R=this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'});
-    R.setPixelRatio(Math.min(devicePixelRatio,2));
+    R.setPixelRatio(Math.min(devicePixelRatio,compact3D?1.5:2));
     R.outputColorSpace=THREE.SRGBColorSpace;
     R.toneMapping=THREE.ACESFilmicToneMapping; R.toneMappingExposure=1.06;
     R.shadowMap.enabled=true; R.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -1070,7 +1079,7 @@ class Studio{
     sc.add(new THREE.HemisphereLight(0xa8dcc9,0x141f1c,.44));
     const key=new THREE.DirectionalLight(0xfff0da,1.62);
     key.position.set(1.7,5.3,2.3); key.castShadow=true;
-    key.shadow.mapSize.set(1024,1024); key.shadow.camera.near=.5; key.shadow.camera.far=12;
+    key.shadow.mapSize.set(compact3D?512:1024,compact3D?512:1024); key.shadow.camera.near=.5; key.shadow.camera.far=12;
     key.shadow.camera.left=-2.6; key.shadow.camera.right=2.6; key.shadow.camera.top=3.4; key.shadow.camera.bottom=-1;
     key.shadow.bias=-.0006; key.shadow.radius=5; sc.add(key);
     const rim=new THREE.DirectionalLight(0xc9f24f,.82); rim.position.set(-3.2,3.6,-3.4); sc.add(rim);
@@ -1286,7 +1295,7 @@ class Studio{
   buildCharacter(){
     const T=this.T, root=this.root=new T.Group(); this.scene.add(root);
     const phy=(c,r,cc)=>new T.MeshPhysicalMaterial({color:c,roughness:r??.5,metalness:.02,clearcoat:cc??0,clearcoatRoughness:.35,side:T.DoubleSide});
-    const compact3D=matchMedia('(max-width: 720px)').matches||(Number(navigator.deviceMemory)||8)<=4;
+    const compact3D=this.compact3D;
     const sphereSegments=compact3D?22:32, sphereRings=compact3D?16:24;
     const capsuleSegments=compact3D?10:16, latheSegments=compact3D?28:40;
     const textureRandom=createSeededRandom(0x4d474d47);
@@ -1390,16 +1399,16 @@ class Studio{
       attenuationColor:new T.Color(0xe7bea5),attenuationDistance:3.2,
       clearcoat:.38,clearcoatRoughness:.22,
       bumpMap:F_S.tex,bumpScale:.55,side:T.DoubleSide},ex||{}));
-     this._porcC=new T.Color(0x89565b); this._hotC=new T.Color(0xc9f24f);
+     this._porcC=new T.Color(0xb28f79); this._hotC=new T.Color(0xe9c46a);
     this.anatMats={}; this.anatDMats={}; this.deepMeshes={};
     const anat=(key)=>this.anatMats[key]??(this.anatMats[key]=(()=>{
       const F=(key==='core'||key==='chest'||key==='ab_obliques'||key==='back'||key==='lowback'||key==='traps')?F_V:F_T;
-       const m=porc({color:0x89565b,roughness:.60,clearcoat:.12,
-        map:F.map,bumpMap:F.tex,bumpScale:2.35,roughnessMap:F.tex,
-        normalMap:F.nrm,normalScale:new T.Vector2(2.6,2.6),
+       const m=porc({color:0xb28f79,roughness:.60,clearcoat:.12,
+        map:F.map,bumpMap:F.tex,bumpScale:1.05,roughnessMap:F.tex,
+        normalMap:F.nrm,normalScale:new T.Vector2(1.15,1.15),
         emissiveMap:F.emi});
       if('anisotropy' in m){m.anisotropy=.55;m.anisotropyRotation=Math.PI/2;}
-       m.userData.base=new T.Color(0x89565b);return m})());
+       m.userData.base=new T.Color(0xb28f79);return m})());
     const anatD=(key)=>this.anatDMats[key]??(this.anatDMats[key]=(()=>{
        const m=new T.MeshPhysicalMaterial({color:0x70454a,roughness:.50,metalness:.02,clearcoat:.16,clearcoatRoughness:.3,
         map:F_A.map,bumpMap:F_A.tex,bumpScale:1.55,roughnessMap:F_A.tex,
@@ -1417,6 +1426,8 @@ class Studio{
     this.limbMats={thighM,shinM,uaM,faM};
     this.bodyFade=[bodySkin,thighM,shinM,uaM,faM];
      const hairM=phy(0x241b26,.50,.32),
+        fabricM=phy(0x30413d,.72,.03), fabricTrimM=phy(0x829087,.62,.08),
+        gearTrimM=phy(0x71827c,.42,.42),
         braM=bodySkin, dark=phy(0x2a2430,.4),
         hairAccentM=phy(0x4b414a,.36,.24), sportAccentM=phy(0xc9f24f,.28,.36),
         sneakerM=phy(0x202832,.34,.28), sneakerSoleM=phy(0xd4d9d1,.45,.12);
@@ -1444,7 +1455,7 @@ class Studio{
     const hips=this.hips=new T.Group(); hips.position.y=1.04; root.add(hips);
     const pelvis=lathe([[.001,-.118],[.060,-.114],[.102,-.104],[.132,-.082],[.150,-.050],[.159,-.010],[.159,.034],[.150,.080],[.138,.120],[.126,.158]],bodySkin);
     pelvis.scale.set(1,.98,.92); hips.add(pelvis); R.pelvis=pelvis;
-    const waistband=lathe([[.152,.058],[.163,.086],[.163,.114],[.150,.146],[.130,.172]],braM); waistband.scale.set(1,1,.86); hips.add(waistband);
+    const waistband=lathe([[.152,.058],[.163,.086],[.163,.114],[.150,.146],[.130,.172]],fabricM); waistband.scale.set(1,1,.86); hips.add(waistband);
     R.gluteL=sph(.108,anat('glute_max')); R.gluteL.position.set(-.072,-.034,-.070); R.gluteL.scale.set(.92,.92,1.02); hips.add(R.gluteL);
     R.gluteR=sph(.108,anat('glute_max')); R.gluteR.position.set(.072,-.034,-.070); R.gluteR.scale.set(.92,.92,1.02); hips.add(R.gluteR);
     /* لایه عمقی: سرینی کوچک + گلابی‌شکل */
@@ -1501,14 +1512,14 @@ class Studio{
      for(const s of [-1,1]){const lt=cap(.036,.10,anat('lat_upper')); lt.position.set(.072*s,.01,-.066); lt.rotation.z=.30*s; chestG.add(lt); R[s<0?'latsL':'latsR']=lt;}
      for(const s of [-1,1]){const lf=dreg('lat_lower',cap(.028,.08,anatD('lat_lower'))); lf.rotation.z=.2*s; lf.position.set(.06*s,-.02,-.06); chestG.add(lf);}
        for(const s of [-1,1]){const tp=cap(.022,.070,anat('traps_upper')); tp.position.set(.064*s,.242,-.028); tp.rotation.z=1.32*s; chestG.add(tp); R[s<0?'trapsL':'trapsR']=tp;}
-    const neck=lathe([[.027,-.070],[.034,-.055],[.041,-.022],[.039,.018],[.033,.052],[.029,.070]],bodySkin,32); neck.position.y=.292; chestG.add(neck); R.neck=neck;
+    const neck=lathe([[.027,-.070],[.034,-.055],[.041,-.022],[.039,.018],[.033,.052],[.029,.070]],bodySkin,32); neck.position.y=.292; neck.scale.y=.72; chestG.add(neck); R.neck=neck;
     for(const s of [-1,1]){const cl=cap(.0046,.050,bodySkin); cl.rotation.z=1.42*s; cl.rotation.x=-.30; cl.position.set(.036*s,.202,.055); chestG.add(cl);
       dput(cap(.0032,.044,skinD),[.022*s,.194,.078],[.055*s,.176,.062]);   /* شیار زیر ترقوه */
       dput(cap(.0036,.046,skinD),[.006*s,.070,.090],[.044*s,.058,.076]);}  /* شیار زیر سینه */
     for(const s of [-1,1]){const scm=cap(.0048,.058,bodySkin); scm.rotation.x=-.22; scm.rotation.z=-.16*s; scm.position.set(.0175*s,.238,.041); chestG.add(scm);}
     for(const s of [-1,1]){const tr3=sph(.030,anat('traps_mid')); tr3.scale.set(1.5,.42,.9); tr3.position.set(.048*s,.196,-.030); chestG.add(tr3);}
     /* ---------- سر و صورت (مانیکن آناتومیک: سر کوچک، صورت ریز، موی بسته) ---------- */
-     const headG=this.headG=new T.Group(); headG.position.y=.34; headG.scale.setScalar(1.11); chestG.add(headG);dputParent=headG;
+     const headG=this.headG=new T.Group(); headG.position.y=.34; headG.scale.setScalar(.99); chestG.add(headG);dputParent=headG;
     const head=lathe([[.002,0],[.034,.004],[.058,.015],[.073,.035],[.084,.064],[.091,.096],[.096,.128],[.094,.158],[.083,.184],[.060,.204],[.002,.214]],headSkin,48); headG.add(head);
     {const jn=sph(.055,headSkin); jn.scale.set(1.10,.56,1.00); jn.position.set(0,.038,.008); headG.add(jn);}   /* فک پهن‌تر */
     const lidM=headSkin, skinT=skinD;
@@ -1589,7 +1600,7 @@ class Studio{
        const eg=new T.Group(); eg.position.y=-.30; sg.add(eg);dputParent=eg;
        const ole=sph(.015,bodySkin); ole.scale.set(.9,1.1,.7); ole.position.set(0,-.005,-.042); eg.add(ole);
        const elbJ=sph(.0295,uaM); elbJ.scale.set(1,1.15,.92); elbJ.position.set(0,-.005,0); eg.add(elbJ);
-       const elbowRing=new T.Mesh(new T.TorusGeometry(.027,.0028,8,24),sportAccentM);
+       const elbowRing=new T.Mesh(new T.TorusGeometry(.027,.0018,8,24),gearTrimM);
        elbowRing.rotation.x=Math.PI/2;elbowRing.position.set(0,-.005,.004);eg.add(elbowRing);
       const faa=lathe([[.035,-.005],[.038,-.07],[.031,-.17],[.023,-.25]],faM); eg.add(faa);
       const flex=belly(.0290,.120,anat('forearm_flexors')); flex.position.set(0,-.062,.022); eg.add(flex); R[side<0?'forearmsL':'forearmsR']=flex;
@@ -1657,7 +1668,7 @@ class Studio{
       dput(cap(.008,.075,skinD),[.010,-.075,-.044],[-.010,-.150,-.036]);               /* حفرهٔ پشت زانو */
       dput(cap(.017,.075,anat('calves')),[.030*side,-.130,.040],[-.010*side,-.200,.036]); /* درشت‌نی قدامی */
        const knee=sph(.0395,thighM); knee.scale.set(1.06,1.10,.86); knee.position.set(0,-.008,0); kg.add(knee);
-       const kneeRing=new T.Mesh(new T.TorusGeometry(.034,.0028,8,24),sportAccentM);
+       const kneeRing=new T.Mesh(new T.TorusGeometry(.034,.0018,8,24),gearTrimM);
        kneeRing.rotation.x=Math.PI/2;kneeRing.position.set(0,-.008,.004);kg.add(kneeRing);
       /* لایه عمقی ساق: نعلی + درشت‌نی پشتی + نازک‌نی */
       const sl=dreg('calves',belly(.031,.13,anatD('calves'))); sl.position.set(0,-.15,-.028); kg.add(sl);
@@ -1695,6 +1706,32 @@ class Studio{
        return {tg,kg,ag,side};
     };
     this.legL=mkLeg(-1); this.legR=mkLeg(1);
+    /* A fitted training kit gives the animated demonstrator a clear coach-like silhouette. */
+    const trainingTop=lathe([[.001,-.060],[.147,-.055],[.158,-.020],[.154,.030],[.137,.105],[.126,.185],[.137,.245],[.145,.285],[.001,.300]],fabricM);
+    trainingTop.scale.set(1.025,1,.84); trainingTop.renderOrder=2; spine.add(trainingTop);
+    const topHem=new T.Mesh(new T.TorusGeometry(.151,.0028,8,48),fabricTrimM);
+    topHem.rotation.x=Math.PI/2; topHem.position.set(0,-.035,0); topHem.scale.z=.84; spine.add(topHem);
+    const chestPanel=lathe([[.001,-.095],[.138,-.090],[.150,-.050],[.150,.015],[.142,.085],[.125,.145],[.097,.195],[.060,.230],[.001,.238]],fabricM);
+    chestPanel.scale.set(1.02,1,.84); chestPanel.renderOrder=2; chestG.add(chestPanel);
+    const collar=new T.Mesh(new T.TorusGeometry(.062,.0032,8,40),fabricTrimM);
+    collar.rotation.x=Math.PI/2; collar.position.set(0,.225,0); collar.scale.z=.84; chestG.add(collar);
+    const brandCanvas=document.createElement('canvas'); brandCanvas.width=256; brandCanvas.height=128;
+    const brandCtx=brandCanvas.getContext('2d');
+    brandCtx.fillStyle='#c9f24f'; brandCtx.fillRect(8,8,240,112);
+    brandCtx.fillStyle='#14201a'; brandCtx.font='900 76px Arial,sans-serif'; brandCtx.textAlign='center'; brandCtx.textBaseline='middle'; brandCtx.fillText('MG',128,66);
+    const brandTexture=new T.CanvasTexture(brandCanvas); brandTexture.colorSpace=T.SRGBColorSpace;
+    const brandMark=new T.Mesh(new T.PlaneGeometry(.090,.045),new T.MeshBasicMaterial({map:brandTexture,side:T.DoubleSide,toneMapped:false}));
+    brandMark.position.set(0,.035,.140); chestG.add(brandMark);
+    const trainingShorts=lathe([[.001,-.390],[.150,-.390],[.165,-.335],[.184,-.265],[.210,-.190],[.213,-.115],[.199,-.035],[.180,.045],[.154,.115],[.001,.120]],fabricM);
+    trainingShorts.scale.set(1,1,.94); trainingShorts.renderOrder=2; hips.add(trainingShorts);
+    const shortsHem=new T.Mesh(new T.TorusGeometry(.165,.0028,8,48),fabricTrimM);
+    shortsHem.rotation.x=Math.PI/2; shortsHem.position.set(0,-.340,0); shortsHem.scale.z=.94; hips.add(shortsHem);
+    for(const side of [-1,1]) dput(cap(.0024,.20,fabricTrimM),[.167*side,-.300,.025],[.207*side,-.105,.025],hips);
+    for(const arm of [this.armL,this.armR]){
+      const sleeve=cap(.043,.065,fabricM); sleeve.position.set(0,-.075,0); sleeve.scale.set(1.04,1,.94); arm.sg.add(sleeve);
+      const sleeveHem=new T.Mesh(new T.TorusGeometry(.036,.0025,8,28),fabricTrimM);
+      sleeveHem.rotation.x=Math.PI/2; sleeveHem.position.set(0,-.145,0); arm.sg.add(sleeveHem);
+    }
        const muscleMaterials=new Map();
        for(const [name,material] of Object.entries({...this.anatMats,...this.anatDMats}))muscleMaterials.set(material,name);
        this.pickTargets=[];
@@ -1959,9 +1996,9 @@ class Studio{
     const dT=this._deepT, keyT={};
     const muscleEase=1-Math.exp(-9.05*delta),limbEase=1-Math.exp(-13.39*delta);
     const apply=m=>{m.color.copy(m.userData.base??this._porcC).lerp(this._hotC,m._t);
-       m.emissive.setHex(0x6ea92c); m.emissiveIntensity=m._t*(.24+pulse*.48);
-      m.roughness=.34+m._t*.26; m.clearcoat=.5*(1-m._t*.6); m.envMapIntensity=.5*(1-m._t*.7);
-      m.bumpScale=.9+m._t*1.0;};
+       m.emissive.setHex(0x8a6a2b); m.emissiveIntensity=m._t*(.12+pulse*.24);
+      m.roughness=.58+m._t*.12; m.clearcoat=.18+m._t*.20; m.envMapIntensity=.38+m._t*.16;
+      m.bumpScale=.65+m._t*.45;};
     const fade=(m,minOpacity=.16)=>{m.transparent=dT>.02; m.opacity=1-dT*(1-minOpacity); m.depthWrite=dT<.45;};
     for(const k in this.anatMats){
       const m=this.anatMats[k]; m._t??=0;
@@ -2065,6 +2102,17 @@ class Studio{
   }
   bindControls(){
     const cv=this.canvas;
+    cv.addEventListener('keydown',e=>{
+      const next=dollCameraKeyboardInput(e.key,this.camGoal,this.defaultDistance());
+      if(!next)return;
+      e.preventDefault();
+      e.stopPropagation();
+      if(e.key==='Home'){this.setView('front');return;}
+      if(this.anatomyMode&&e.key.startsWith('Arrow')&&this.selectedAnatomyRegion)this.clearAnatomySelection();
+      this.camGoal=next;
+      ['front','back','side'].forEach(x=>$('#'+x+'Btn').classList.remove('on'));
+      $('#freeBtn').classList.add('on');
+    });
     cv.addEventListener('pointerdown',e=>{
       this._drag={x:e.clientX,y:e.clientY,yaw:this.camGoal.yaw,pitch:this.camGoal.pitch};
       cv.setPointerCapture(e.pointerId);
@@ -2416,8 +2464,10 @@ $('#closeDlg').onclick=()=>$('#dlg').classList.add('hidden');
 $('#dlg').onclick=e=>{if(e.target.id==='dlg')e.currentTarget.classList.add('hidden')};
 $('#ftMuscles').onclick=function(){muscleOn=!muscleOn;this.setAttribute('aria-pressed',String(muscleOn));
   this.classList.toggle('on',muscleOn);toast(muscleOn?'عضله‌های هدف روشن شد':'نمایش عضله خاموش شد')};
+$('#ftMuscles').setAttribute('aria-pressed','false'); $('#ftMuscles').classList.remove('on');
 $('#ftLabels').onclick=function(){labelsOn=!labelsOn;this.setAttribute('aria-pressed',String(labelsOn));
   this.classList.toggle('on',labelsOn);toast(labelsOn?'نام عضله‌ها روشن':'نام عضله‌ها خاموش')};
+$('#ftLabels').setAttribute('aria-pressed','false'); $('#ftLabels').classList.remove('on');
 $('#ftDeep').onclick=function(){deepMode=!deepMode;this.setAttribute('aria-pressed',String(deepMode));
   this.classList.toggle('on',deepMode);toast(deepMode?'حالت لایهٔ عمقی فعال شد':'لایهٔ سطحی عضلات')};
 {const q=new URLSearchParams(location.search); if(q.get('deep')){deepMode=true;

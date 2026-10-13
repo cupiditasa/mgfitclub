@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261012-doll-30stage-v1";
+const CACHE_NAME = "mg-fitclub-v20261012-doll-coach-v3";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -56,7 +56,7 @@ const APP_SHELL = [
   "./education-studio.html",
   "./assets/education/exercise-additions.mjs?v=20261012-exercise-estimates-v1",
   "./assets/education/exercise-duration.mjs?v=20261012-exercise-estimates-v1",
-  "./assets/education/doll-character-math.mjs?v=20261012-doll-30stage",
+  "./assets/education/doll-character-math.mjs?v=20261012-doll-coach-v3",
   "./secretary.html",
   "./support.html",
   "./athlete-shared-theme.css",
