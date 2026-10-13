@@ -931,6 +931,7 @@ button.badge:disabled{opacity:.55;cursor:wait}
 import { ANATOMY_REGION_INFO, ANATOMY_REGIONS_BY_VIEW, ANATOMY_REGION_RADII, anatomyFaceAtYaw, pickAnatomyRegion } from './assets/education/anatomy-region-map.mjs?v=20261008-regions';
 import { alignModelUpAxis } from './assets/education/model-axis.mjs?v=20261010-axis-fix';
 import { createSeededRandom } from './assets/education/seeded-random.mjs?v=20261010-procedural-textures';
+import { blinkEnvelope, dollIdleMotion } from './assets/education/doll-character-math.mjs?v=20261012-doll-10stage';
 import { samplePoseMotion } from './assets/education/pose-motion.mjs?v=20261010-pose-transition';
 import { EXERCISE_ADDITIONS } from './assets/education/exercise-additions.mjs?v=20261012-exercise-estimates-v1';
 import { estimateExerciseDuration, formatExerciseDuration, sumExerciseDurations, usesIndependentTiming } from './assets/education/exercise-duration.mjs?v=20261012-exercise-estimates-v1';
@@ -1285,6 +1286,9 @@ class Studio{
   buildCharacter(){
     const T=this.T, root=this.root=new T.Group(); this.scene.add(root);
     const phy=(c,r,cc)=>new T.MeshPhysicalMaterial({color:c,roughness:r??.5,metalness:.02,clearcoat:cc??0,clearcoatRoughness:.35,side:T.DoubleSide});
+    const compact3D=matchMedia('(max-width: 720px)').matches||(Number(navigator.deviceMemory)||8)<=4;
+    const sphereSegments=compact3D?22:32, sphereRings=compact3D?16:24;
+    const capsuleSegments=compact3D?10:16, latheSegments=compact3D?28:40;
     const textureRandom=createSeededRandom(0x4d474d47);
     /* بافت رگه‌های فیبر عضله (bump) */
     const mkStria=()=>{const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');
@@ -1372,9 +1376,9 @@ class Studio{
       const ct=new T.CanvasTexture(cc);ct.wrapS=ct.wrapT=T.RepeatWrapping;ct.anisotropy=8;
       return {tex:t,nrm:nt,emi:et,map:ct};};
     const rep3=(f,rx,ry)=>{for(const k of ['tex','nrm','emi','map'])f[k].repeat.set(rx,ry);return f;};
-    const F_T=rep3(mkFiber(1024,520,.0),4,7);
-    const F_A=rep3(mkFiber(768,340,.30),5,7);
-    const F_S=rep3(mkFiber(512,160,0),7,9);
+     const F_T=rep3(mkFiber(compact3D?512:1024,compact3D?300:520,.0),4,7);
+     const F_A=rep3(mkFiber(compact3D?384:768,compact3D?190:340,.30),5,7);
+     const F_S=rep3(mkFiber(compact3D?256:512,compact3D?90:160,0),7,9);
     /* نسخهٔ چرخیدهٔ ۹۰ درجه برای عضلات تنه (UV کره‌ای ⇒ الیاف افقی می‌شود) */
     const rot90=f=>{const o={};for(const k in f){const t=f[k].clone();t.center.set(.5,.5);t.rotation=Math.PI/2;t.needsUpdate=true;o[k]=t;}return o;};
     const F_V=rot90(F_T);
@@ -1405,7 +1409,7 @@ class Studio{
     const dreg=(key,mesh)=>{(this.deepMeshes[key]??=[]).push(mesh); mesh.visible=false; return mesh;};
     const bodySkin=glass({bumpScale:.30,transmission:.30,thickness:.24,roughness:.24,attenuationDistance:2.8});
     const thighM=glass({bumpScale:.72}), shinM=glass({bumpScale:.66}), uaM=glass({bumpScale:.62}), faM=glass({bumpScale:.58});
-    const headSkin=new T.MeshPhysicalMaterial({color:0xe4b99b,roughness:.48,metalness:0,clearcoat:.18,clearcoatRoughness:.34,bumpMap:stria,bumpScale:.28,side:T.DoubleSide}),
+     const headSkin=new T.MeshPhysicalMaterial({color:0xe4b99b,roughness:.34,metalness:0,clearcoat:.38,clearcoatRoughness:.26,bumpMap:stria,bumpScale:.20,side:T.DoubleSide}),
           handSkin=glass({transmission:.30,thickness:.22,roughness:.28}),
           footSkin=glass({transmission:.30,thickness:.22,roughness:.28}),
           skinD=porc({color:0xd9d2c9});
@@ -1413,20 +1417,29 @@ class Studio{
     this.limbMats={thighM,shinM,uaM,faM};
     this.bodyFade=[bodySkin,thighM,shinM,uaM,faM];
      const hairM=phy(0x241b26,.50,.32),
-       braM=bodySkin, dark=phy(0x2a2430,.4);
+        braM=bodySkin, dark=phy(0x2a2430,.4),
+        hairAccentM=phy(0x4b414a,.36,.24), sportAccentM=phy(0xc9f24f,.28,.36),
+        sneakerM=phy(0x202832,.34,.28), sneakerSoleM=phy(0xd4d9d1,.45,.12);
     this.mats={skin:bodySkin,hair:hairM,top:braM,leg:bodySkin,shoe:footSkin};
     const R=this.ref={};
-    const lathe=(pts,mat,seg=40)=>{const P=[[.001,pts[0][1]],...pts,[.001,pts[pts.length-1][1]]];
-      const g=new T.LatheGeometry(P.map(p=>new T.Vector2(p[0],p[1])),seg);const m=new T.Mesh(g,mat);m.castShadow=true;return m};
-    const sph=(r,mt)=>{const m=new T.Mesh(new T.SphereGeometry(r,32,24),mt);m.castShadow=true;return m};
-    const cap=(r,l,mt)=>{const m=new T.Mesh(new T.CapsuleGeometry(r,l,6,16),mt);m.castShadow=true;return m};
+     const lathe=(pts,mat,seg=latheSegments)=>{const P=[[.001,pts[0][1]],...pts,[.001,pts[pts.length-1][1]]];
+       const g=new T.LatheGeometry(P.map(p=>new T.Vector2(p[0],p[1])),seg);const m=new T.Mesh(g,mat);m.castShadow=true;return m};
+     const sphereGeometryCache=new Map(),capsuleGeometryCache=new Map();
+     const sph=(r,mt)=>{const key=Number(r).toFixed(5);let g=sphereGeometryCache.get(key);
+       if(!g){g=new T.SphereGeometry(r,sphereSegments,sphereRings);sphereGeometryCache.set(key,g);}
+       const m=new T.Mesh(g,mt);m.castShadow=true;return m};
+     const cap=(r,l,mt)=>{const key=Number(r).toFixed(5)+':'+Number(l).toFixed(5);let g=capsuleGeometryCache.get(key);
+       if(!g){g=new T.CapsuleGeometry(r,l,6,capsuleSegments);capsuleGeometryCache.set(key,g);}
+       const m=new T.Mesh(g,mt);m.castShadow=true;return m};
     const V3=(x,y,z)=>new T.Vector3(x,y,z);
     const belly=(r,l,mt)=>{ /* عضلهٔ دوکی برجسته */
       const P=[[.001,-l*.5],[r*.42,-l*.46],[r*.82,-l*.34],[r,-l*.10],[r*1.02,l*.06],[r*.88,l*.26],[r*.55,l*.42],[.001,l*.5]];
       return lathe(P,mt);};
     /* استوانه/کپسول را از نقطه a تا b بکش */
-    const dput=(m,a,b)=>{const A=V3(...a),B=V3(...b);m.position.copy(A).add(B).multiplyScalar(.5);
-      m.quaternion.setFromUnitVectors(V3(0,1,0),B.clone().sub(A).normalize());m.castShadow=true;return m;};
+     let dputParent=root;
+     const dput=(m,a,b,parent=dputParent)=>{if(!parent)throw new Error('Doll detail meshes require an active rig parent');
+       const A=V3(...a),B=V3(...b);m.position.copy(A).add(B).multiplyScalar(.5);
+       m.quaternion.setFromUnitVectors(V3(0,1,0),B.clone().sub(A).normalize());m.castShadow=true;parent.add(m);return m;};
     /* ---------- لگن ---------- */
     const hips=this.hips=new T.Group(); hips.position.y=1.04; root.add(hips);
     const pelvis=lathe([[.001,-.118],[.060,-.114],[.102,-.104],[.132,-.082],[.150,-.050],[.159,-.010],[.159,.034],[.150,.080],[.138,.120],[.126,.158]],bodySkin);
@@ -1438,7 +1451,7 @@ class Studio{
     for(const s of [-1,1]){const gm=dreg('glute_med',sph(.075,anatD('glute_med'))); gm.scale.set(1,1.1,.9); gm.position.set(.095*s,.03,-.01); hips.add(gm);}
     for(const s of [-1,1]){const pf=dreg('glutes',cap(.028,.06,anatD('glutes'))); pf.rotation.z=1.2*s; pf.position.set(.055*s,-.01,-.09); hips.add(pf);}
     /* ---------- ستون فقرات و تنه ---------- */
-    const spine=this.spineG=new T.Group(); spine.position.y=.05; hips.add(spine);
+    const spine=this.spineG=new T.Group(); spine.position.y=.05; hips.add(spine);dputParent=spine;
     const torso=lathe([[.100,-.018],[.140,.005],[.138,.045],[.124,.095],[.110,.150],[.104,.195],[.112,.250],[.124,.305],[.134,.355],[.137,.400],[.128,.445],[.108,.485],[.078,.512]],bodySkin);
     torso.scale.set(1,1,.8); spine.add(torso); R.torso=torso; R.top=torso;
     {const nv=sph(.007,skinD); nv.scale.set(1,1.25,.5); nv.position.set(0,.015,.112); spine.add(nv);}
@@ -1476,7 +1489,7 @@ class Studio{
     {const spM=anatD('erector_spinae');
      for(let i=0;i<8;i++){const v=sph(.0105,spM); v.scale.set(1.2,.80,.85); v.position.set(0,-.012+i*.040,-.101+i*.0015); spine.add(v);}
      dput(cap(.007,.30,anatD('lowback')),[0,.02,-.108],[0,.28,-.090]);}
-    const chestG=this.chestG=new T.Group(); chestG.position.y=.31; spine.add(chestG);
+    const chestG=this.chestG=new T.Group(); chestG.position.y=.31; spine.add(chestG);dputParent=chestG;
      for(const s of [-1,1]){
        const pc=sph(.050,anat('pec_upper')); pc.scale.set(1.44,.64,.30); pc.position.set(.052*s,-.004,.074); chestG.add(pc);
        const lower=sph(.031,anat('pec_lower')); lower.scale.set(1.16,.52,.28); lower.position.set(.050*s,-.043,.070); chestG.add(lower);
@@ -1494,21 +1507,27 @@ class Studio{
     for(const s of [-1,1]){const scm=cap(.0048,.058,bodySkin); scm.rotation.x=-.22; scm.rotation.z=-.16*s; scm.position.set(.0175*s,.238,.041); chestG.add(scm);}
     for(const s of [-1,1]){const tr3=sph(.030,anat('traps_mid')); tr3.scale.set(1.5,.42,.9); tr3.position.set(.048*s,.196,-.030); chestG.add(tr3);}
     /* ---------- سر و صورت (مانیکن آناتومیک: سر کوچک، صورت ریز، موی بسته) ---------- */
-    const headG=this.headG=new T.Group(); headG.position.y=.34; chestG.add(headG);
+     const headG=this.headG=new T.Group(); headG.position.y=.34; headG.scale.setScalar(1.08); chestG.add(headG);dputParent=headG;
     const head=lathe([[.002,0],[.034,.004],[.058,.015],[.073,.035],[.084,.064],[.091,.096],[.096,.128],[.094,.158],[.083,.184],[.060,.204],[.002,.214]],headSkin,48); headG.add(head);
     {const jn=sph(.055,headSkin); jn.scale.set(1.10,.56,1.00); jn.position.set(0,.038,.008); headG.add(jn);}   /* فک پهن‌تر */
     const lidM=headSkin, skinT=skinD;
     const lipM=phy(0xb98a80,.44,.15), scleraM=phy(0xf6f2ec,.34), irisM=phy(0x3b2b25,.28), darkM=phy(0x1d1620,.35,.5);
     /* چشم‌های ریز و طبیعی */
-    for(const s of [-1,1]){
-      const sc=sph(.0088,scleraM); sc.position.set(.0375*s,.1005,.0900); sc.scale.set(1.30,.95,.42); headG.add(sc); (this.eyes??=[]).push(sc);
-      const ir=sph(.0045,irisM);   ir.position.set(.0375*s,.1000,.0944); ir.scale.set(1,.94,.38); headG.add(ir); (this.eyes??=[]).push(ir);
-      const pu=sph(.0020,darkM);   pu.position.set(.0375*s,.1000,.0967); pu.scale.set(1,.94,.36); headG.add(pu); (this.eyes??=[]).push(pu);
-      const gl=sph(.0016,phy(0xffffff,.12)); gl.position.set(.0345*s,.1030,.0964); headG.add(gl); (this.eyes??=[]).push(gl);
-      const lid=sph(.0096,lidM);  lid.position.set(.0375*s,.1088,.0900);  lid.scale.set(1.32,.62,.42); headG.add(lid);
-      const lid2=sph(.0090,lidM); lid2.position.set(.0375*s,.0925,.0900); lid2.scale.set(1.24,.42,.42); headG.add(lid2);
-      const brow=cap(.0032,.030,darkM);  brow.rotation.z=1.54-(.16*s); brow.position.set(.0380*s,.1180,.0905); headG.add(brow);
-    }
+     this.eyeLids=[]; this.eyeGaze=[]; this.brows=[]; this.cheeks=[];
+     for(const s of [-1,1]){
+       const eyeX=.0375*s;
+       const sc=sph(.0105,scleraM); sc.position.set(eyeX,.1005,.0900); sc.scale.set(1.30,.96,.42); headG.add(sc);
+       const ir=sph(.0056,irisM);   ir.position.set(eyeX,.1000,.0944); ir.scale.set(1,.96,.42); headG.add(ir);
+       const pu=sph(.0026,darkM);   pu.position.set(eyeX,.1000,.0967); pu.scale.set(1,.96,.42); headG.add(pu);
+       const gl=sph(.0018,phy(0xffffff,.12)); gl.position.set(eyeX-.0018,.1030,.0964); headG.add(gl);
+       this.eyeGaze.push({iris:ir,pupil:pu,highlight:gl,baseX:eyeX,side:s});
+       const lid=sph(.0102,lidM);  lid.position.set(eyeX,.1090,.0900);  lid.scale.set(1.32,.58,.44); headG.add(lid);
+       const lid2=sph(.0090,lidM); lid2.position.set(eyeX,.0925,.0900); lid2.scale.set(1.24,.40,.44); headG.add(lid2);
+       this.eyeLids.push({upper:lid,lower:lid2,upperY:lid.position.y,lowerY:lid2.position.y,
+         upperScaleY:lid.scale.y,lowerScaleY:lid2.scale.y,eyeY:.1000});
+       const brow=cap(.0035,.032,darkM); brow.rotation.z=1.54-(.16*s); brow.position.set(.0380*s,.1180,.0905); headG.add(brow);
+       this.brows.push({mesh:brow,baseRotation:brow.rotation.z,side:s});
+     }
     /* بینی و لب‌های ریز */
     {const bridge=cap(.0036,.024,lidM); bridge.rotation.x=-.32; bridge.position.set(0,.0855,.0915); headG.add(bridge);
      const nb=sph(.0058,lidM); nb.position.set(0,.0740,.0930); nb.scale.set(.86,.86,.80); headG.add(nb);
@@ -1517,8 +1536,10 @@ class Studio{
     {const up=new T.Mesh(new T.TorusGeometry(.0108,.0024,8,24,Math.PI),lipM); up.position.set(0,.0505,.0908); up.rotation.z=Math.PI; up.rotation.x=-.10; smile.add(up);
      const lo=sph(.0100,lipM); lo.scale.set(1.0,.40,.42); lo.position.set(0,.0450,.0908); smile.add(lo);}
     headG.add(smile); this.smile=smile;
-    const mouthOpen=new T.Mesh(new T.TorusGeometry(.0068,.0034,8,20),phy(0x5e2a26,.5));
-    mouthOpen.position.set(0,.0460,.0915); mouthOpen.visible=false; headG.add(mouthOpen); this.mouthOpen=mouthOpen;
+     const mouthOpen=new T.Mesh(new T.TorusGeometry(.0068,.0034,8,20),phy(0x5e2a26,.5));
+     mouthOpen.position.set(0,.0460,.0915); mouthOpen.visible=false; headG.add(mouthOpen); this.mouthOpen=mouthOpen;
+     const blushM=phy(0xe78585,.8); blushM.transparent=true; blushM.opacity=.11; blushM.depthWrite=false;
+     for(const s of [-1,1]){const cheek=sph(.013,blushM);cheek.scale.set(.95,.42,.18);cheek.position.set(.061*s,.072,.083);headG.add(cheek);this.cheeks.push(cheek);}
     /* استخوان‌بندی چهرهٔ مردانه */
     for(const s of [-1,1]){
       const ch=sph(.0180,lidM); ch.scale.set(.90,.58,.50); ch.position.set(.0500*s,.0865,.0640); headG.add(ch);
@@ -1528,15 +1549,22 @@ class Studio{
     }
     const chin=sph(.022,lidM); chin.scale.set(1.08,.66,.62); chin.position.set(0,.0505,.0705); headG.add(chin);
     /* موی کوتاه ورزشی؛ بدون دم‌اسبی یا حجم بلند پشت سر */
-    const hairCap=sph(.101,hairM); hairCap.position.set(0,.125,-.024); hairCap.scale.set(1.00,.92,.96); headG.add(hairCap);
-    const crop=sph(.069,hairM); crop.scale.set(1.02,.35,.86); crop.position.set(0,.193,.005); headG.add(crop);
-    for(const s of [-1,1]){
-      const sideCut=sph(.047,hairM); sideCut.scale.set(.55,.78,.88); sideCut.position.set(.071*s,.105,-.030); headG.add(sideCut);
-    }
-    this.tail=[];
+     const hairCap=sph(.101,hairM); hairCap.position.set(0,.125,-.010); hairCap.scale.set(1.00,.92,1.04); headG.add(hairCap);
+     const crop=sph(.069,hairM); crop.scale.set(1.02,.35,.95); crop.position.set(0,.193,.028); headG.add(crop);
+     for(const s of [-1,1]){
+       const sideCut=sph(.047,hairM); sideCut.scale.set(.55,.78,.88); sideCut.position.set(.071*s,.105,-.030); headG.add(sideCut);
+     }
+     /* A few swept locks and a slim lime headband give the training figure a clear toy-hero silhouette. */
+     for(const x of [-.030,0,.030]){
+       dput(cap(.008,.024,hairM),[x-.008,.174,.084],[x+.002,.209,.060]);
+       dput(cap(.0018,.018,hairAccentM),[x-.007,.180,.090],[x+.001,.205,.069]);
+     }
+     const headband=new T.Mesh(new T.TorusGeometry(.099,.0045,8,40),sportAccentM);
+     headband.rotation.x=Math.PI/2;headband.position.set(0,.148,.018);headG.add(headband);
+     this.tail=[];
     /* ---------- دست‌ها با انگشت ---------- */
     const mkArm=(side)=>{
-      const sg=new T.Group(); sg.position.set(.235*side,.235,0); sg.rotation.order='ZYX'; chestG.add(sg);
+       const sg=new T.Group(); sg.position.set(.235*side,.235,0); sg.rotation.order='ZYX'; chestG.add(sg);dputParent=sg;
       /* پوشش پیوستهٔ شانه؛ فاصلهٔ ظاهری تنه تا دلتوئید را در ژست‌های مختلف می‌پوشاند. */
       const shoulderBlend=sph(.044,bodySkin); shoulderBlend.scale.set(1.52,.92,.62); shoulderBlend.position.set(-.036*side,-.016,-.003); sg.add(shoulderBlend);
       R[side<0?'shoulderBlendL':'shoulderBlendR']=shoulderBlend;
@@ -1550,9 +1578,11 @@ class Studio{
       const tri=belly(.0365,.175,anat('triceps')); tri.position.set(0,-.148,-.038); sg.add(tri); R[side<0?'tricepsL':'tricepsR']=tri;
       const br=dreg('brachialis',belly(.024,.10,anatD('brachialis'))); br.position.set(.012*side,-.17,.012); sg.add(br);
       const tl=dreg('triceps',belly(.022,.11,anatD('triceps'))); tl.position.set(-.009*side,-.14,-.020); sg.add(tl);
-      const eg=new T.Group(); eg.position.y=-.30; sg.add(eg);
-      const ole=sph(.015,bodySkin); ole.scale.set(.9,1.1,.7); ole.position.set(0,-.005,-.042); eg.add(ole);
-      const elbJ=sph(.0295,uaM); elbJ.scale.set(1,1.15,.92); elbJ.position.set(0,-.005,0); eg.add(elbJ);
+       const eg=new T.Group(); eg.position.y=-.30; sg.add(eg);dputParent=eg;
+       const ole=sph(.015,bodySkin); ole.scale.set(.9,1.1,.7); ole.position.set(0,-.005,-.042); eg.add(ole);
+       const elbJ=sph(.0295,uaM); elbJ.scale.set(1,1.15,.92); elbJ.position.set(0,-.005,0); eg.add(elbJ);
+       const elbowRing=new T.Mesh(new T.TorusGeometry(.027,.0028,8,24),sportAccentM);
+       elbowRing.rotation.x=Math.PI/2;elbowRing.position.set(0,-.005,.004);eg.add(elbowRing);
       const faa=lathe([[.035,-.005],[.038,-.07],[.031,-.17],[.023,-.25]],faM); eg.add(faa);
       const flex=belly(.0290,.120,anat('forearm_flexors')); flex.position.set(0,-.062,.022); eg.add(flex); R[side<0?'forearmsL':'forearmsR']=flex;
       const ext=belly(.0200,.105,anat('forearm_extensors')); ext.position.set(0,-.065,-.030); eg.add(ext);
@@ -1561,9 +1591,11 @@ class Studio{
       dput(cap(.006,.075,skinD),[0,-.100,.038],[.010*side,-.190,.014]);                   /* تاندون */
       {const ole2=sph(.012,skinD); ole2.scale.set(1,.9,.8); ole2.position.set(0,-.004,-.040); eg.add(ole2);}
       const fd=dreg('biceps',belly(.017,.09,anatD('biceps'))); fd.position.set(0,-.09,0); eg.add(fd);
-      const hg=new T.Group(); hg.position.y=-.25; eg.add(hg);
-      const wrJ=sph(.0205,faM); wrJ.scale.set(1,1.05,.9); wrJ.position.set(0,-.005,0); hg.add(wrJ);
-      const hand=sph(.0355,handSkin); hand.scale.set(.90,1.24,.62); hg.add(hand);
+       const hg=new T.Group(); hg.position.y=-.25; eg.add(hg);dputParent=hg;
+       const wrJ=sph(.0205,faM); wrJ.scale.set(1,1.05,.9); wrJ.position.set(0,-.005,0); hg.add(wrJ);
+       const wristBand=new T.Mesh(new T.TorusGeometry(.0175,.0032,8,24),sportAccentM);
+       wristBand.rotation.x=Math.PI/2;wristBand.position.set(0,-.012,0);hg.add(wristBand);
+       const hand=sph(.0355,handSkin); hand.scale.set(.90,1.24,.62); hg.add(hand);
       const thumb=cap(.0090,.028,handSkin); thumb.position.set(-.0255*side,-.011,.021); thumb.rotation.z=.9*side; thumb.rotation.x=.4; hg.add(thumb);
       /* چهار انگشت با بند و ناخن‌گونه */
       const fo=[-.0205,-.0068,.0068,.0205], fr=[.0082,.0090,.0084,.0074], fl=[.040,.048,.044,.036];
@@ -1584,7 +1616,7 @@ class Studio{
     this.armL=mkArm(-1); this.armR=mkArm(1);
     /* ---------- پاها با پای برهنهٔ آناتومیک ---------- */
     const mkLeg=(side)=>{
-      const tg=new T.Group(); tg.position.set(.104*side,-.02,0); hips.add(tg);
+      const tg=new T.Group(); tg.position.set(.104*side,-.02,0); hips.add(tg);dputParent=tg;
       const thigh=lathe([[.086,.02],[.080,-.14],[.064,-.30],[.048,-.48]],thighM); tg.add(thigh); R[side<0?'thighL':'thighR']=thigh;
       const hipJ=sph(.064,thighM); hipJ.scale.set(1,.95,1); hipJ.position.set(0,-.005,0); tg.add(hipJ);
       const plate=sph(.076,anat('rectus_femoris')); plate.scale.set(1.00,1.88,.62); plate.position.set(-.004*side,-.205,.046); tg.add(plate); R[side<0?'quadsL':'quadsR']=plate;
@@ -1604,7 +1636,7 @@ class Studio{
       const am=dreg('ham_semitendinosus',belly(.032,.16,anatD('ham_semitendinosus'))); am.position.set(-.022*side,-.21,-.038); tg.add(am);
       const bf=dreg('ham_biceps_femoris',belly(.027,.13,anatD('ham_biceps_femoris'))); bf.position.set(.038*side,-.18,-.040); tg.add(bf);
       for(let i=0;i<3;i++){const du=dreg('quads',belly(.011,.15,anatD('quads'))); du.position.set((-.030+i*.030)*side,-.16,.052); tg.add(du);}
-      const kg=new T.Group(); kg.position.y=-.47; tg.add(kg);
+      const kg=new T.Group(); kg.position.y=-.47; tg.add(kg);dputParent=kg;
       const shin=lathe([[.049,-.005],[.053,-.10],[.040,-.28],[.027,-.45]],shinM); kg.add(shin); R[side<0?'shinL':'shinR']=shin;
       const ga=belly(.034,.115,anat('gastrocnemius')); ga.position.set(.016*side,-.095,-.038); kg.add(ga); R[side<0?'calvesL':'calvesR']=ga;
       const gb=belly(.030,.105,anat('gastrocnemius')); gb.position.set(-.016*side,-.105,-.036); kg.add(gb);
@@ -1615,7 +1647,9 @@ class Studio{
       for(const s of [-1,1]){const cd=sph(.020,anat('quads')); cd.scale.set(1,.85,.95); cd.position.set(.030*s,-.010,.030); kg.add(cd);}
       dput(cap(.008,.075,skinD),[.010,-.075,-.044],[-.010,-.150,-.036]);               /* حفرهٔ پشت زانو */
       dput(cap(.017,.075,anat('calves')),[.030*side,-.130,.040],[-.010*side,-.200,.036]); /* درشت‌نی قدامی */
-      const knee=sph(.0395,thighM); knee.scale.set(1.06,1.10,.86); knee.position.set(0,-.008,0); kg.add(knee);
+       const knee=sph(.0395,thighM); knee.scale.set(1.06,1.10,.86); knee.position.set(0,-.008,0); kg.add(knee);
+       const kneeRing=new T.Mesh(new T.TorusGeometry(.034,.0028,8,24),sportAccentM);
+       kneeRing.rotation.x=Math.PI/2;kneeRing.position.set(0,-.008,.004);kg.add(kneeRing);
       /* لایه عمقی ساق: نعلی + درشت‌نی پشتی + نازک‌نی */
       const sl=dreg('calves',belly(.031,.13,anatD('calves'))); sl.position.set(0,-.15,-.028); kg.add(sl);
       const tp2=dreg('calves',belly(.019,.13,anatD('calves'))); tp2.position.set(0,-.17,-.008); kg.add(tp2);
@@ -1623,7 +1657,7 @@ class Studio{
       {const tb2=dreg('calves',belly(.014,.30,anatD('calves'))); tb2.position.set(.012*side,-.16,.030); kg.add(tb2);
        const fb2=dreg('calves',belly(.012,.28,anatD('calves'))); fb2.position.set(-.010*side,-.16,.028); kg.add(fb2);}
       /* ---------- پنجه و انگشتان پا ---------- */
-      const ag=new T.Group(); ag.position.y=-.45; ag.rotation.y=.20*side; kg.add(ag);
+      const ag=new T.Group(); ag.position.y=-.45; ag.rotation.y=.20*side; kg.add(ag);dputParent=ag;
       const heel=sph(.0295,footSkin); heel.scale.set(1,.9,.95); heel.position.set(0,-.052,-.048); ag.add(heel);
       const ach=cap(.011,.06,footSkin); ach.rotation.x=.25; ach.position.set(0,-.028,-.052); ag.add(ach);
       const ankJ=sph(.0255,shinM); ankJ.scale.set(1,1.05,.92); ankJ.position.set(0,-.008,0); ag.add(ankJ);
@@ -1635,12 +1669,19 @@ class Studio{
       for(let i=0;i<5;i++){const mt=sph(.0085,footSkin); mt.scale.set(1,.7,1.5); mt.position.set((-.026+i*.013),-.086,.118); ag.add(mt);} /* برجستگی کف‌پایی */
       for(const s of [-1,1]) dput(cap(.006,.030,footSkin),[.016*s,-.070,.030],[.030*s,-.060,.072]);
       const to=[-.027,-.0145,-.002,.0105,.023], trr=[.0096,.0080,.0071,.0067,.0062], tl2=[.029,.025,.023,.021,.019];
-      for(let i=0;i<5;i++){
-        const t1=cap(trr[i],tl2[i]*.6,footSkin); t1.position.set(to[i]*side,-.090,.145); t1.rotation.x=1.35; ag.add(t1);
-        const t2=cap(trr[i]*.8,tl2[i]*.35,footSkin); t2.position.set(to[i]*side,-.094,.168); t2.rotation.x=1.5; ag.add(t2);
-        const tn=sph(trr[i]*.7,skinD); tn.scale.set(1,.6,.9); tn.position.set(0,-tl2[i]*.5,.008); t2.add(tn);
-      }
-      return {tg,kg,ag,side};
+       for(let i=0;i<5;i++){
+         const t1=cap(trr[i],tl2[i]*.6,footSkin); t1.position.set(to[i]*side,-.090,.145); t1.rotation.x=1.35; ag.add(t1);
+         const t2=cap(trr[i]*.8,tl2[i]*.35,footSkin); t2.position.set(to[i]*side,-.094,.168); t2.rotation.x=1.5; ag.add(t2);
+         const tn=sph(trr[i]*.7,skinD); tn.scale.set(1,.6,.9); tn.position.set(0,-tl2[i]*.5,.008); t2.add(tn);
+       }
+       const sole=sph(.039,sneakerSoleM);sole.scale.set(1.20,.23,1.72);sole.position.set(0,-.105,.100);ag.add(sole);
+       const upper=sph(.040,sneakerM);upper.scale.set(1.16,.48,1.70);upper.position.set(0,-.078,.101);ag.add(upper);
+       for(let i=0;i<3;i++){
+         const lace=new T.Mesh(new T.CapsuleGeometry(.0022,.014,2,8),sportAccentM);
+         lace.rotation.z=Math.PI/2;lace.position.set(0,-.057,.078+i*.018);ag.add(lace);
+       }
+       dput(cap(.0024,.018,sportAccentM),[0,-.054,.067],[0,-.052,.102]);
+       return {tg,kg,ag,side};
     };
     this.legL=mkLeg(-1); this.legR=mkLeg(1);
        const muscleMaterials=new Map();
@@ -1717,6 +1758,7 @@ class Studio{
   /* ---------- اعمال پوز ---------- */
   applyPose(p,time=0,vel=0,u=0,effort=0,delta=1/60){
     const T=this.T;
+    const idle=dollIdleMotion(time,effort>.04?.22:1);
     this.hips.position.y=p.y??0.98;
     this.hips.position.z=p.z||0;
     this.hips.rotation.x=p.pelvis||0;
@@ -1724,19 +1766,28 @@ class Studio{
     this.chestG.rotation.x=(p.chest||0)+Math.sin(time*1.9+.6)*.014;
     const hd=p.head||[0,0];
     this.headG.rotation.x=hd[0]+Math.sin(time*1.3)*.02-clamp(vel*.0016,-.05,.05);
-    this.headG.rotation.y=hd[1]||0;
+    this.headG.rotation.y=(hd[1]||0)+idle.headTurn;
+    this.headG.rotation.z=idle.headTilt;
+    for(const eye of this.eyeGaze||[]){
+      const gazeX=eye.baseX+idle.gaze;
+      eye.iris.position.x=gazeX;eye.pupil.position.x=gazeX;eye.highlight.position.x=gazeX-.0018;
+    }
     /* تنفس قفسهٔ سینه */
     const br=1+Math.sin(time*1.9)*.010;
     if(this.ref.top)this.ref.top.scale.set(br,1,.82*br);
     /* فرم چهرهٔ تلاش */
     const ef=effort||0;
-    if(this.mouthOpen){this.mouthOpen.visible=ef>.55;this.smile.visible=ef<=.55;
-      this.mouthOpen.scale.setScalar(1+ef*.5);}
+    if(this.mouthOpen){this.mouthOpen.visible=ef>.68;this.smile.visible=ef<=.68;
+      this.mouthOpen.scale.set(1+ef*.20,1+ef*.38,1);}
+    for(const brow of this.brows||[])brow.mesh.rotation.z=brow.baseRotation+brow.side*ef*.075;
+    for(const cheek of this.cheeks||[])cheek.material.opacity=.10+ef*.20;
     /* میکرو-بانس فنری بدن */
     this.root.position.y=.010+clamp(vel*.0032,-.006,.010);
     this.armL.sg.rotation.set(...(p.shL||[0,0,0]));
+    this.armL.sg.rotation.z-=idle.shoulderLift;
     this.armL.eg.rotation.x=p.elbL||0;
     this.armR.sg.rotation.set(...(p.shR||[0,0,0]));
+    this.armR.sg.rotation.z+=idle.shoulderLift;
     this.armR.eg.rotation.x=p.elbR||0;
     const leg=(L)=>{
       const hp=L===this.legL?p.hipL:p.hipR;
@@ -1756,10 +1807,16 @@ class Studio{
     }
     /* پلک زدن */
     this._blink??=2.5;
+    this._blinkRandom??=createSeededRandom(0x424c494e);
     this._blink-=delta;
-    if(this._blink<-.12)this._blink=2.2+Math.random()*2.5;
-    const bs=this._blink<0?.15:1;
-    for(const e of this.eyes||[])e.scale.y=bs;
+    if(this._blink<-.12)this._blink=2.2+this._blinkRandom()*2.5;
+    const blink=blinkEnvelope(this._blink);
+    for(const lids of this.eyeLids||[]){
+      lids.upper.position.y=T.MathUtils.lerp(lids.upperY,lids.eyeY,blink);
+      lids.lower.position.y=T.MathUtils.lerp(lids.lowerY,lids.eyeY+.0005,blink);
+      lids.upper.scale.y=lids.upperScaleY*(1+blink*.42);
+      lids.lower.scale.y=lids.lowerScaleY*(1+blink*.75);
+    }
   }
   /* ---------- صحنهٔ هر فریم ---------- */
   frame(now,poseU,exercise,playing){
