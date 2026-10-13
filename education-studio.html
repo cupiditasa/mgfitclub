@@ -931,7 +931,7 @@ button.badge:disabled{opacity:.55;cursor:wait}
 import { ANATOMY_REGION_INFO, ANATOMY_REGIONS_BY_VIEW, ANATOMY_REGION_RADII, anatomyFaceAtYaw, pickAnatomyRegion } from './assets/education/anatomy-region-map.mjs?v=20261008-regions';
 import { alignModelUpAxis } from './assets/education/model-axis.mjs?v=20261010-axis-fix';
 import { createSeededRandom } from './assets/education/seeded-random.mjs?v=20261010-procedural-textures';
-import { blinkEnvelope, dollIdleMotion, dollEffortMotion } from './assets/education/doll-character-math.mjs?v=20261012-doll-20stage';
+import { blinkEnvelope, dollIdleMotion, dollBreathingMotion, dollGazeMotion, dollHeadCounterTilt, dollGripMotion, dollEffortMotion } from './assets/education/doll-character-math.mjs?v=20261012-doll-30stage';
 import { samplePoseMotion } from './assets/education/pose-motion.mjs?v=20261010-pose-transition';
 import { EXERCISE_ADDITIONS } from './assets/education/exercise-additions.mjs?v=20261012-exercise-estimates-v1';
 import { estimateExerciseDuration, formatExerciseDuration, sumExerciseDurations, usesIndependentTiming } from './assets/education/exercise-duration.mjs?v=20261012-exercise-estimates-v1';
@@ -1455,9 +1455,10 @@ class Studio{
     const torso=lathe([[.100,-.018],[.140,.005],[.138,.045],[.124,.095],[.110,.150],[.104,.195],[.112,.250],[.124,.305],[.134,.355],[.137,.400],[.128,.445],[.108,.485],[.078,.512]],bodySkin);
     torso.scale.set(1,1,.8); spine.add(torso); R.torso=torso; R.top=torso;
     {const nv=sph(.007,skinD); nv.scale.set(1,1.25,.5); nv.position.set(0,.015,.112); spine.add(nv);}
+    const abdomenG=new T.Group();spine.add(abdomenG);R.abdomen=abdomenG;
     const abRows=[[-.005,.102],[.046,.098],[.094,.092]];
     for(const [ay,az] of abRows)for(const s of [-1,1]){
-      const ab=sph(.0292,anat(ay>.02?'abs_upper':'abs_lower')); ab.scale.set(1.10,1.26,.34); ab.position.set(.029*s,ay,az); spine.add(ab);}
+      const ab=sph(.0292,anat(ay>.02?'abs_upper':'abs_lower')); ab.scale.set(1.10,1.26,.34); ab.position.set(.029*s,ay,az); abdomenG.add(ab);}
     for(const s of [-1,1]){const ob=cap(.016,.085,anat('obliques')); ob.position.set(.094*s,-.012,.028); ob.rotation.z=.62*s; ob.rotation.x=.18; spine.add(ob); R[s<0?'obliquesL':'obliquesR']=ob;}
     for(const s of [-1,1]){const er=cap(.015,.12,anat('erector_spinae')); er.position.set(.026*s,.10,-.096); spine.add(er);}
     /* لایه عمقی تنه: عرضی شکم، مورب داخلی، دندانه‌ای، لوزی، چندپاره */
@@ -1523,7 +1524,7 @@ class Studio{
        const ir=sph(.0049,irisM);   ir.position.set(eyeX,.1000,.0933); ir.scale.set(1,.96,.44); headG.add(ir);
        const pu=sph(.0023,darkM);   pu.position.set(eyeX,.1000,.0954); pu.scale.set(1,.96,.44); headG.add(pu);
        const gl=sph(.0017,phy(0xffffff,.12)); gl.position.set(eyeX-.0017,.1025,.0950); headG.add(gl);
-       this.eyeGaze.push({iris:ir,pupil:pu,highlight:gl,baseX:eyeX,side:s});
+       this.eyeGaze.push({iris:ir,pupil:pu,highlight:gl,baseX:eyeX,baseY:.1000,side:s});
        const lid=sph(.0090,lidM);  lid.position.set(eyeX,.1084,.0894);  lid.scale.set(1.26,.55,.45); headG.add(lid);
        const lid2=sph(.0082,lidM); lid2.position.set(eyeX,.0928,.0894); lid2.scale.set(1.18,.38,.44); headG.add(lid2);
        this.eyeLids.push({upper:lid,lower:lid2,upperY:lid.position.y,lowerY:lid2.position.y,
@@ -1768,25 +1769,31 @@ class Studio{
   /* ---------- اعمال پوز ---------- */
   applyPose(p,time=0,vel=0,u=0,effort=0,delta=1/60){
     const T=this.T;
-    const idle=dollIdleMotion(time,effort>.04?.22:1);
+    const ef=effort||0, motionScale=REDUCED?.22:1;
+    const idle=dollIdleMotion(time,(effort>.04?.22:1)*motionScale);
+    const breath=dollBreathingMotion(time,ef,REDUCED?.35:1);
+    const gaze=dollGazeMotion(time,ef,motionScale);
     this.hips.position.y=p.y??0.98;
     this.hips.position.z=p.z||0;
     this.hips.rotation.x=p.pelvis||0;
-    this.spineG.rotation.x=(p.spine||0)+Math.sin(time*1.9)*.012;
-    this.chestG.rotation.x=(p.chest||0)+Math.sin(time*1.9+.6)*.014;
+    this.spineG.rotation.x=(p.spine||0)+Math.sin(time*1.9)*.012*motionScale+breath.chest*.12;
+    this.chestG.rotation.x=(p.chest||0)+Math.sin(time*1.9+.6)*.014*motionScale+breath.shoulder;
     const hd=p.head||[0,0];
-    this.headG.rotation.x=hd[0]+Math.sin(time*1.3)*.02-clamp(vel*.0016,-.05,.05);
+    this.headG.rotation.x=hd[0]+dollHeadCounterTilt(p.spine||0,p.chest||0)+Math.sin(time*1.3)*.02*motionScale-clamp(vel*.0016,-.05,.05);
     this.headG.rotation.y=(hd[1]||0)+idle.headTurn;
     this.headG.rotation.z=idle.headTilt;
     for(const eye of this.eyeGaze||[]){
-      const gazeX=eye.baseX+idle.gaze;
-      eye.iris.position.x=gazeX;eye.pupil.position.x=gazeX;eye.highlight.position.x=gazeX-.0018;
+      const gazeX=eye.baseX+gaze.x, gazeY=eye.baseY+gaze.y;
+      eye.iris.position.set(gazeX,gazeY,.0933);eye.pupil.position.set(gazeX,gazeY,.0954);eye.highlight.position.set(gazeX-.0018,gazeY+.0025,.0950);
     }
     /* تنفس قفسهٔ سینه */
-    const br=1+Math.sin(time*1.9)*.010;
-    if(this.ref.top)this.ref.top.scale.set(br,1,.82*br);
+    if(this.ref.top){
+      this._torsoBaseScale??=this.ref.top.scale.clone();
+      this.ref.top.scale.set(this._torsoBaseScale.x*(1+breath.chest),this._torsoBaseScale.y,this._torsoBaseScale.z*(1+breath.chest));
+    }
+    if(this.ref.abdomen)this.ref.abdomen.scale.y=1+breath.abdomen;
     /* فرم چهرهٔ تلاش */
-    const ef=effort||0, expression=dollEffortMotion(ef);
+    const expression=dollEffortMotion(ef);
     if(this.expressionMaterials){
       this.expressionMaterials.smile.opacity=1-expression.mouthOpen;
       this.expressionMaterials.mouth.opacity=expression.mouthOpen;
@@ -1795,17 +1802,17 @@ class Studio{
     for(const brow of this.brows||[])brow.mesh.rotation.z=brow.baseRotation+brow.side*expression.browTension;
     for(const cheek of this.cheeks||[])cheek.material.opacity=expression.cheekFlush;
     for(const digit of this.gripDigits||[]){
-      const flex=clamp(ef,0,1)*.035+Math.sin(time*1.7+digit.index*.72)*.008;
+      const flex=dollGripMotion(time,ef,digit.index);
       digit.proximal.rotation.x=digit.baseProximal+flex;
       digit.distal.rotation.x=digit.baseDistal+flex*1.25;
     }
     /* میکرو-بانس فنری بدن */
     this.root.position.y=.010+clamp(vel*.0032,-.006,.010);
     this.armL.sg.rotation.set(...(p.shL||[0,0,0]));
-    this.armL.sg.rotation.z-=idle.shoulderLift;
+    this.armL.sg.rotation.z-=idle.shoulderLift+breath.shoulder;
     this.armL.eg.rotation.x=p.elbL||0;
     this.armR.sg.rotation.set(...(p.shR||[0,0,0]));
-    this.armR.sg.rotation.z+=idle.shoulderLift;
+    this.armR.sg.rotation.z+=idle.shoulderLift+breath.shoulder;
     this.armR.eg.rotation.x=p.elbR||0;
     const leg=(L)=>{
       const hp=L===this.legL?p.hipL:p.hipR;
@@ -1842,7 +1849,8 @@ class Studio{
     const delta=this._lastFrameNow===undefined?1/60:clamp((frameNow-this._lastFrameNow)/1000,1/240,.05);
     this._lastFrameNow=frameNow;
     const time=frameNow/1000;
-    this.root.rotation.y=Math.sin(time*.5)*.015;
+    const ambientMotion=REDUCED?0:1;
+    this.root.rotation.y=Math.sin(time*.5)*.015*ambientMotion;
     let p,vel=0;
     if(exercise&&POSES[exercise]){
       const P=POSES[exercise];
@@ -1858,9 +1866,9 @@ class Studio{
     /* عضله‌ها */
     this.updateMuscles(time,exercise,delta);
     /* ذرات */
-    this.pts.rotation.y=time*.02;
-    this.pts.position.y=Math.sin(time*.6)*.04;
-    this.ring.material.opacity=.55+Math.sin(time*2.2)*.3;
+    this.pts.rotation.y=time*.02*ambientMotion;
+    this.pts.position.y=Math.sin(time*.6)*.04*ambientMotion;
+    this.ring.material.opacity=.55+Math.sin(time*2.2)*.3*ambientMotion;
     /* دوربین */
     const c=this.cam,g=this.camGoal;
     const cameraEase=1-Math.exp(-5.65*delta);
