@@ -41,7 +41,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=20261008-small-type" />
+    <link rel="stylesheet" href="styles.css?v=20261013-location-3d" />
     <link rel="stylesheet" href="mg-global-theme.css?v=20261012-studio-contrast" data-mg-global-theme="true" />
     <link rel="stylesheet" href="site-tour.css?v=20261011-first-visit" />
     <script type="application/ld+json">
@@ -747,17 +747,43 @@
             </a>
           </div>
         </div>
-        <figure class="map map--real" data-reveal>
-          <img
-            src="assets/images/location-map.webp"
-            width="1100"
-            height="1948"
-            alt="نقشه دسترسی به باشگاه MG FitClub در ابتدای فرهنگ‌شهر، نبش کوچه پل احسان"
-            loading="lazy"
-            decoding="async"
-          />
+        <figure class="map map--real map--3d" data-reveal data-location-map>
+          <div class="map__viewport">
+            <img
+              class="map__fallback"
+              src="assets/images/location-map.webp"
+              width="1100"
+              height="1948"
+              alt="نقشه دسترسی به باشگاه MG FitClub در ابتدای فرهنگ‌شهر، نبش کوچه پل احسان"
+              loading="lazy"
+              decoding="async"
+            />
+            <canvas
+              class="map__canvas"
+              tabindex="0"
+              aria-label="شبیه‌سازی سه‌بعدی محدوده باشگاه MG FitClub؛ با کشیدن ماوس یا لمس بچرخانید، با دکمه‌ها بزرگ‌نمایی کنید"
+            ></canvas>
+            <div class="map__toolbar" data-map-toolbar hidden>
+              <span class="map__mode"><i aria-hidden="true"></i> شبیه‌سازی سه‌بعدی</span>
+              <div class="map__controls" role="group" aria-label="کنترل مدل سه‌بعدی">
+                <button type="button" data-map-action="focus" aria-label="نمای نزدیک باشگاه" title="نمای نزدیک باشگاه">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5M11 7.5v7M7.5 11h7"/></svg>
+                </button>
+                <button type="button" data-map-action="zoom-in" aria-label="بزرگ‌نمایی" title="بزرگ‌نمایی">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5M10.5 7.5v6M7.5 10.5h6"/></svg>
+                </button>
+                <button type="button" data-map-action="zoom-out" aria-label="کوچک‌نمایی" title="کوچک‌نمایی">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5M7.5 10.5h6"/></svg>
+                </button>
+                <button type="button" data-map-action="reset" aria-label="بازنشانی زاویه دید" title="بازنشانی زاویه دید">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.7-4L3 10M3 5v5h5M4 13a8 8 0 0 0 14.7 4L21 14m0 5v-5h-5"/></svg>
+                </button>
+              </div>
+            </div>
+            <p class="map__status" data-map-status role="status" aria-live="polite" hidden></p>
+          </div>
           <figcaption>
-            <span>از معالی‌آباد تا ابتدای فرهنگ‌شهر</span>
+            <span>نمای شماتیک سه‌بعدی از محدودهٔ معالی‌آباد و فرهنگ‌شهر</span>
             <b>نبش کوچه پل احسان</b>
           </figcaption>
         </figure>
@@ -1065,5 +1091,6 @@
     <script src="dashboard-switch.js?v=20261008"></script>
     <script src="mg-global-theme.js?v=20261012-studio-contrast"></script>
     <script src="site-tour.js?v=20261011-first-visit" defer></script>
+    <script type="module" src="assets/location-scene.js?v=20261013-location-3d"></script>
   </body>
 </html>

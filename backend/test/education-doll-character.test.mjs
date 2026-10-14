@@ -134,7 +134,7 @@ test('animated doll details stay rigged and the mobile model uses a lighter geom
   assert.match(html, /dput\(cap\(\.0015,\.042,sneakerTreadM\),\[-\.023,-\.116,\.075\+i\*\.020\],\[\.023,-\.116,\.075\+i\*\.020\],ag\)/);
   assert.match(html, /sneakerSoleM/);
   assert.match(html, /doll-character-math\.mjs\?v=20261013-doll-hand-v1/);
-  assert.match(serviceWorker, /mg-fitclub-v20261013-doll-lazy-anatomy-v8/);
+  assert.match(serviceWorker, /mg-fitclub-v20261013-location-3d-v9/);
   assert.match(serviceWorker, /doll-character-math\.mjs\?v=20261013-doll-hand-v1/);
 });
 

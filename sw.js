@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261013-doll-lazy-anatomy-v8";
+const CACHE_NAME = "mg-fitclub-v20261013-location-3d-v9";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -70,6 +70,8 @@ const APP_SHELL = [
   "./assets/education/mg-anatomy-character.png",
   "./assets/vendor/three/three.module.js",
   "./assets/vendor/three/examples/jsm/environments/RoomEnvironment.js",
+  "./assets/location-scene.js?v=20261013-location-3d",
+  "./assets/images/location-map.webp",
 ];
 self.addEventListener("install", (event) => {
   event.waitUntil(
