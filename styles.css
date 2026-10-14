@@ -2818,6 +2818,12 @@ img {
     min-height: 520px;
   }
 
+  .location {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+    min-height: auto;
+  }
+
   .map__toolbar {
     top: .65rem;
     right: .65rem;

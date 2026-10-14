@@ -55,6 +55,7 @@ if (MAP) {
         slab: new THREE.MeshStandardMaterial({ color: 0x29352d, roughness: 0.9 }),
         ground: new THREE.MeshStandardMaterial({ color: 0xd8ddd3, roughness: 1 }),
         curb: new THREE.MeshBasicMaterial({ color: 0xb3bdb4 }),
+        sidewalk: new THREE.MeshStandardMaterial({ color: 0xa7afa8, roughness: 0.94 }),
         road: new THREE.MeshStandardMaterial({ color: 0x687782, roughness: 0.88 }),
         sideRoad: new THREE.MeshStandardMaterial({ color: 0x89949a, roughness: 0.9 }),
         line: new THREE.MeshBasicMaterial({ color: 0xe8e4d2 }),
@@ -66,6 +67,8 @@ if (MAP) {
         park: new THREE.MeshStandardMaterial({ color: 0x8fab72, roughness: 0.95 }),
         tree: new THREE.MeshStandardMaterial({ color: 0x497354, roughness: 0.92 }),
         treeLight: new THREE.MeshStandardMaterial({ color: 0x71935d, roughness: 0.92 }),
+        lamp: new THREE.MeshStandardMaterial({ color: 0xe8ddb6, emissive: 0x76652d, emissiveIntensity: 0.42, roughness: 0.48 }),
+        carGlass: new THREE.MeshStandardMaterial({ color: 0x789393, roughness: 0.3, metalness: 0.2 }),
         window: new THREE.MeshStandardMaterial({ color: 0x8ba2a2, roughness: 0.4, metalness: 0.14 }),
         darkWindow: new THREE.MeshStandardMaterial({ color: 0x31413e, roughness: 0.42, metalness: 0.12 }),
       };
@@ -236,6 +239,19 @@ if (MAP) {
         else addRoad(road.points, road.width, road.material, road.dashed);
       }
 
+      // Raised paving strips separate the divided boulevard from adjacent blocks.
+      const rajaiRoute = neighborhoodRoads.find((road) => road.name === "Rajai Blvd").points;
+      const sidewalkOffset = medianWidth / 2 + carriagewayWidth + 0.095;
+      for (const side of [-1, 1]) {
+        addRoad(offsetPath(rajaiRoute, side * sidewalkOffset), 0.19, materials.sidewalk);
+      }
+      for (const roadName of ["Baharan 8th", "50th Rajaei", "Alley 52", "Baharan St"]) {
+        const road = neighborhoodRoads.find((item) => item.name === roadName);
+        if (!road) continue;
+        const pathOffset = road.width / 2 + 0.08;
+        for (const side of [-1, 1]) addRoad(offsetPath(road.points, side * pathOffset), 0.12, materials.sidewalk);
+      }
+
       const distanceToPath = (x, z, points) => {
         let nearest = Infinity;
         for (let index = 0; index < points.length - 1; index += 1) {
@@ -292,7 +308,7 @@ if (MAP) {
 
       // A small shared instanced window set gives the city depth without hundreds of draw calls.
       const windowGeometry = new THREE.BoxGeometry(0.19, 0.15, 0.025);
-      const windows = new THREE.InstancedMesh(windowGeometry, materials.window, buildings.length * 6);
+      const windows = new THREE.InstancedMesh(windowGeometry, materials.window, buildings.length * 12);
       const instance = new THREE.Object3D();
       let windowIndex = 0;
       for (const group of buildings) {
@@ -309,12 +325,67 @@ if (MAP) {
             instance.scale.set(1, 1, 1);
             instance.updateMatrix();
             windows.setMatrixAt(windowIndex++, instance.matrix);
+            instance.position.set(group.position.x + side * (width / 2 + 0.014), y, group.position.z + (random() - 0.5) * depth * 0.42);
+            instance.rotation.set(0, Math.PI / 2, 0);
+            instance.updateMatrix();
+            windows.setMatrixAt(windowIndex++, instance.matrix);
           }
         }
       }
       windows.count = windowIndex;
       windows.instanceMatrix.needsUpdate = true;
       mapWorld.add(windows);
+
+      // Street lamps and a few small vehicles add scale while staying lightweight.
+      const lampPoleGeometry = new THREE.CylinderGeometry(0.022, 0.032, 0.88, 6);
+      const lampHeadGeometry = new THREE.BoxGeometry(0.16, 0.045, 0.075);
+      const boulevardLampSamples = samplePath(rajaiRoute, 2.35);
+      for (const side of [-1, 1]) {
+        const poles = new THREE.InstancedMesh(lampPoleGeometry, materials.bridgeRail, boulevardLampSamples.length);
+        const heads = new THREE.InstancedMesh(lampHeadGeometry, materials.lamp, boulevardLampSamples.length);
+        const lampTransform = new THREE.Object3D();
+        boulevardLampSamples.forEach(([x, z], index) => {
+          const position = offsetPath([[x, z], [x, z + 0.1]], side * sidewalkOffset)[0];
+          lampTransform.rotation.set(0, 0, 0);
+          lampTransform.position.set(position[0], 0.48, position[1]);
+          lampTransform.updateMatrix();
+          poles.setMatrixAt(index, lampTransform.matrix);
+          lampTransform.position.set(position[0] + side * 0.075, 0.91, position[1]);
+          lampTransform.rotation.set(0, 0, side * -0.12);
+          lampTransform.updateMatrix();
+          heads.setMatrixAt(index, lampTransform.matrix);
+        });
+        poles.instanceMatrix.needsUpdate = true;
+        heads.instanceMatrix.needsUpdate = true;
+        mapWorld.add(poles, heads);
+      }
+      const addCar = (x, z, color, rotation = 0) => {
+        const car = new THREE.Group();
+        car.position.set(x, 0.045, z);
+        car.rotation.y = rotation;
+        mapWorld.add(car);
+        const body = new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.08 });
+        const chassis = new THREE.Mesh(sharedBox, body);
+        chassis.position.y = 0.12;
+        chassis.scale.set(0.19, 0.15, 0.39);
+        car.add(chassis);
+        const cabin = new THREE.Mesh(sharedBox, materials.carGlass);
+        cabin.position.set(0, 0.225, -0.015);
+        cabin.scale.set(0.145, 0.095, 0.19);
+        car.add(cabin);
+        const wheelGeometry = new THREE.CylinderGeometry(0.047, 0.047, 0.035, 8);
+        for (const wheelX of [-0.103, 0.103]) {
+          for (const wheelZ of [-0.12, 0.12]) {
+            const wheel = new THREE.Mesh(wheelGeometry, materials.bridgeRail);
+            wheel.rotation.z = Math.PI / 2;
+            wheel.position.set(wheelX, 0.07, wheelZ);
+            car.add(wheel);
+          }
+        }
+      };
+      addCar(-carriagewayOffset, -5.6, 0x627c83, Math.PI);
+      addCar(carriagewayOffset, -0.85, 0xc7b79b);
+      addCar(-carriagewayOffset, 3.0, 0x8d72a9, Math.PI);
 
       // Ehsan's ground-level circle sits under the raised through-route.
       const roundaboutRoad = new THREE.Mesh(
@@ -331,6 +402,25 @@ if (MAP) {
       roundaboutIsland.rotation.x = -Math.PI / 2;
       roundaboutIsland.position.set(ehsanRoundaboutSite.x, 0.035, ehsanRoundaboutSite.z);
       mapWorld.add(roundaboutIsland);
+      const roundaboutCurb = new THREE.Mesh(
+        new THREE.RingGeometry(1.08, 1.18, 48),
+        materials.curb,
+      );
+      roundaboutCurb.rotation.x = -Math.PI / 2;
+      roundaboutCurb.position.set(ehsanRoundaboutSite.x, 0.05, ehsanRoundaboutSite.z);
+      mapWorld.add(roundaboutCurb);
+      const roundaboutLaneMark = new THREE.MeshBasicMaterial({ color: 0xe8e4d2 });
+      for (let mark = 0; mark < 12; mark += 1) {
+        const angle = (mark / 12) * Math.PI * 2;
+        const dash = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.014, 0.035), roundaboutLaneMark);
+        dash.position.set(
+          ehsanRoundaboutSite.x + Math.cos(angle) * 0.88,
+          0.046,
+          ehsanRoundaboutSite.z + Math.sin(angle) * 0.88,
+        );
+        dash.rotation.y = -angle;
+        mapWorld.add(dash);
+      }
       const islandTreeGeometry = new THREE.ConeGeometry(0.14, 0.42, 7);
       for (const [dx, dz] of [[0, 0], [-0.26, 0.18], [0.24, -0.2]]) {
         const islandTree = new THREE.Mesh(islandTreeGeometry, materials.tree);
@@ -377,6 +467,26 @@ if (MAP) {
         for (let step = 0; step < 6; step += 1) {
           addBox(side * (1.2 + step * 0.18), 0.15 + step * 0.08, 0, 0.19, 0.07, 0.32, materials.bridge, footbridge);
         }
+        for (const railZ of [-0.22, 0.22]) {
+          const handrail = addBox(side * 1.78, 0.49, railZ, 1.28, 0.045, 0.045, materials.bridgeRail, footbridge);
+          handrail.rotation.z = side * 0.34;
+        }
+      }
+      // Marked crossings sit just beyond the bridge deck on both carriageways.
+      for (const side of [-1, 1]) {
+        for (const zOffset of [-0.78, 0.78]) {
+          for (let stripe = -2; stripe <= 2; stripe += 1) {
+            addBox(
+              pedestrianBridgeSite.x + side * carriagewayOffset,
+              0.044,
+              pedestrianBridgeSite.z + zOffset + stripe * 0.13,
+              0.43,
+              0.016,
+              0.065,
+              materials.line,
+            );
+          }
+        }
       }
 
       // Nearby reference buildings from the supplied pin: the petrol station
@@ -396,6 +506,10 @@ if (MAP) {
         addBox(x, 0.25, 0, 0.18, 0.36, 0.2, materials.bridge, petrolStation);
         addBox(x, 0.31, 0.106, 0.11, 0.1, 0.025, stationAccent, petrolStation);
         addBox(x - 0.11, 0.3, -0.12, 0.055, 0.18, 0.035, stationAccent, petrolStation);
+        const hose = new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.012, 5, 10, Math.PI), materials.bridgeRail);
+        hose.rotation.set(Math.PI / 2, 0, Math.PI / 2);
+        hose.position.set(x + 0.1, 0.24, 0.12);
+        petrolStation.add(hose);
       }
       addBox(-0.82, 0.28, -0.53, 0.52, 0.42, 0.5, materials.bridge, petrolStation);
       addBox(-0.82, 0.51, -0.53, 0.58, 0.08, 0.56, stationAccent, petrolStation);
@@ -421,6 +535,9 @@ if (MAP) {
       addBox(0, 0.83, 0.42, 1.04, 0.12, 0.08, bakeryAwning, vipBakery);
       addBox(-0.18, 0.42, 0.401, 0.36, 0.34, 0.035, bakeryWindow, vipBakery);
       addBox(0.24, 0.42, 0.401, 0.32, 0.34, 0.035, bakeryWindow, vipBakery);
+      addBox(-0.45, 0.42, 0.43, 0.055, 0.38, 0.07, stationAccent, vipBakery);
+      addBox(0.45, 0.42, 0.43, 0.055, 0.38, 0.07, stationAccent, vipBakery);
+      addBox(0, 0.2, 0.43, 0.16, 0.38, 0.055, bakeryBody, vipBakery);
       addBox(0, 0.99, 0.43, 0.82, 0.22, 0.06, stationAccent, vipBakery);
       const bakeryCake = new THREE.Mesh(new THREE.SphereGeometry(0.13, 9, 7), new THREE.MeshStandardMaterial({ color: 0xf5e9d0, roughness: 0.52 }));
       bakeryCake.position.set(-0.32, 0.68, 0.44);
@@ -435,8 +552,11 @@ if (MAP) {
       const neginGlass = new THREE.MeshStandardMaterial({ color: 0x6d9394, roughness: 0.28, metalness: 0.2, emissive: 0x132627 });
       const neginAccent = new THREE.MeshStandardMaterial({ color: 0x69aaa1, roughness: 0.58 });
       addBox(0, 0.96, 0, 2.2, 1.92, 1.65, neginBody, neginComplex);
+      addBox(-1.24, 0.62, -0.12, 0.42, 1.24, 1.38, neginBody, neginComplex);
+      addBox(1.23, 0.52, 0.08, 0.38, 1.04, 1.26, neginBody, neginComplex);
       addBox(0, 1.97, 0, 2.34, 0.12, 1.78, neginAccent, neginComplex);
       for (let floor = 0; floor < 3; floor += 1) {
+        addBox(0, 0.17 + floor * 0.53, 0.846, 2.18, 0.035, 0.025, neginAccent, neginComplex);
         for (const x of [-0.78, -0.26, 0.26, 0.78]) {
           addBox(x, 0.42 + floor * 0.53, 0.833, 0.34, 0.28, 0.035, neginGlass, neginComplex);
         }
@@ -486,6 +606,20 @@ if (MAP) {
       roof.position.y = clubHeight + 0.12;
       roof.scale.set(clubWidth + 0.22, 0.24, clubDepth + 0.18);
       club.add(roof);
+      const entryCanopy = new THREE.Mesh(sharedBox, new THREE.MeshStandardMaterial({ color: 0x323b34, roughness: 0.7 }));
+      entryCanopy.position.set(0, 0.87, clubDepth / 2 + 0.28);
+      entryCanopy.scale.set(0.9, 0.09, 0.52);
+      club.add(entryCanopy);
+      const entrance = new THREE.Mesh(sharedBox, clubWindowMaterial);
+      entrance.position.set(0, 0.47, clubDepth / 2 + 0.035);
+      entrance.scale.set(0.56, 0.78, 0.05);
+      club.add(entrance);
+      for (const side of [-1, 1]) {
+        const rooftopUnit = new THREE.Mesh(sharedBox, materials.darkWindow);
+        rooftopUnit.position.set(side * 0.56, clubHeight + 0.32, 0.18);
+        rooftopUnit.scale.set(0.32, 0.18, 0.3);
+        club.add(rooftopUnit);
+      }
 
       const makeTextSprite = (text, opts = {}) => {
         const width = 512;
@@ -573,6 +707,12 @@ if (MAP) {
         badge.position.set(x + labelOffset[0], 1.08, z + labelOffset[1]);
         return badge;
       };
+      const vipSign = makeTextSprite("VIP", { scale: 0.92, fontSize: 56, border: "#c3a3d7", background: "rgba(35, 25, 42, .96)" });
+      vipSign.position.set(vipBakerySite.x, 1.62, vipBakerySite.z + 0.4);
+      const stationSign = makeTextSprite("24H", { scale: 0.86, fontSize: 50, border: "#c3a3d7", background: "rgba(35, 25, 42, .96)" });
+      stationSign.position.set(petrolStationSite.x + 0.88, 1.34, petrolStationSite.z + 0.57);
+      const neginSign = makeTextSprite("NEGIN", { scale: 1.12, fontSize: 48, border: "#69aaa1", background: "rgba(18, 37, 37, .96)" });
+      neginSign.position.set(neginSite.x, 2.45, neginSite.z + 0.9);
       addPin(ehsanRoundaboutSite.x, ehsanRoundaboutSite.z, "میدان احسان", 0xf4a340, 2.15, [-1.15, 0.42]);
       addPin(pedestrianBridgeSite.x, pedestrianBridgeSite.z, "پل عابر • ۲۰م جنوب", 0xf4a340, 2.65, [-2.8, -0.32]);
       addPin(petrolStationSite.x, petrolStationSite.z, "پمپ بنزین", 0xc3a3d7, 2.0, [0.6, 0.35]);

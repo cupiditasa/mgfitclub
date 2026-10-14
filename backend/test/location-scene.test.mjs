@@ -9,10 +9,11 @@ test('public location diorama follows the supplied MG Maps pin and street layout
   const html = read('index.html');
   const scene = read('assets/location-scene.js');
   const serviceWorker = read('sw.js');
+  const styles = read('styles.css');
 
   assert.match(html, /data-location-lat="29\.6745805" data-location-lon="52\.4546395"/);
   assert.match(html, /maps\.app\.goo\.gl\/HoLtoDqxUWRN86bd7/);
-  assert.match(html, /location-scene\.js\?v=20261014-location-detail-v14/);
+  assert.match(html, /location-scene\.js\?v=20261014-location-detail-v15/);
   assert.match(scene, /name: "Rajai Blvd"/);
   assert.match(scene, /name: "Ehsan Overpass"/);
   assert.match(scene, /name: "Jazayeri St"/);
@@ -26,6 +27,17 @@ test('public location diorama follows the supplied MG Maps pin and street layout
   assert.match(scene, /points: \[\[-0\.1, 8\.05\], \[0\.68, 7\.88\]/);
   assert.match(scene, /Parastar Blvd.*\[-1\.92, 8\.82\]/);
   assert.match(scene, /name: "Alley 52"/);
+  assert.match(scene, /const sidewalkOffset = medianWidth \/ 2 \+ carriagewayWidth \+ 0\.095/);
+  assert.match(scene, /new THREE\.InstancedMesh\(windowGeometry, materials\.window, buildings\.length \* 12\)/);
+  assert.match(scene, /const lampPoleGeometry = new THREE\.CylinderGeometry/);
+  assert.match(scene, /addCar\(-carriagewayOffset, -5\.6, 0x627c83/);
+  assert.match(scene, /const handrail = addBox/);
+  assert.match(scene, /Marked crossings sit just beyond the bridge deck/);
+  assert.match(scene, /const hose = new THREE\.Mesh\(new THREE\.TorusGeometry/);
+  assert.match(scene, /makeTextSprite\("VIP"/);
+  assert.match(scene, /makeTextSprite\("NEGIN"/);
+  assert.match(scene, /const entryCanopy = new THREE\.Mesh/);
+  assert.match(scene, /const roundaboutCurb = new THREE\.Mesh/);
   assert.match(scene, /pedestrianBridgeSite\.x \+ laneCenter \+ stripeOffset/);
   assert.match(scene, /x: \(clubSite\.x \+ pedestrianBridgeSite\.x\) \/ 2/);
   assert.match(scene, /color: 0x8d72a9/);
@@ -35,7 +47,8 @@ test('public location diorama follows the supplied MG Maps pin and street layout
   assert.match(scene, /mapWorld\.scale\.x = -1/);
   assert.match(scene, /const defaultTheta = -2\.9/);
   assert.match(scene, /club\.rotation\.y = Math\.PI \/ 2/);
-  assert.match(serviceWorker, /mg-fitclub-v20261014-location-detail-v14/);
-  assert.match(serviceWorker, /styles\.css\?v=20261014-location-detail-v14/);
-  assert.match(serviceWorker, /location-scene\.js\?v=20261014-location-detail-v14/);
+  assert.match(styles, /\.location \{\s+grid-template-columns: minmax\(0, 1fr\);\s+gap: 2\.5rem;\s+min-height: auto;/);
+  assert.match(serviceWorker, /mg-fitclub-v20261014-location-detail-v15/);
+  assert.match(serviceWorker, /styles\.css\?v=20261014-location-detail-v15/);
+  assert.match(serviceWorker, /location-scene\.js\?v=20261014-location-detail-v15/);
 });
