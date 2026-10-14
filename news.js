@@ -212,13 +212,13 @@ function render(data) {
 }
 
 async function loadNews() {
-  const res = await fetch("https://api.mgfitclub.ir/api/news", { cache: "no-store" });
+  const res = await fetch("/api/api01/api/news", { cache: "no-store" });
   if (!res.ok) throw new Error("news failed");
   render(await res.json());
 }
 
 async function loadEditorial() {
-  const res = await fetch("https://api.mgfitclub.ir/api/news/editorial", { cache: "no-store" });
+  const res = await fetch("/api/api01/api/news/editorial", { cache: "no-store" });
   if (!res.ok) throw new Error("editorial news failed");
   const data = await res.json();
   editorialStories = Array.isArray(data.articles) ? data.articles : [];

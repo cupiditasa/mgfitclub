@@ -2634,7 +2634,7 @@ $('#savePrivateWeek').onclick=async event=>{
   if(!exercises.length){toast('برنامه‌ای برای ذخیره پیدا نشد',true);return}
   button.disabled=true;button.textContent='در حال ذخیره…';
   try{
-    const response=await fetch('https://api.mgfitclub.ir/api/workouts/saved',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+token},body:JSON.stringify({requestKey:crypto.randomUUID(),title:'برنامهٔ هفتگی · '+weekFocus+' · '+weekGoal,focus:weekFocus,goal:weekGoal,exercises})});
+    const response=await fetch('/api/api01/api/workouts/saved',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+token},body:JSON.stringify({requestKey:crypto.randomUUID(),title:'برنامهٔ هفتگی · '+weekFocus+' · '+weekGoal,focus:weekFocus,goal:weekGoal,exercises})});
     const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.error||'save_failed');
     toast('برنامه در بخش خصوصی و داشبوردت ذخیره شد');
   }catch(error){toast(error.message==='athlete_only'?'برای ذخیره باید با حساب ورزشکار وارد شوی':error.message==='workouts_disabled'?'ذخیرهٔ برنامه هنوز روی سرور فعال نشده است':'ذخیره انجام نشد؛ اتصال حساب را بررسی و دوباره تلاش کن',true)}

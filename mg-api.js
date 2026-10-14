@@ -104,7 +104,9 @@
   const API_BASE =
     window.MG_API_BASE ||
     document.documentElement.dataset.apiBase ||
-    "https://api.mgfitclub.ir";
+    (location.hostname === "staff.mgfitclub.ir"
+      ? "https://api.mgfitclub.ir"
+      : "/api/api01");
 
   const readJson = async (response) => {
     const data = await response.json().catch(() => ({}));

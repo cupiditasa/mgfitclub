@@ -68,8 +68,9 @@ test("staff login route loads the shared login page while retaining its URL", ()
   assert.match(apiSource, /staff\\\/login/);
 });
 
-test("account login sends API requests to the API subdomain", () => {
-  assert.match(accountSource, /window\.MG_API_BASE\s*=\s*["']https:\/\/api\.mgfitclub\.ir["']/);
+test("account login sends API requests through the same-origin path gateway", () => {
+  assert.match(accountSource, /window\.MG_API_BASE\s*=\s*location\.hostname\s*===\s*["']staff\.mgfitclub\.ir["']\s*\?/);
+  assert.match(accountSource, /:\s*["']\/api\/api01["']/);
   assert.match(accountSource, /const API = window\.MG_API_BASE \|\|/);
 });
 

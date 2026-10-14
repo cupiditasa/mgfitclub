@@ -1,0 +1,32 @@
+[Unit]
+Description=MG FitClub API
+After=network.target
+
+[Service]
+Type=simple
+User=mgapi
+Group=mgapi
+WorkingDirectory=/opt/mgfitclub/current/backend
+EnvironmentFile=/etc/mg-fitclub-api.env
+ExecStart=/opt/node-v24.21.0-linux-x64/bin/node /opt/mgfitclub/current/backend/server.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/lib/mg-fitclub-api /var/backups/mg-fitclub-api
+MemoryMax=768M
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target

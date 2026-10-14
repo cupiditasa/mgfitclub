@@ -1,1 +1,16 @@
-{"name":"mg-fitclub-api","private":true,"type":"module","scripts":{"test":"node --test test/*.test.mjs"}}
+{
+  "name": "mg-fitclub-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "start": "node server.js",
+    "check": "node --check worker.js && node --check sqlite-d1.js && node --check server.js && node --check backup-database.js && node --check import-d1-export.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "13.0.3"
+  },
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true
+  }
+}

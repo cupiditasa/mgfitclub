@@ -1193,7 +1193,7 @@
         if (options.body !== undefined) headers.set('content-type', 'application/json');
         const token = localStorage.getItem('mg_session');
         if (token) headers.set('authorization', `Bearer ${token}`);
-        const apiBase = document.documentElement.dataset.apiBase || window.MG_API_BASE || 'https://api.mgfitclub.ir';
+        const apiBase = document.documentElement.dataset.apiBase || window.MG_API_BASE || (location.hostname === 'staff.mgfitclub.ir' ? 'https://api.mgfitclub.ir' : '/api/api01');
         const response = await fetch(apiBase + path, { ...options, cache:'no-store', headers,
           body: options.body === undefined ? undefined : JSON.stringify(options.body) });
         const data = await response.json().catch(() => ({}));

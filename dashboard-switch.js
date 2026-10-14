@@ -84,7 +84,8 @@
       status.hidden = false;
       status.textContent = "در حال بررسی نشست ورود…";
       try {
-        const response = await fetch("https://api.mgfitclub.ir/api/me", {
+        const apiBase = location.hostname === "staff.mgfitclub.ir" ? "https://api.mgfitclub.ir" : "/api/api01";
+        const response = await fetch(apiBase + "/api/me", {
           cache: "no-store",
           headers: { authorization: "Bearer " + session },
         });
