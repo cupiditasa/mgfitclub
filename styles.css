@@ -1887,7 +1887,7 @@ img {
   color: var(--white);
   background: rgba(5, 7, 5, .84);
   backdrop-filter: blur(16px);
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .map--real figcaption span {
@@ -1898,6 +1898,24 @@ img {
 .map--real figcaption b {
   font-size: .78rem;
   font-weight: 600;
+}
+
+.map--real figcaption a {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  flex: 0 0 auto;
+  color: var(--acid);
+  font-size: .7rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.map--real figcaption a:hover,
+.map--real figcaption a:focus-visible {
+  color: var(--white);
+  text-decoration: underline;
+  text-underline-offset: .2em;
 }
 
 .map__grid {
@@ -2824,6 +2842,16 @@ img {
     bottom: 5.5rem;
     max-width: calc(100% - 1.4rem);
     font-size: .62rem;
+  }
+
+  .map--real figcaption {
+    flex-wrap: wrap;
+    gap: .4rem .8rem;
+    padding: .75rem .85rem;
+  }
+
+  .map--real figcaption span {
+    flex: 1 0 100%;
   }
 
   .register {

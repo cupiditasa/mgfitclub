@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const root = new URL('../../', import.meta.url);
+const read = (path) => fs.readFileSync(new URL(path, root), 'utf8');
+
+test('public location diorama follows the supplied MG Maps pin and street layout', () => {
+  const html = read('index.html');
+  const scene = read('assets/location-scene.js');
+  const serviceWorker = read('sw.js');
+
+  assert.match(html, /data-location-lat="29\.6745805" data-location-lon="52\.4546395"/);
+  assert.match(html, /maps\.app\.goo\.gl\/HoLtoDqxUWRN86bd7/);
+  assert.match(html, /location-scene\.js\?v=20261014-location-detail-v14/);
+  assert.match(scene, /name: "Rajai Blvd"/);
+  assert.match(scene, /name: "Ehsan Overpass"/);
+  assert.match(scene, /name: "Jazayeri St"/);
+  assert.match(scene, /name: "Baharan 8th"/);
+  assert.match(scene, /name: "50th Rajaei"/);
+  assert.match(scene, /club\.position\.set\(clubSite\.x, 0, clubSite\.z\)/);
+  assert.match(scene, /const MAP_METERS_PER_UNIT = 12/);
+  assert.match(scene, /const MEDIAN_WIDTH_METERS = 3\.5/);
+  assert.match(scene, /const ehsanRoundaboutSite = \{ x: -1\.18, z: 8\.05 \}/);
+  assert.match(scene, /z: clubSite\.z - 20 \/ MAP_METERS_PER_UNIT/);
+  assert.match(scene, /points: \[\[-0\.1, 8\.05\], \[0\.68, 7\.88\]/);
+  assert.match(scene, /Parastar Blvd.*\[-1\.92, 8\.82\]/);
+  assert.match(scene, /name: "Alley 52"/);
+  assert.match(scene, /pedestrianBridgeSite\.x \+ laneCenter \+ stripeOffset/);
+  assert.match(scene, /x: \(clubSite\.x \+ pedestrianBridgeSite\.x\) \/ 2/);
+  assert.match(scene, /color: 0x8d72a9/);
+  assert.match(scene, /addPin\(4\.55, 6\.55, "معالی‌آباد"/);
+  assert.match(scene, /text: "خیابان پرستار"/);
+  assert.match(scene, /else addRoad\(points, medianWidth, materials\.bridge, false, baseY\)/);
+  assert.match(scene, /mapWorld\.scale\.x = -1/);
+  assert.match(scene, /const defaultTheta = -2\.9/);
+  assert.match(scene, /club\.rotation\.y = Math\.PI \/ 2/);
+  assert.match(serviceWorker, /mg-fitclub-v20261014-location-detail-v14/);
+  assert.match(serviceWorker, /styles\.css\?v=20261014-location-detail-v14/);
+  assert.match(serviceWorker, /location-scene\.js\?v=20261014-location-detail-v14/);
+});

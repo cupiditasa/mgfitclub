@@ -45,6 +45,11 @@ if (MAP) {
       fillLight.position.set(11, 9, -12);
       scene.add(fillLight);
 
+      // Keep the north-up map convention (east on screen-right) in the oblique view.
+      const mapWorld = new THREE.Group();
+      mapWorld.scale.x = -1;
+      scene.add(mapWorld);
+
       const sharedBox = new THREE.BoxGeometry(1, 1, 1);
       const materials = {
         slab: new THREE.MeshStandardMaterial({ color: 0x29352d, roughness: 0.9 }),
@@ -53,6 +58,10 @@ if (MAP) {
         road: new THREE.MeshStandardMaterial({ color: 0x687782, roughness: 0.88 }),
         sideRoad: new THREE.MeshStandardMaterial({ color: 0x89949a, roughness: 0.9 }),
         line: new THREE.MeshBasicMaterial({ color: 0xe8e4d2 }),
+        median: new THREE.MeshStandardMaterial({ color: 0x78945f, roughness: 0.96 }),
+        medianPlant: new THREE.MeshStandardMaterial({ color: 0x3f6948, roughness: 0.94 }),
+        bridge: new THREE.MeshStandardMaterial({ color: 0xc8c9bf, roughness: 0.82 }),
+        bridgeRail: new THREE.MeshStandardMaterial({ color: 0x495752, metalness: 0.22, roughness: 0.68 }),
         lime: new THREE.MeshStandardMaterial({ color: 0xc6ff3f, roughness: 0.55 }),
         park: new THREE.MeshStandardMaterial({ color: 0x8fab72, roughness: 0.95 }),
         tree: new THREE.MeshStandardMaterial({ color: 0x497354, roughness: 0.92 }),
@@ -60,7 +69,7 @@ if (MAP) {
         window: new THREE.MeshStandardMaterial({ color: 0x8ba2a2, roughness: 0.4, metalness: 0.14 }),
         darkWindow: new THREE.MeshStandardMaterial({ color: 0x31413e, roughness: 0.42, metalness: 0.12 }),
       };
-      const addBox = (x, y, z, sx, sy, sz, material, parent = scene) => {
+      const addBox = (x, y, z, sx, sy, sz, material, parent = mapWorld) => {
         const mesh = new THREE.Mesh(sharedBox, material);
         mesh.position.set(x, y, z);
         mesh.scale.set(sx, sy, sz);
@@ -70,12 +79,34 @@ if (MAP) {
         return mesh;
       };
 
-      // A compact neighborhood diorama. Street labels and named landmarks mirror
-      // the club's supplied location artwork; proportions are illustrative, not survey data.
-      addBox(0, -0.34, 0, 16.8, 0.42, 20.4, materials.slab);
-      addBox(0, -0.105, 0, 16.45, 0.08, 20.05, materials.ground);
+      // North-up neighborhood diorama aligned to the supplied Google Maps pin.
+      // Latitude/longitude is exact; street geometry remains illustrative, not survey data.
+      const clubSite = {
+        latitude: Number(MAP.dataset.locationLat),
+        longitude: Number(MAP.dataset.locationLon),
+        x: 1.9,
+        z: -0.75,
+      };
+      const MAP_METERS_PER_UNIT = 12;
+      const ehsanRoundaboutSite = { x: -1.18, z: 8.05 };
+      const pedestrianBridgeSite = {
+        x: 0.08,
+        z: clubSite.z - 20 / MAP_METERS_PER_UNIT,
+      };
+      const vipBakerySite = {
+        x: (clubSite.x + pedestrianBridgeSite.x) / 2,
+        z: (clubSite.z + pedestrianBridgeSite.z) / 2,
+      };
+      const petrolStationSite = { x: -2.5, z: 5.1 };
+      const ehsanSportsSite = { x: -6.8, z: 6.4 };
+      const neginSite = { x: -3.75, z: 10.8 };
+      if (!Number.isFinite(clubSite.latitude) || !Number.isFinite(clubSite.longitude)) {
+        throw new Error("MG location pin coordinates are missing.");
+      }
+      addBox(0, -0.34, 0, 18.2, 0.42, 24.4, materials.slab);
+      addBox(0, -0.105, 0, 17.85, 0.08, 24.05, materials.ground);
 
-      const addRoad = (points, width, material, dashed = false) => {
+      const addRoad = (points, width, material, dashed = false, baseY = 0) => {
         const outline = [];
         const inner = [];
         const segments = [];
@@ -110,9 +141,9 @@ if (MAP) {
           geometry.setIndex(indices);
           geometry.computeVertexNormals();
           const mesh = new THREE.Mesh(geometry, mat);
-          mesh.position.y = 0.008;
+          mesh.position.y = 0.008 + baseY;
           mesh.rotation.x = 0;
-          scene.add(mesh);
+          mapWorld.add(mesh);
         };
         makeStrip(outline, 0, materials.curb);
         makeStrip(inner, 0.012, material);
@@ -126,18 +157,98 @@ if (MAP) {
                 new THREE.BoxGeometry(0.045, 0.018, Math.min(0.34, length / count * 0.62)),
                 materials.line,
               );
-              mark.position.set(a[0] + dx * t, 0.036, a[1] + dz * t);
+              mark.position.set(a[0] + dx * t, 0.036 + baseY, a[1] + dz * t);
               mark.rotation.y = angle;
-              scene.add(mark);
+              mapWorld.add(mark);
             }
           }
         }
       };
 
-      addRoad([[-7.55, -7.9], [-4.4, -4.25], [-1.25, -0.3], [2.1, 3.7], [6.95, 8.35]], 1.36, materials.road, true);
-      addRoad([[-7.8, -2.65], [-3.5, -1.75], [1.15, -0.55], [7.8, 0.65]], 0.82, materials.sideRoad, true);
-      addRoad([[-6.7, 7.75], [-3.35, 4.25], [0.2, 0.8], [3.4, -2.85], [6.6, -7.7]], 0.74, materials.sideRoad, false);
-      addRoad([[-7.7, 4.7], [-4.2, 4.05], [-0.6, 3.55], [3.2, 3.15], [7.7, 2.45]], 0.52, materials.sideRoad, false);
+      const MEDIAN_WIDTH_METERS = 3.5;
+      const medianWidth = MEDIAN_WIDTH_METERS / MAP_METERS_PER_UNIT;
+      const carriagewayWidth = 0.53;
+      const carriagewayOffset = medianWidth / 2 + carriagewayWidth / 2;
+      const offsetPath = (points, offset) => points.map((point, index) => {
+        const previous = points[Math.max(0, index - 1)];
+        const next = points[Math.min(points.length - 1, index + 1)];
+        const dx = next[0] - previous[0];
+        const dz = next[1] - previous[1];
+        const length = Math.hypot(dx, dz) || 1;
+        return [point[0] - dz / length * offset, point[1] + dx / length * offset];
+      });
+      const samplePath = (points, spacing) => {
+        const samples = [];
+        let carry = 0;
+        for (let index = 0; index < points.length - 1; index += 1) {
+          const a = points[index];
+          const b = points[index + 1];
+          const dx = b[0] - a[0];
+          const dz = b[1] - a[1];
+          const length = Math.hypot(dx, dz) || 1;
+          for (let distance = spacing - carry; distance < length; distance += spacing) {
+            const t = distance / length;
+            samples.push([a[0] + dx * t, a[1] + dz * t]);
+          }
+          carry = (carry + length) % spacing;
+        }
+        return samples;
+      };
+      const addLandscapedMedian = (points, baseY = 0, skipRoundabout = false) => {
+        addRoad(points, medianWidth, materials.median, false, baseY);
+        const plantGeometry = new THREE.SphereGeometry(0.075, 6, 5);
+        const plants = new THREE.InstancedMesh(plantGeometry, materials.medianPlant, 48);
+        const plant = new THREE.Object3D();
+        let count = 0;
+        for (const [x, z] of samplePath(points, 0.72)) {
+          if (skipRoundabout && Math.hypot(x - ehsanRoundaboutSite.x, z - ehsanRoundaboutSite.z) < 1.4) continue;
+          plant.position.set(x, 0.12 + baseY, z);
+          plant.scale.set(1.2, 0.72, 0.82);
+          plant.updateMatrix();
+          plants.setMatrixAt(count++, plant.matrix);
+        }
+        plants.count = count;
+        plants.instanceMatrix.needsUpdate = true;
+        mapWorld.add(plants);
+      };
+      const addDividedRoad = (points, baseY = 0, landscaped = true) => {
+        addRoad(offsetPath(points, -carriagewayOffset), carriagewayWidth, materials.road, true, baseY);
+        addRoad(offsetPath(points, carriagewayOffset), carriagewayWidth, materials.road, true, baseY);
+        if (landscaped) addLandscapedMedian(points, baseY, true);
+        else addRoad(points, medianWidth, materials.bridge, false, baseY);
+      };
+
+      const neighborhoodRoads = [
+        // The raised Ehsan route and divided Rajai Boulevard are separate axes.
+        { name: "Ehsan Overpass", points: [[-1.35, 10.7], [-1.28, 9.2], [-1.2, 7.9], [-1.1, 6.2], [-0.92, 4.8]], width: 1.35, material: materials.road, dashed: true, divided: true, elevated: true },
+        { name: "Rajai Blvd", points: [[-0.02, 10], [-0.02, 8], [-0.01, 6], [0.02, 4], [0.04, 1.5], [0.1, -1], [0.18, -4], [0.26, -7], [0.34, -10]], width: 1.35, material: materials.road, dashed: true, divided: true },
+        { name: "Maali Abad Bypass", points: [[-0.1, 8.05], [0.68, 7.88], [1.78, 7.46], [2.95, 7.08], [4.55, 6.55]], width: 0.62, material: materials.sideRoad, dashed: false },
+        { name: "Parastar Blvd", points: [[-1.92, 8.82], [-2.48, 9.38], [-3.15, 10.08], [-3.75, 10.7]], width: 0.68, material: materials.road, dashed: true },
+        { name: "Jazayeri St", points: [[-8.25, 0.95], [-6, 0.87], [-3.5, 0.78], [-1.45, 0.72], [-0.01, 0.7]], width: 0.55, material: materials.sideRoad, dashed: false },
+        { name: "Baharan 8th", points: [[0.12, 3.0], [1.45, 3.75], [2.9, 4.75], [4.6, 5.8]], width: 0.5, material: materials.sideRoad, dashed: false },
+        { name: "50th Rajaei", points: [[0.08, -2.15], [1.4, -3.05], [2.8, -4.25], [4.4, -5.45], [6.55, -6.8]], width: 0.54, material: materials.sideRoad, dashed: false },
+        { name: "Alley 52", points: [[0.24, -2.45], [1.5, -2.52], [2.8, -2.38], [4.25, -1.95]], width: 0.38, material: materials.sideRoad, dashed: false },
+        { name: "Baharan St", points: [[5.55, 10], [5.5, 5], [5.5, 0], [5.45, -5], [5.4, -10]], width: 0.52, material: materials.sideRoad, dashed: false },
+        { name: "1st Rahmati St", points: [[-7.35, -10], [-7.3, -5], [-7.25, 0], [-7.2, 5], [-7.15, 10]], width: 0.46, material: materials.sideRoad, dashed: false },
+      ];
+      for (const road of neighborhoodRoads) {
+        if (road.divided) addDividedRoad(road.points, road.elevated ? 0.62 : 0, !road.elevated);
+        else addRoad(road.points, road.width, road.material, road.dashed);
+      }
+
+      const distanceToPath = (x, z, points) => {
+        let nearest = Infinity;
+        for (let index = 0; index < points.length - 1; index += 1) {
+          const [ax, az] = points[index];
+          const [bx, bz] = points[index + 1];
+          const dx = bx - ax;
+          const dz = bz - az;
+          const lengthSquared = dx * dx + dz * dz || 1;
+          const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / lengthSquared));
+          nearest = Math.min(nearest, Math.hypot(x - (ax + t * dx), z - (az + t * dz)));
+        }
+        return nearest;
+      };
 
       const palette = [0xe6e4db, 0xd8d8cf, 0xcbd3cd, 0xd8cfbf, 0xc5d0cc];
       const roofPalette = [0xc4c9bf, 0xb5c0b8, 0xd3cbbd, 0xb1bfbd];
@@ -149,15 +260,17 @@ if (MAP) {
       const blockPalette = palette.map((color) => new THREE.MeshStandardMaterial({ color, roughness: 0.92 }));
       const roofMaterials = roofPalette.map((color) => new THREE.MeshStandardMaterial({ color, roughness: 0.96 }));
       const buildings = [];
-      const xs = [-6.5, -4.35, -2.15, 0.45, 2.8, 5.15, 6.8];
-      const zs = [-7.45, -5.15, -2.75, -0.35, 2.05, 4.45, 6.85, 8.1];
+      const xs = [-7.25, -6.25, -4.25, -3.1, -1.8, 2.95, 4.05, 6.55, 7.55];
+      const zs = [-8.5, -6.4, -4.25, -2.2, 2.0, 4.1, 6.5, 8.6, 10.8];
       for (const z of zs) {
         for (const x of xs) {
-          const mainRoadDistance = Math.abs(x - (0.72 * z - 1.1));
-          const crossingRoadDistance = Math.abs(z - (-0.23 * x - 0.9));
-          const parkDistance = Math.hypot(x - 4.65, z + 5.55);
-          const clubDistance = Math.hypot(x + 0.55, z - 1.0);
-          if (mainRoadDistance < 1.05 || crossingRoadDistance < 0.72 || parkDistance < 1.7 || clubDistance < 1.5) continue;
+          const roadClearance = neighborhoodRoads.some((road) => distanceToPath(x, z, road.points) < road.width / 2 + 0.52);
+          const clubDistance = Math.hypot(x - clubSite.x, z - clubSite.z);
+          const petrolDistance = Math.hypot(x - petrolStationSite.x, z - petrolStationSite.z);
+          const sportsDistance = Math.hypot(x - ehsanSportsSite.x, z - ehsanSportsSite.z);
+          const bakeryDistance = Math.hypot(x - vipBakerySite.x, z - vipBakerySite.z);
+          const neginDistance = Math.hypot(x - neginSite.x, z - neginSite.z);
+          if (roadClearance || clubDistance < 2.2 || petrolDistance < 1.8 || sportsDistance < 1.9 || bakeryDistance < 1.7 || neginDistance < 2.1) continue;
           if (random() < 0.12) continue;
           const width = 0.84 + random() * 0.56;
           const depth = 0.82 + random() * 0.62;
@@ -172,7 +285,7 @@ if (MAP) {
           roof.position.y = height + 0.035;
           roof.scale.set(width + 0.05, 0.07, depth + 0.05);
           group.add(roof);
-          scene.add(group);
+          mapWorld.add(group);
           buildings.push(group);
         }
       }
@@ -201,34 +314,142 @@ if (MAP) {
       }
       windows.count = windowIndex;
       windows.instanceMatrix.needsUpdate = true;
-      scene.add(windows);
+      mapWorld.add(windows);
 
-      // Mellat Park as a visible green pocket in the district.
-      addBox(4.65, -0.008, -5.55, 2.55, 0.065, 2.45, materials.park);
-      const trunkGeometry = new THREE.CylinderGeometry(0.055, 0.075, 0.35, 7);
-      const crownGeometry = new THREE.SphereGeometry(0.28, 9, 7);
-      const parkTrees = new THREE.Group();
-      for (let row = 0; row < 3; row += 1) {
-        for (let column = 0; column < 4; column += 1) {
-          const x = 3.75 + column * 0.57 + (row % 2) * 0.18;
-          const z = -6.25 + row * 0.66;
-          const trunk = new THREE.Mesh(trunkGeometry, new THREE.MeshStandardMaterial({ color: 0x79694a, roughness: 1 }));
-          trunk.position.set(x, 0.17, z);
-          parkTrees.add(trunk);
-          const crown = new THREE.Mesh(crownGeometry, row % 2 ? materials.tree : materials.treeLight);
-          crown.position.set(x, 0.51, z);
-          crown.scale.set(1, 0.88 + random() * 0.26, 1);
-          parkTrees.add(crown);
+      // Ehsan's ground-level circle sits under the raised through-route.
+      const roundaboutRoad = new THREE.Mesh(
+        new THREE.RingGeometry(0.64, 1.08, 48),
+        materials.road,
+      );
+      roundaboutRoad.rotation.x = -Math.PI / 2;
+      roundaboutRoad.position.set(ehsanRoundaboutSite.x, 0.026, ehsanRoundaboutSite.z);
+      mapWorld.add(roundaboutRoad);
+      const roundaboutIsland = new THREE.Mesh(
+        new THREE.CircleGeometry(0.62, 32),
+        materials.park,
+      );
+      roundaboutIsland.rotation.x = -Math.PI / 2;
+      roundaboutIsland.position.set(ehsanRoundaboutSite.x, 0.035, ehsanRoundaboutSite.z);
+      mapWorld.add(roundaboutIsland);
+      const islandTreeGeometry = new THREE.ConeGeometry(0.14, 0.42, 7);
+      for (const [dx, dz] of [[0, 0], [-0.26, 0.18], [0.24, -0.2]]) {
+        const islandTree = new THREE.Mesh(islandTreeGeometry, materials.tree);
+        islandTree.position.set(ehsanRoundaboutSite.x + dx, 0.25, ehsanRoundaboutSite.z + dz);
+        mapWorld.add(islandTree);
+      }
+
+      // Short piers and parapets make the Ehsan route read as a real overpass.
+      for (const z of [6.25, 9.9]) {
+        for (const dx of [-0.4, 0.4]) {
+          addBox(ehsanRoundaboutSite.x + dx, 0.32, z, 0.16, 0.64, 0.18, materials.bridge);
         }
       }
-      scene.add(parkTrees);
+      for (const dx of [-0.76, 0.76]) {
+        addBox(ehsanRoundaboutSite.x + dx, 0.92, 8.05, 0.07, 0.28, 4.2, materials.bridgeRail);
+      }
+
+      // The pedestrian bridge is placed 20m south of the club pin along the street axis.
+      const footbridge = new THREE.Group();
+      footbridge.position.set(pedestrianBridgeSite.x, 0, pedestrianBridgeSite.z);
+      mapWorld.add(footbridge);
+      for (const laneCenter of [-carriagewayOffset, carriagewayOffset]) {
+        for (const stripeOffset of [-0.18, -0.06, 0.06, 0.18]) {
+          addBox(
+            pedestrianBridgeSite.x + laneCenter + stripeOffset,
+            0.038,
+            pedestrianBridgeSite.z,
+            0.075,
+            0.018,
+            0.12,
+            materials.line,
+          );
+        }
+      }
+      addBox(0.38, 0.78, 0, 3.3, 0.12, 0.34, materials.bridge, footbridge);
+      addBox(0.38, 0.99, -0.15, 3.3, 0.08, 0.07, materials.bridgeRail, footbridge);
+      addBox(0.38, 0.99, 0.15, 3.3, 0.08, 0.07, materials.bridgeRail, footbridge);
+      for (const x of [-0.42, 1.18]) {
+        addBox(x, 0.35, 0, 0.12, 0.7, 0.12, materials.bridge, footbridge);
+      }
+      for (const side of [-1, 1]) {
+        const stair = addBox(side * 2.1, 0.37, 0, 0.92, 0.1, 0.29, materials.bridge, footbridge);
+        stair.rotation.z = side * -0.2;
+        for (let step = 0; step < 6; step += 1) {
+          addBox(side * (1.2 + step * 0.18), 0.15 + step * 0.08, 0, 0.19, 0.07, 0.32, materials.bridge, footbridge);
+        }
+      }
+
+      // Nearby reference buildings from the supplied pin: the petrol station
+      // north-west of the club and Ehsan sports complex farther west.
+      const petrolStation = new THREE.Group();
+      petrolStation.position.set(petrolStationSite.x, 0, petrolStationSite.z);
+      mapWorld.add(petrolStation);
+      const stationPad = new THREE.MeshStandardMaterial({ color: 0xaaa2bb, roughness: 0.88 });
+      const stationCanopy = new THREE.MeshStandardMaterial({ color: 0xd8c8e7, roughness: 0.62 });
+      const stationAccent = new THREE.MeshStandardMaterial({ color: 0x8d72a9, roughness: 0.56 });
+      addBox(0, 0.035, 0, 2.15, 0.07, 1.62, stationPad, petrolStation);
+      addBox(0, 0.79, -0.05, 1.72, 0.16, 1.22, stationCanopy, petrolStation);
+      for (const x of [-0.62, 0.62]) {
+        for (const z of [-0.48, 0.38]) addBox(x, 0.41, z, 0.065, 0.76, 0.065, materials.bridgeRail, petrolStation);
+      }
+      for (const x of [-0.4, 0.4]) {
+        addBox(x, 0.25, 0, 0.18, 0.36, 0.2, materials.bridge, petrolStation);
+        addBox(x, 0.31, 0.106, 0.11, 0.1, 0.025, stationAccent, petrolStation);
+        addBox(x - 0.11, 0.3, -0.12, 0.055, 0.18, 0.035, stationAccent, petrolStation);
+      }
+      addBox(-0.82, 0.28, -0.53, 0.52, 0.42, 0.5, materials.bridge, petrolStation);
+      addBox(-0.82, 0.51, -0.53, 0.58, 0.08, 0.56, stationAccent, petrolStation);
+      addBox(0.88, 0.76, 0.72, 0.8, 0.58, 0.28, materials.bridge, petrolStation);
+      addBox(0.88, 0.92, 0.57, 0.66, 0.17, 0.045, stationAccent, petrolStation);
+
+      const sportsComplex = new THREE.Group();
+      sportsComplex.position.set(ehsanSportsSite.x, 0, ehsanSportsSite.z);
+      mapWorld.add(sportsComplex);
+      addBox(0, 0.035, 0, 2.15, 0.07, 1.75, materials.park, sportsComplex);
+      addBox(0, 0.4, 0, 1.72, 0.68, 1.28, materials.darkWindow, sportsComplex);
+      addBox(0, 0.77, 0, 1.84, 0.09, 1.4, materials.slab, sportsComplex);
+      for (const x of [-0.52, 0, 0.52]) addBox(x, 0.4, 0.655, 0.24, 0.31, 0.025, materials.window, sportsComplex);
+
+      // VIP pastry shop between the club and the pedestrian crossing.
+      const vipBakery = new THREE.Group();
+      vipBakery.position.set(vipBakerySite.x, 0, vipBakerySite.z);
+      mapWorld.add(vipBakery);
+      const bakeryBody = new THREE.MeshStandardMaterial({ color: 0xd5c5b8, roughness: 0.78 });
+      const bakeryAwning = new THREE.MeshStandardMaterial({ color: 0xc3a3d7, roughness: 0.58 });
+      const bakeryWindow = new THREE.MeshStandardMaterial({ color: 0x9fb7b8, roughness: 0.28, metalness: 0.16, emissive: 0x172522 });
+      addBox(0, 0.4, 0, 0.92, 0.8, 0.78, bakeryBody, vipBakery);
+      addBox(0, 0.83, 0.42, 1.04, 0.12, 0.08, bakeryAwning, vipBakery);
+      addBox(-0.18, 0.42, 0.401, 0.36, 0.34, 0.035, bakeryWindow, vipBakery);
+      addBox(0.24, 0.42, 0.401, 0.32, 0.34, 0.035, bakeryWindow, vipBakery);
+      addBox(0, 0.99, 0.43, 0.82, 0.22, 0.06, stationAccent, vipBakery);
+      const bakeryCake = new THREE.Mesh(new THREE.SphereGeometry(0.13, 9, 7), new THREE.MeshStandardMaterial({ color: 0xf5e9d0, roughness: 0.52 }));
+      bakeryCake.position.set(-0.32, 0.68, 0.44);
+      bakeryCake.scale.set(1.2, 0.55, 0.62);
+      vipBakery.add(bakeryCake);
+
+      // Distant Negin Fars landmark: kept visually smaller than the nearby blocks.
+      const neginComplex = new THREE.Group();
+      neginComplex.position.set(neginSite.x, 0, neginSite.z);
+      mapWorld.add(neginComplex);
+      const neginBody = new THREE.MeshStandardMaterial({ color: 0xd5d0c2, roughness: 0.74 });
+      const neginGlass = new THREE.MeshStandardMaterial({ color: 0x6d9394, roughness: 0.28, metalness: 0.2, emissive: 0x132627 });
+      const neginAccent = new THREE.MeshStandardMaterial({ color: 0x69aaa1, roughness: 0.58 });
+      addBox(0, 0.96, 0, 2.2, 1.92, 1.65, neginBody, neginComplex);
+      addBox(0, 1.97, 0, 2.34, 0.12, 1.78, neginAccent, neginComplex);
+      for (let floor = 0; floor < 3; floor += 1) {
+        for (const x of [-0.78, -0.26, 0.26, 0.78]) {
+          addBox(x, 0.42 + floor * 0.53, 0.833, 0.34, 0.28, 0.035, neginGlass, neginComplex);
+        }
+      }
+      addBox(0, 2.12, 0, 1.35, 0.22, 0.06, materials.bridgeRail, neginComplex);
 
       // Main MG FitClub building: multi-floor facade, warm cladding, windows and rooftop sign.
       const club = new THREE.Group();
-      club.position.set(-0.55, 0, 1.0);
-      scene.add(club);
-      const clubWidth = 2.28;
-      const clubDepth = 2.0;
+      club.position.set(clubSite.x, 0, clubSite.z);
+      club.rotation.y = Math.PI / 2;
+      mapWorld.add(club);
+      const clubWidth = 2.05;
+      const clubDepth = 1.86;
       const clubHeight = 3.5;
       const clubBodyMaterial = new THREE.MeshStandardMaterial({ color: 0x805331, roughness: 0.74 });
       const clubBody = new THREE.Mesh(sharedBox, clubBodyMaterial);
@@ -300,7 +521,7 @@ if (MAP) {
         texture.minFilter = THREE.LinearFilter;
         const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true }));
         sprite.scale.set(opts.scale || 2.6, (opts.scale || 2.6) * height / width, 1);
-        scene.add(sprite);
+        mapWorld.add(sprite);
         return sprite;
       };
 
@@ -336,36 +557,46 @@ if (MAP) {
       const pinMaterial = new THREE.MeshStandardMaterial({ color: 0xc6ff3f, emissive: 0x455b0e, roughness: 0.4 });
       const markerGeometry = new THREE.SphereGeometry(0.105, 12, 9);
       const ringGeometry = new THREE.TorusGeometry(0.23, 0.022, 6, 24);
-      const addPin = (x, z, label, color = 0xc6ff3f, tagScale = 2.6) => {
+      const addPin = (x, z, label, color = 0xc6ff3f, tagScale = 2.6, labelOffset = [0, 0]) => {
         const material = color === 0xc6ff3f ? pinMaterial : new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.16 });
         const stem = new THREE.Mesh(pinGeometry, material);
         stem.position.set(x, 0.34, z);
-        scene.add(stem);
+        mapWorld.add(stem);
         const ball = new THREE.Mesh(markerGeometry, material);
         ball.position.set(x, 0.58, z);
-        scene.add(ball);
+        mapWorld.add(ball);
         const ring = new THREE.Mesh(ringGeometry, material);
         ring.position.set(x, 0.045, z);
         ring.rotation.x = Math.PI / 2;
-        scene.add(ring);
+        mapWorld.add(ring);
         const badge = makeTextSprite(label, { scale: tagScale, border: `#${color.toString(16).padStart(6, "0")}` });
-        badge.position.set(x, 1.08, z);
+        badge.position.set(x + labelOffset[0], 1.08, z + labelOffset[1]);
         return badge;
       };
-      addPin(-5.8, 1.55, "پل احسان", 0xf4a340, 2.15);
-      addPin(-5.3, -7.35, "معالی‌آباد", 0xf4a340, 2.45);
-      addPin(5.85, 7.6, "فرهنگ‌شهر", 0xf4a340, 2.45);
-      addPin(4.65, -5.55, "پارک ملت", 0x84d874, 2.1);
+      addPin(ehsanRoundaboutSite.x, ehsanRoundaboutSite.z, "میدان احسان", 0xf4a340, 2.15, [-1.15, 0.42]);
+      addPin(pedestrianBridgeSite.x, pedestrianBridgeSite.z, "پل عابر • ۲۰م جنوب", 0xf4a340, 2.65, [-2.8, -0.32]);
+      addPin(petrolStationSite.x, petrolStationSite.z, "پمپ بنزین", 0xc3a3d7, 2.0, [0.6, 0.35]);
+      addPin(ehsanSportsSite.x, ehsanSportsSite.z, "ورزشی احسان", 0x84d874, 2.2, [-0.55, -0.65]);
+      addPin(vipBakerySite.x, vipBakerySite.z, "شیرینی VIP", 0xc3a3d7, 1.9, [3.0, -0.18]);
+      addPin(neginSite.x, neginSite.z, "مجتمع نگین", 0x69aaa1, 2.2, [-2.4, 0.55]);
+      addPin(4.55, 6.55, "معالی‌آباد", 0xf4a340, 2.15, [1.15, 0.25]);
+      addPin(7.05, 8.65, "فرهنگ‌شهر", 0xf4a340, 2.35);
 
-      const dena = makeTextSprite("Dena St", { scale: 1.9, background: "rgba(36, 48, 51, .94)", border: "#b7cbd0", foreground: "#eef2e8", fontSize: 38 });
-      dena.position.set(4.5, 0.22, -1.25);
-      const baharan = makeTextSprite("Baharan St", { scale: 2.0, background: "rgba(36, 48, 51, .94)", border: "#b7cbd0", foreground: "#eef2e8", fontSize: 37 });
-      baharan.position.set(3.8, 0.24, 2.9);
-      const rajai = makeTextSprite("50th Rajai", { scale: 2.0, background: "rgba(36, 48, 51, .94)", border: "#b7cbd0", foreground: "#eef2e8", fontSize: 36 });
-      rajai.position.set(3.1, 0.24, 6.95);
+      const roadLabelStyle = { background: "rgba(36, 48, 51, .94)", border: "#b7cbd0", foreground: "#eef2e8", fontSize: 34 };
+      const roadLabels = [
+        { text: "بلوار رجایی", x: 0.95, z: -4.25, scale: 1.8 },
+        { text: "کوچه ۵۲", x: 5.25, z: -3.05, scale: 1.6 },
+        { text: "خیابان پرستار", x: -2.75, z: 9.72, scale: 2.0 },
+        { text: "کنارگذر", x: 2.45, z: 7.1, scale: 1.8 },
+      ];
+      for (const label of roadLabels) {
+        const sprite = makeTextSprite(label.text, { ...roadLabelStyle, scale: label.scale });
+        sprite.position.set(label.x, 0.22, label.z);
+      }
 
-      const target = new THREE.Vector3(0, 0.1, 0);
-      const orbit = { theta: 0.62, phi: 0.94, radius: 33 };
+      const target = new THREE.Vector3(-clubSite.x, 0.1, clubSite.z);
+      const defaultTheta = -2.9; // approach from the south with a slight west angle; keep north nearly upright
+      const orbit = { theta: defaultTheta, phi: 0.94, radius: 33 };
       let userAdjustedView = false;
       const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
       const updateCamera = () => {
@@ -384,7 +615,7 @@ if (MAP) {
         camera.fov = narrow ? 50 : 34;
         if (!userAdjustedView) {
           orbit.radius = narrow ? 37 : 33;
-          target.z = narrow ? 1.6 : 0;
+          target.set(-clubSite.x, 0.1, clubSite.z + (narrow ? 1.6 : 0));
         }
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
@@ -455,8 +686,8 @@ if (MAP) {
 
       const reset = () => {
         const narrow = viewport.clientWidth / Math.max(1, viewport.clientHeight) < 0.82;
-        target.set(0, 0.1, narrow ? 1.6 : 0);
-        orbit.theta = 0.62;
+        target.set(-clubSite.x, 0.1, clubSite.z + (narrow ? 1.6 : 0));
+        orbit.theta = defaultTheta;
         orbit.phi = 0.94;
         userAdjustedView = false;
         orbit.radius = narrow ? 37 : 33;
@@ -468,7 +699,7 @@ if (MAP) {
         if (!button) return;
         const action = button.dataset.mapAction;
         if (action === "focus") {
-          target.set(-0.55, 0.8, 1.0);
+          target.set(-clubSite.x, 0.8, clubSite.z);
           orbit.radius = 22;
         } else if (action === "zoom-in") orbit.radius *= 0.84;
         else if (action === "zoom-out") orbit.radius *= 1.19;
