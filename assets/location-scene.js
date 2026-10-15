@@ -91,14 +91,16 @@ if (MAP) {
         z: -0.75,
       };
       const MAP_METERS_PER_UNIT = 12;
+      const CLUB_TO_BRIDGE_SOUTH_METERS = 20;
+      const VIP_BAKERY_PROGRESS = 0.65;
       const ehsanRoundaboutSite = { x: -1.18, z: 8.05 };
       const pedestrianBridgeSite = {
         x: 0.08,
-        z: clubSite.z - 20 / MAP_METERS_PER_UNIT,
+        z: clubSite.z - CLUB_TO_BRIDGE_SOUTH_METERS / MAP_METERS_PER_UNIT,
       };
       const vipBakerySite = {
-        x: (clubSite.x + pedestrianBridgeSite.x) / 2,
-        z: (clubSite.z + pedestrianBridgeSite.z) / 2,
+        x: clubSite.x + (pedestrianBridgeSite.x - clubSite.x) * VIP_BAKERY_PROGRESS,
+        z: clubSite.z + (pedestrianBridgeSite.z - clubSite.z) * VIP_BAKERY_PROGRESS,
       };
       const petrolStationSite = { x: -2.5, z: 5.1 };
       const ehsanSportsSite = { x: -6.8, z: 6.4 };
@@ -527,18 +529,20 @@ if (MAP) {
       // VIP pastry shop between the club and the pedestrian crossing.
       const vipBakery = new THREE.Group();
       vipBakery.position.set(vipBakerySite.x, 0, vipBakerySite.z);
+      vipBakery.rotation.y = -Math.PI / 2;
       mapWorld.add(vipBakery);
       const bakeryBody = new THREE.MeshStandardMaterial({ color: 0xd5c5b8, roughness: 0.78 });
       const bakeryAwning = new THREE.MeshStandardMaterial({ color: 0xc3a3d7, roughness: 0.58 });
       const bakeryWindow = new THREE.MeshStandardMaterial({ color: 0x9fb7b8, roughness: 0.28, metalness: 0.16, emissive: 0x172522 });
-      addBox(0, 0.4, 0, 0.92, 0.8, 0.78, bakeryBody, vipBakery);
-      addBox(0, 0.83, 0.42, 1.04, 0.12, 0.08, bakeryAwning, vipBakery);
-      addBox(-0.18, 0.42, 0.401, 0.36, 0.34, 0.035, bakeryWindow, vipBakery);
-      addBox(0.24, 0.42, 0.401, 0.32, 0.34, 0.035, bakeryWindow, vipBakery);
-      addBox(-0.45, 0.42, 0.43, 0.055, 0.38, 0.07, stationAccent, vipBakery);
-      addBox(0.45, 0.42, 0.43, 0.055, 0.38, 0.07, stationAccent, vipBakery);
-      addBox(0, 0.2, 0.43, 0.16, 0.38, 0.055, bakeryBody, vipBakery);
-      addBox(0, 0.99, 0.43, 0.82, 0.22, 0.06, stationAccent, vipBakery);
+      addBox(0, 0.03, 0, 0.82, 0.06, 0.68, stationPad, vipBakery);
+      addBox(0, 0.39, 0, 0.7, 0.72, 0.56, bakeryBody, vipBakery);
+      addBox(0, 0.77, 0.3, 0.76, 0.1, 0.08, bakeryAwning, vipBakery);
+      addBox(-0.17, 0.4, 0.291, 0.26, 0.31, 0.035, bakeryWindow, vipBakery);
+      addBox(0.17, 0.4, 0.291, 0.26, 0.31, 0.035, bakeryWindow, vipBakery);
+      addBox(-0.35, 0.4, 0.31, 0.045, 0.35, 0.055, stationAccent, vipBakery);
+      addBox(0.35, 0.4, 0.31, 0.045, 0.35, 0.055, stationAccent, vipBakery);
+      addBox(0, 0.2, 0.31, 0.13, 0.36, 0.055, bakeryBody, vipBakery);
+      addBox(0, 0.9, 0.31, 0.62, 0.16, 0.055, stationAccent, vipBakery);
       const bakeryCake = new THREE.Mesh(new THREE.SphereGeometry(0.13, 9, 7), new THREE.MeshStandardMaterial({ color: 0xf5e9d0, roughness: 0.52 }));
       bakeryCake.position.set(-0.32, 0.68, 0.44);
       bakeryCake.scale.set(1.2, 0.55, 0.62);
@@ -566,58 +570,60 @@ if (MAP) {
       // Main MG FitClub building: multi-floor facade, warm cladding, windows and rooftop sign.
       const club = new THREE.Group();
       club.position.set(clubSite.x, 0, clubSite.z);
-      club.rotation.y = Math.PI / 2;
+      // The local front is +Z; this rotation plus the mirrored map world turns it west,
+      // toward Rajai Blvd and the public street frontage.
+      club.rotation.y = -Math.PI / 2;
       mapWorld.add(club);
-      const clubWidth = 2.05;
-      const clubDepth = 1.86;
-      const clubHeight = 3.5;
+      const clubWidth = 1.42;
+      const clubDepth = 0.82;
+      const clubHeight = 2.55;
       const clubBodyMaterial = new THREE.MeshStandardMaterial({ color: 0x805331, roughness: 0.74 });
       const clubBody = new THREE.Mesh(sharedBox, clubBodyMaterial);
       clubBody.position.y = clubHeight / 2;
       clubBody.scale.set(clubWidth, clubHeight, clubDepth);
       club.add(clubBody);
       const base = new THREE.Mesh(sharedBox, new THREE.MeshStandardMaterial({ color: 0x363c35, roughness: 0.78 }));
-      base.position.set(0, 0.28, 0);
-      base.scale.set(clubWidth + 0.1, 0.56, clubDepth + 0.1);
+      base.position.set(0, 0.2, 0);
+      base.scale.set(clubWidth + 0.1, 0.4, clubDepth + 0.1);
       club.add(base);
       const ledgeMaterial = new THREE.MeshStandardMaterial({ color: 0xad7643, roughness: 0.62 });
       for (let floor = 1; floor <= 4; floor += 1) {
         const ledge = new THREE.Mesh(sharedBox, ledgeMaterial);
-        ledge.position.set(0, floor * 0.68 + 0.25, clubDepth / 2 + 0.025);
-        ledge.scale.set(clubWidth + 0.12, 0.07, 0.07);
+        ledge.position.set(0, floor * 0.42 + 0.37, clubDepth / 2 + 0.025);
+        ledge.scale.set(clubWidth + 0.12, 0.055, 0.07);
         club.add(ledge);
       }
       const clubWindowMaterial = new THREE.MeshStandardMaterial({ color: 0xa7c4c1, roughness: 0.3, metalness: 0.12, emissive: 0x18201d });
       for (let floor = 0; floor < 5; floor += 1) {
-        for (let col = 0; col < 4; col += 1) {
+        for (const x of [-0.48, -0.16, 0.16, 0.48]) {
           const window = new THREE.Mesh(sharedBox, clubWindowMaterial);
-          window.position.set(-0.79 + col * 0.53, 0.76 + floor * 0.65, clubDepth / 2 + 0.018);
-          window.scale.set(0.29, 0.38, 0.045);
+          window.position.set(x, 0.51 + floor * 0.4, clubDepth / 2 + 0.018);
+          window.scale.set(0.2, 0.29, 0.045);
           club.add(window);
         }
       }
       for (const edge of [-1, 1]) {
         const column = new THREE.Mesh(sharedBox, ledgeMaterial);
-        column.position.set(edge * (clubWidth / 2 - 0.09), 1.95, clubDepth / 2 + 0.055);
-        column.scale.set(0.12, 3.55, 0.12);
+        column.position.set(edge * (clubWidth / 2 - 0.075), clubHeight / 2, clubDepth / 2 + 0.055);
+        column.scale.set(0.1, clubHeight, 0.1);
         club.add(column);
       }
       const roof = new THREE.Mesh(sharedBox, new THREE.MeshStandardMaterial({ color: 0x403c32, roughness: 0.9 }));
-      roof.position.y = clubHeight + 0.12;
-      roof.scale.set(clubWidth + 0.22, 0.24, clubDepth + 0.18);
+      roof.position.y = clubHeight + 0.1;
+      roof.scale.set(clubWidth + 0.18, 0.2, clubDepth + 0.14);
       club.add(roof);
       const entryCanopy = new THREE.Mesh(sharedBox, new THREE.MeshStandardMaterial({ color: 0x323b34, roughness: 0.7 }));
-      entryCanopy.position.set(0, 0.87, clubDepth / 2 + 0.28);
-      entryCanopy.scale.set(0.9, 0.09, 0.52);
+      entryCanopy.position.set(0, 0.78, clubDepth / 2 + 0.24);
+      entryCanopy.scale.set(0.7, 0.08, 0.42);
       club.add(entryCanopy);
       const entrance = new THREE.Mesh(sharedBox, clubWindowMaterial);
       entrance.position.set(0, 0.47, clubDepth / 2 + 0.035);
-      entrance.scale.set(0.56, 0.78, 0.05);
+      entrance.scale.set(0.38, 0.72, 0.05);
       club.add(entrance);
       for (const side of [-1, 1]) {
         const rooftopUnit = new THREE.Mesh(sharedBox, materials.darkWindow);
-        rooftopUnit.position.set(side * 0.56, clubHeight + 0.32, 0.18);
-        rooftopUnit.scale.set(0.32, 0.18, 0.3);
+        rooftopUnit.position.set(side * 0.38, clubHeight + 0.25, 0.12);
+        rooftopUnit.scale.set(0.24, 0.16, 0.2);
         club.add(rooftopUnit);
       }
 
@@ -682,10 +688,10 @@ if (MAP) {
       const signTexture = new THREE.CanvasTexture(signCanvas);
       signTexture.colorSpace = THREE.SRGBColorSpace;
       const facadeSign = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.92, 0.63),
+        new THREE.PlaneGeometry(1.28, 0.44),
         new THREE.MeshBasicMaterial({ map: signTexture, toneMapped: false }),
       );
-      facadeSign.position.set(0, 3.08, clubDepth / 2 + 0.045);
+      facadeSign.position.set(0, 2.16, clubDepth / 2 + 0.045);
       club.add(facadeSign);
       const pinGeometry = new THREE.CylinderGeometry(0.025, 0.04, 0.44, 8);
       const pinMaterial = new THREE.MeshStandardMaterial({ color: 0xc6ff3f, emissive: 0x455b0e, roughness: 0.4 });
@@ -708,7 +714,7 @@ if (MAP) {
         return badge;
       };
       const vipSign = makeTextSprite("VIP", { scale: 0.92, fontSize: 56, border: "#c3a3d7", background: "rgba(35, 25, 42, .96)" });
-      vipSign.position.set(vipBakerySite.x, 1.62, vipBakerySite.z + 0.4);
+      vipSign.position.set(vipBakerySite.x - 0.42, 1.42, vipBakerySite.z + 0.12);
       const stationSign = makeTextSprite("24H", { scale: 0.86, fontSize: 50, border: "#c3a3d7", background: "rgba(35, 25, 42, .96)" });
       stationSign.position.set(petrolStationSite.x + 0.88, 1.34, petrolStationSite.z + 0.57);
       const neginSign = makeTextSprite("NEGIN", { scale: 1.12, fontSize: 48, border: "#69aaa1", background: "rgba(18, 37, 37, .96)" });
@@ -735,7 +741,7 @@ if (MAP) {
       }
 
       const target = new THREE.Vector3(-clubSite.x, 0.1, clubSite.z);
-      const defaultTheta = -2.9; // approach from the south with a slight west angle; keep north nearly upright
+      const defaultTheta = 2.25; // approach from Rajai Blvd so the club's street-facing facade is visible
       const orbit = { theta: defaultTheta, phi: 0.94, radius: 33 };
       let userAdjustedView = false;
       const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
