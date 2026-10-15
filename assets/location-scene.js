@@ -1,3 +1,6 @@
+import { clamp, createPolylineNavigator, LOCKED_STREET_LIMIT_UNITS, MAP_METERS_PER_UNIT, offsetFromStreetDrag } from "./map-pan.mjs";
+import { LOCATION_SCENE_LAYOUT } from "./location-scene-layout.mjs";
+
 const MAP = document.querySelector("[data-location-map]");
 
 if (MAP) {
@@ -63,6 +66,7 @@ if (MAP) {
         medianPlant: new THREE.MeshStandardMaterial({ color: 0x3f6948, roughness: 0.94 }),
         bridge: new THREE.MeshStandardMaterial({ color: 0xc8c9bf, roughness: 0.82 }),
         bridgeRail: new THREE.MeshStandardMaterial({ color: 0x495752, metalness: 0.22, roughness: 0.68 }),
+        bridgeGlow: new THREE.MeshStandardMaterial({ color: 0xd6ae59, emissive: 0x744c12, emissiveIntensity: 0.5, roughness: 0.62 }),
         lime: new THREE.MeshStandardMaterial({ color: 0xc6ff3f, roughness: 0.55 }),
         park: new THREE.MeshStandardMaterial({ color: 0x8fab72, roughness: 0.95 }),
         tree: new THREE.MeshStandardMaterial({ color: 0x497354, roughness: 0.92 }),
@@ -82,25 +86,23 @@ if (MAP) {
         return mesh;
       };
 
-      // North-up neighborhood diorama aligned to the supplied Google Maps pin.
-      // Latitude/longitude is exact; street geometry remains illustrative, not survey data.
+      // Preserve the approved local orientation and model scale. The map screenshot
+      // defines the route topology; the club remains the anchor for this diorama.
       const clubSite = {
         latitude: Number(MAP.dataset.locationLat),
         longitude: Number(MAP.dataset.locationLon),
         x: 1.9,
         z: -0.75,
       };
-      const MAP_METERS_PER_UNIT = 12;
       const CLUB_TO_BRIDGE_SOUTH_METERS = 20;
-      const VIP_BAKERY_PROGRESS = 0.65;
-      const ehsanRoundaboutSite = { x: -1.18, z: 8.05 };
+      const ehsanRoundaboutSite = { x: LOCATION_SCENE_LAYOUT.ehsanRoundabout[0], z: LOCATION_SCENE_LAYOUT.ehsanRoundabout[1] };
       const pedestrianBridgeSite = {
         x: 0.08,
         z: clubSite.z - CLUB_TO_BRIDGE_SOUTH_METERS / MAP_METERS_PER_UNIT,
       };
       const vipBakerySite = {
-        x: clubSite.x + (pedestrianBridgeSite.x - clubSite.x) * VIP_BAKERY_PROGRESS,
-        z: clubSite.z + (pedestrianBridgeSite.z - clubSite.z) * VIP_BAKERY_PROGRESS,
+        x: clubSite.x + (pedestrianBridgeSite.x - clubSite.x) * 0.65,
+        z: clubSite.z + (pedestrianBridgeSite.z - clubSite.z) * 0.65,
       };
       const petrolStationSite = { x: -2.5, z: 5.1 };
       const ehsanSportsSite = { x: -6.8, z: 6.4 };
@@ -111,49 +113,64 @@ if (MAP) {
       addBox(0, -0.34, 0, 18.2, 0.42, 24.4, materials.slab);
       addBox(0, -0.105, 0, 17.85, 0.08, 24.05, materials.ground);
 
-      const addRoad = (points, width, material, dashed = false, baseY = 0) => {
-        const outline = [];
-        const inner = [];
+      const addRoad = (points, width, material, dashed = false, baseY = 0, surfaceYOffset = 0, includeCurb = true) => {
+        const roadPoints = points.filter((point, index) => index === 0
+          || Math.hypot(point[0] - points[index - 1][0], point[1] - points[index - 1][1]) > 0.001);
         const segments = [];
-        for (let index = 0; index < points.length - 1; index += 1) {
-          const a = points[index];
-          const b = points[index + 1];
+        const elevationAt = (pointIndex) => Array.isArray(baseY) ? (baseY[pointIndex] ?? 0) : baseY;
+        for (let index = 0; index < roadPoints.length - 1; index += 1) {
+          const a = roadPoints[index];
+          const b = roadPoints[index + 1];
           const dx = b[0] - a[0];
           const dz = b[1] - a[1];
           const length = Math.hypot(dx, dz) || 1;
           const nx = -dz / length;
           const nz = dx / length;
-          segments.push({ a, b, dx, dz, length, nx, nz });
-          for (const [target, half] of [[outline, width / 2 + 0.1], [inner, width / 2]]) {
-            target.push(
-              [a[0] + nx * half, a[1] + nz * half],
-              [b[0] + nx * half, b[1] + nz * half],
-              [b[0] - nx * half, b[1] - nz * half],
-              [a[0] - nx * half, a[1] - nz * half],
-            );
-          }
+          const baseYA = elevationAt(index);
+          const baseYB = elevationAt(index + 1);
+          segments.push({ a, b, dx, dz, length, nx, nz, baseYA, baseYB });
         }
-        const makeStrip = (vertices, y, mat) => {
+        const makeStrip = (halfWidth, y, mat) => {
           const positions = [];
           const indices = [];
-          for (let i = 0; i < vertices.length; i += 4) {
-            const offset = positions.length / 3;
-            for (const [x, z] of vertices.slice(i, i + 4)) positions.push(x, y, z);
-            indices.push(offset, offset + 1, offset + 2, offset, offset + 2, offset + 3);
+          const sections = roadPoints.map((point, index) => {
+            const previous = roadPoints[Math.max(0, index - 1)];
+            const next = roadPoints[Math.min(roadPoints.length - 1, index + 1)];
+            const previousLength = Math.hypot(point[0] - previous[0], point[1] - previous[1]) || 1;
+            const nextLength = Math.hypot(next[0] - point[0], next[1] - point[1]) || 1;
+            const previousNormal = [-(point[1] - previous[1]) / previousLength, (point[0] - previous[0]) / previousLength];
+            const nextNormal = [-(next[1] - point[1]) / nextLength, (next[0] - point[0]) / nextLength];
+            let miter = index === 0 ? nextNormal : index === roadPoints.length - 1 ? previousNormal : [previousNormal[0] + nextNormal[0], previousNormal[1] + nextNormal[1]];
+            const miterLength = Math.hypot(miter[0], miter[1]);
+            miter = miterLength > 0.001 ? [miter[0] / miterLength, miter[1] / miterLength] : nextNormal;
+            const projection = Math.abs(miter[0] * nextNormal[0] + miter[1] * nextNormal[1]);
+            const scale = index === 0 || index === roadPoints.length - 1 ? 1 : Math.min(2.2, 1 / Math.max(0.46, projection));
+            const offsetX = miter[0] * halfWidth * scale;
+            const offsetZ = miter[1] * halfWidth * scale;
+            const elevation = elevationAt(index);
+            positions.push(point[0] + offsetX, y + elevation, point[1] + offsetZ);
+            positions.push(point[0] - offsetX, y + elevation, point[1] - offsetZ);
+            return positions.length / 3 - 2;
+          });
+          for (let index = 0; index < sections.length - 1; index += 1) {
+            const start = sections[index];
+            const end = sections[index + 1];
+            indices.push(start, end, end + 1, start, end + 1, start + 1);
           }
           const geometry = new THREE.BufferGeometry();
           geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
           geometry.setIndex(indices);
           geometry.computeVertexNormals();
           const mesh = new THREE.Mesh(geometry, mat);
-          mesh.position.y = 0.008 + baseY;
+          mesh.position.y = 0.008;
           mesh.rotation.x = 0;
           mapWorld.add(mesh);
         };
-        makeStrip(outline, 0, materials.curb);
-        makeStrip(inner, 0.012, material);
+        if (roadPoints.length < 2) return;
+        if (includeCurb) makeStrip(width / 2 + 0.1, 0, materials.curb);
+        makeStrip(width / 2, 0.012 + surfaceYOffset, material);
         if (dashed) {
-          for (const { a, dx, dz, length } of segments) {
+          for (const { a, dx, dz, length, baseYA, baseYB } of segments) {
             const count = Math.floor(length / 0.74);
             for (let n = 1; n < count; n += 2) {
               const t = n / count;
@@ -162,12 +179,21 @@ if (MAP) {
                 new THREE.BoxGeometry(0.045, 0.018, Math.min(0.34, length / count * 0.62)),
                 materials.line,
               );
-              mark.position.set(a[0] + dx * t, 0.036 + baseY, a[1] + dz * t);
+              mark.position.set(a[0] + dx * t, 0.036 + baseYA + (baseYB - baseYA) * t, a[1] + dz * t);
               mark.rotation.y = angle;
               mapWorld.add(mark);
             }
           }
         }
+      };
+      const addSlopedLinearBar = (a, b, width, height, centerYA, centerYB, material, parent = mapWorld) => {
+        const direction = new THREE.Vector3(b[0] - a[0], centerYB - centerYA, b[1] - a[1]);
+        const length = direction.length() || 1;
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(width, height, length), material);
+        bar.position.set((a[0] + b[0]) / 2, (centerYA + centerYB) / 2, (a[1] + b[1]) / 2);
+        bar.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction.normalize());
+        parent.add(bar);
+        return bar;
       };
 
       const MEDIAN_WIDTH_METERS = 3.5;
@@ -199,6 +225,18 @@ if (MAP) {
         }
         return samples;
       };
+      const elevationOnPath = (points, elevations, station) => {
+        let traveled = 0;
+        for (let index = 0; index < points.length - 1; index += 1) {
+          const length = Math.hypot(points[index + 1][0] - points[index][0], points[index + 1][1] - points[index][1]);
+          if (station <= traveled + length || index === points.length - 2) {
+            const progress = Math.max(0, Math.min(1, (station - traveled) / (length || 1)));
+            return elevations[index] + (elevations[index + 1] - elevations[index]) * progress;
+          }
+          traveled += length;
+        }
+        return elevations.at(-1) ?? 0;
+      };
       const addLandscapedMedian = (points, baseY = 0, skipRoundabout = false) => {
         addRoad(points, medianWidth, materials.median, false, baseY);
         const plantGeometry = new THREE.SphereGeometry(0.075, 6, 5);
@@ -206,7 +244,7 @@ if (MAP) {
         const plant = new THREE.Object3D();
         let count = 0;
         for (const [x, z] of samplePath(points, 0.72)) {
-          if (skipRoundabout && Math.hypot(x - ehsanRoundaboutSite.x, z - ehsanRoundaboutSite.z) < 1.4) continue;
+          if (skipRoundabout && Math.hypot(x - ehsanRoundaboutSite.x, z - ehsanRoundaboutSite.z) < 3.95) continue;
           plant.position.set(x, 0.12 + baseY, z);
           plant.scale.set(1.2, 0.72, 0.82);
           plant.updateMatrix();
@@ -216,28 +254,67 @@ if (MAP) {
         plants.instanceMatrix.needsUpdate = true;
         mapWorld.add(plants);
       };
-      const addDividedRoad = (points, baseY = 0, landscaped = true) => {
-        addRoad(offsetPath(points, -carriagewayOffset), carriagewayWidth, materials.road, true, baseY);
-        addRoad(offsetPath(points, carriagewayOffset), carriagewayWidth, materials.road, true, baseY);
+      const addDividedRoad = (points, baseY = 0, landscaped = true, laneWidth = carriagewayWidth, roadMedianWidth = medianWidth) => {
+        const roadOffset = roadMedianWidth / 2 + laneWidth / 2;
+        addRoad(offsetPath(points, -roadOffset), laneWidth, materials.road, true, baseY);
+        addRoad(offsetPath(points, roadOffset), laneWidth, materials.road, true, baseY);
         if (landscaped) addLandscapedMedian(points, baseY, true);
-        else addRoad(points, medianWidth, materials.bridge, false, baseY);
+        else addRoad(points, roadMedianWidth, materials.bridge, false, baseY);
       };
 
+      const roundaboutRadiusX = LOCATION_SCENE_LAYOUT.ehsanRoundaboutRadius;
+      const roundaboutRadiusZ = LOCATION_SCENE_LAYOUT.ehsanRoundaboutRadius;
+      const rajaiApproach = LOCATION_SCENE_LAYOUT.rajaeiBoulevard;
+      const maaliAbadRoute = LOCATION_SCENE_LAYOUT.maaliAbad;
+      const baharanRoute = LOCATION_SCENE_LAYOUT.baharan;
+      const baharan8Route = LOCATION_SCENE_LAYOUT.baharan8;
+      const baharan9Route = LOCATION_SCENE_LAYOUT.baharan9;
+      const baharan7Route = LOCATION_SCENE_LAYOUT.baharan7;
+      const baharan5Route = LOCATION_SCENE_LAYOUT.baharan5;
+      const rajaei54Route = LOCATION_SCENE_LAYOUT.rajaei541;
+      const rajaei544Route = [[4.4, -5.45], [4.15, -4.55], [3.9, -3.9]];
+      const rajaei543Route = [[5.48, -1.5], [4.75, -1.85], [4.1, -2.35], [3.55, -2.7]];
+      const rajaei542Route = [[5.48, 1.2], [4.75, 0.8], [4.0, 0.1], [3.35, -0.3]];
+      const rajaei541Route = rajaei54Route;
+      const rajaei52Route = LOCATION_SCENE_LAYOUT.baharan7;
+      const rajaei50Route = LOCATION_SCENE_LAYOUT.rajaei50;
+      const parastarBoulevardRoute = LOCATION_SCENE_LAYOUT.parastar;
+      const neginAccessRoute = LOCATION_SCENE_LAYOUT.neginAccess;
+      const ehsanOverpassCenterline = LOCATION_SCENE_LAYOUT.ehsanOverpass;
+      const ehsanOverpassRoutes = [
+        offsetPath(ehsanOverpassCenterline, -carriagewayOffset),
+        offsetPath(ehsanOverpassCenterline, carriagewayOffset),
+      ];
+      const maaliAbadSite = { x: 2.75, z: 6.35 };
+      const streetTravelRoute = rajaiApproach.slice().reverse();
       const neighborhoodRoads = [
-        // The raised Ehsan route and divided Rajai Boulevard are separate axes.
-        { name: "Ehsan Overpass", points: [[-1.35, 10.7], [-1.28, 9.2], [-1.2, 7.9], [-1.1, 6.2], [-0.92, 4.8]], width: 1.35, material: materials.road, dashed: true, divided: true, elevated: true },
-        { name: "Rajai Blvd", points: [[-0.02, 10], [-0.02, 8], [-0.01, 6], [0.02, 4], [0.04, 1.5], [0.1, -1], [0.18, -4], [0.26, -7], [0.34, -10]], width: 1.35, material: materials.road, dashed: true, divided: true },
-        { name: "Maali Abad Bypass", points: [[-0.1, 8.05], [0.68, 7.88], [1.78, 7.46], [2.95, 7.08], [4.55, 6.55]], width: 0.62, material: materials.sideRoad, dashed: false },
-        { name: "Parastar Blvd", points: [[-1.92, 8.82], [-2.48, 9.38], [-3.15, 10.08], [-3.75, 10.7]], width: 0.68, material: materials.road, dashed: true },
-        { name: "Jazayeri St", points: [[-8.25, 0.95], [-6, 0.87], [-3.5, 0.78], [-1.45, 0.72], [-0.01, 0.7]], width: 0.55, material: materials.sideRoad, dashed: false },
-        { name: "Baharan 8th", points: [[0.12, 3.0], [1.45, 3.75], [2.9, 4.75], [4.6, 5.8]], width: 0.5, material: materials.sideRoad, dashed: false },
-        { name: "50th Rajaei", points: [[0.08, -2.15], [1.4, -3.05], [2.8, -4.25], [4.4, -5.45], [6.55, -6.8]], width: 0.54, material: materials.sideRoad, dashed: false },
-        { name: "Alley 52", points: [[0.24, -2.45], [1.5, -2.52], [2.8, -2.38], [4.25, -1.95]], width: 0.38, material: materials.sideRoad, dashed: false },
-        { name: "Baharan St", points: [[5.55, 10], [5.5, 5], [5.5, 0], [5.45, -5], [5.4, -10]], width: 0.52, material: materials.sideRoad, dashed: false },
-        { name: "1st Rahmati St", points: [[-7.35, -10], [-7.3, -5], [-7.25, 0], [-7.2, 5], [-7.15, 10]], width: 0.46, material: materials.sideRoad, dashed: false },
+        // Keep the bridge crossing the ground-level Ehsan circle, as in the
+        // approved layout. Only the Maali Abad / Baharan access is extended.
+        { name: "Ehsan Overpass westbound", points: ehsanOverpassRoutes[0], width: 0.64, material: materials.road, dashed: true, elevated: true },
+        { name: "Ehsan Overpass eastbound", points: ehsanOverpassRoutes[1], width: 0.64, material: materials.road, dashed: true, elevated: true },
+        { name: "Rajai Blvd", points: rajaiApproach, width: 1.35, material: materials.road, dashed: true, divided: true },
+        { name: "Maali Abad Blvd", points: maaliAbadRoute, width: 1.12, material: materials.sideRoad, dashed: false, divided: true, laneWidth: 0.48, medianWidth: 0.16 },
+        { name: "Parastar Blvd", points: parastarBoulevardRoute, width: 0.82, material: materials.road, dashed: true },
+        { name: "Negin Mall Access", points: neginAccessRoute, width: 0.58, material: materials.sideRoad, dashed: false },
+        { name: "Jazayeri St", points: LOCATION_SCENE_LAYOUT.jazayeri, width: 0.55, material: materials.sideRoad, dashed: false },
+        // The marked orange route: Maali Abad turns onto Baharan, then 50th
+        // Rajaei and 54/1 return to the alley on MG's rear side.
+        { name: "Baharan St", points: baharanRoute, width: 0.55, material: materials.sideRoad, dashed: false },
+        { name: "8 Baharan", points: baharan8Route, width: 0.38, material: materials.sideRoad, dashed: false },
+        { name: "9 Baharan", points: baharan9Route, width: 0.38, material: materials.sideRoad, dashed: false },
+        { name: "7 Baharan", points: baharan7Route, width: 0.4, material: materials.sideRoad, dashed: false },
+        { name: "5 Baharan", points: baharan5Route, width: 0.38, material: materials.sideRoad, dashed: false },
+        { name: "54 Rajaei", points: rajaei54Route, width: 0.46, material: materials.sideRoad, dashed: false },
+        { name: "54/4 Rajaei", points: rajaei544Route, width: 0.34, material: materials.sideRoad, dashed: false },
+        { name: "54/3 Rajaei", points: rajaei543Route, width: 0.34, material: materials.sideRoad, dashed: false },
+        { name: "54/2 Rajaei", points: rajaei542Route, width: 0.34, material: materials.sideRoad, dashed: false },
+        { name: "Alley behind MG", points: LOCATION_SCENE_LAYOUT.clubAlley, width: 0.36, material: materials.sideRoad, dashed: false },
+        { name: "50 Rajaei", points: rajaei50Route, width: 0.44, material: materials.sideRoad, dashed: false },
+        { name: "First Rahmati St", points: LOCATION_SCENE_LAYOUT.firstRahmati, width: 0.46, material: materials.sideRoad, dashed: false },
       ];
       for (const road of neighborhoodRoads) {
-        if (road.divided) addDividedRoad(road.points, road.elevated ? 0.62 : 0, !road.elevated);
+        if (road.elevated) continue;
+        if (road.divided) addDividedRoad(road.points, road.elevated ? 0.62 : 0, !road.elevated, road.laneWidth ?? carriagewayWidth, road.medianWidth ?? medianWidth);
         else addRoad(road.points, road.width, road.material, road.dashed);
       }
 
@@ -247,10 +324,12 @@ if (MAP) {
       for (const side of [-1, 1]) {
         addRoad(offsetPath(rajaiRoute, side * sidewalkOffset), 0.19, materials.sidewalk);
       }
-      for (const roadName of ["Baharan 8th", "50th Rajaei", "Alley 52", "Baharan St"]) {
+      for (const roadName of ["Maali Abad Blvd", "Baharan St", "8 Baharan", "9 Baharan", "7 Baharan", "5 Baharan", "54 Rajaei", "54/4 Rajaei", "54/3 Rajaei", "54/2 Rajaei", "Alley behind MG", "50 Rajaei"]) {
         const road = neighborhoodRoads.find((item) => item.name === roadName);
         if (!road) continue;
-        const pathOffset = road.width / 2 + 0.08;
+        const pathOffset = road.divided
+          ? (road.medianWidth ?? medianWidth) / 2 + (road.laneWidth ?? carriagewayWidth) + 0.08
+          : road.width / 2 + 0.08;
         for (const side of [-1, 1]) addRoad(offsetPath(road.points, side * pathOffset), 0.12, materials.sidewalk);
       }
 
@@ -288,8 +367,10 @@ if (MAP) {
           const sportsDistance = Math.hypot(x - ehsanSportsSite.x, z - ehsanSportsSite.z);
           const bakeryDistance = Math.hypot(x - vipBakerySite.x, z - vipBakerySite.z);
           const neginDistance = Math.hypot(x - neginSite.x, z - neginSite.z);
-          if (roadClearance || clubDistance < 2.2 || petrolDistance < 1.8 || sportsDistance < 1.9 || bakeryDistance < 1.7 || neginDistance < 2.1) continue;
-          if (random() < 0.12) continue;
+          const roundaboutDistance = Math.hypot(x - ehsanRoundaboutSite.x, z - ehsanRoundaboutSite.z);
+          const overpassClearance = ehsanOverpassRoutes.some((route) => distanceToPath(x, z, route) < 2.25);
+          if (roadClearance || overpassClearance || roundaboutDistance < roundaboutRadiusX + 1 || clubDistance < 2.2 || petrolDistance < 1.8 || sportsDistance < 1.9 || bakeryDistance < 1.7 || neginDistance < 2.1) continue;
+          if (random() < 0.2) continue;
           const width = 0.84 + random() * 0.56;
           const depth = 0.82 + random() * 0.62;
           const height = 0.48 + random() * 1.25;
@@ -389,55 +470,94 @@ if (MAP) {
       addCar(carriagewayOffset, -0.85, 0xc7b79b);
       addCar(-carriagewayOffset, 3.0, 0x8d72a9, Math.PI);
 
-      // Ehsan's ground-level circle sits under the raised through-route.
+      // Approximate the oval ground-level Ehsan junction from the satellite footprint.
       const roundaboutRoad = new THREE.Mesh(
-        new THREE.RingGeometry(0.64, 1.08, 48),
+        new THREE.RingGeometry(0.67, 1, 72),
         materials.road,
       );
       roundaboutRoad.rotation.x = -Math.PI / 2;
       roundaboutRoad.position.set(ehsanRoundaboutSite.x, 0.026, ehsanRoundaboutSite.z);
+      roundaboutRoad.scale.set(roundaboutRadiusX, roundaboutRadiusZ, 1);
       mapWorld.add(roundaboutRoad);
       const roundaboutIsland = new THREE.Mesh(
-        new THREE.CircleGeometry(0.62, 32),
+        new THREE.CircleGeometry(1, 48),
         materials.park,
       );
       roundaboutIsland.rotation.x = -Math.PI / 2;
       roundaboutIsland.position.set(ehsanRoundaboutSite.x, 0.035, ehsanRoundaboutSite.z);
+      roundaboutIsland.scale.set(roundaboutRadiusX * 0.65, roundaboutRadiusZ * 0.65, 1);
       mapWorld.add(roundaboutIsland);
       const roundaboutCurb = new THREE.Mesh(
-        new THREE.RingGeometry(1.08, 1.18, 48),
+        new THREE.RingGeometry(1, 1.045, 72),
         materials.curb,
       );
       roundaboutCurb.rotation.x = -Math.PI / 2;
       roundaboutCurb.position.set(ehsanRoundaboutSite.x, 0.05, ehsanRoundaboutSite.z);
+      roundaboutCurb.scale.set(roundaboutRadiusX, roundaboutRadiusZ, 1);
       mapWorld.add(roundaboutCurb);
       const roundaboutLaneMark = new THREE.MeshBasicMaterial({ color: 0xe8e4d2 });
-      for (let mark = 0; mark < 12; mark += 1) {
-        const angle = (mark / 12) * Math.PI * 2;
-        const dash = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.014, 0.035), roundaboutLaneMark);
+      const roundaboutDashGeometry = new THREE.BoxGeometry(0.22, 0.014, 0.045);
+      for (let mark = 0; mark < 40; mark += 1) {
+        const angle = (mark / 40) * Math.PI * 2;
+        const laneX = roundaboutRadiusX * 0.835;
+        const laneZ = roundaboutRadiusZ * 0.835;
+        const dash = new THREE.Mesh(roundaboutDashGeometry, roundaboutLaneMark);
         dash.position.set(
-          ehsanRoundaboutSite.x + Math.cos(angle) * 0.88,
+          ehsanRoundaboutSite.x + Math.cos(angle) * laneX,
           0.046,
-          ehsanRoundaboutSite.z + Math.sin(angle) * 0.88,
+          ehsanRoundaboutSite.z + Math.sin(angle) * laneZ,
         );
-        dash.rotation.y = -angle;
+        dash.rotation.y = Math.atan2(-laneX * Math.sin(angle), laneZ * Math.cos(angle));
         mapWorld.add(dash);
       }
       const islandTreeGeometry = new THREE.ConeGeometry(0.14, 0.42, 7);
-      for (const [dx, dz] of [[0, 0], [-0.26, 0.18], [0.24, -0.2]]) {
+      const islandTreePoints = [[0, 0], [-0.62, 0.32], [0.62, -0.32], [-0.62, -0.32], [0.62, 0.32], [0.12, 0.82], [-0.12, -0.82]];
+      for (const [dx, dz] of islandTreePoints) {
         const islandTree = new THREE.Mesh(islandTreeGeometry, materials.tree);
         islandTree.position.set(ehsanRoundaboutSite.x + dx, 0.25, ehsanRoundaboutSite.z + dz);
         mapWorld.add(islandTree);
       }
 
-      // Short piers and parapets make the Ehsan route read as a real overpass.
-      for (const z of [6.25, 9.9]) {
-        for (const dx of [-0.4, 0.4]) {
-          addBox(ehsanRoundaboutSite.x + dx, 0.32, z, 0.16, 0.64, 0.18, materials.bridge);
+      // Restore the approved Ehsan flyover across the roundabout; the map's
+      // right-hand Maali Abad exit remains a separate ground-level branch.
+      const bridgeElevationProfile = (points) => {
+        const segmentLengths = points.slice(1).map((point, index) => Math.hypot(
+          point[0] - points[index][0], point[1] - points[index][1],
+        ));
+        const totalLength = segmentLengths.reduce((sum, length) => sum + length, 0) || 1;
+        let traveled = 0;
+        return points.map((_, index) => {
+          const elevation = 0.42 * Math.sin(Math.PI * traveled / totalLength);
+          traveled += segmentLengths[index] ?? 0;
+          return elevation;
+        });
+      };
+      const bridgeCenterElevations = bridgeElevationProfile(ehsanOverpassCenterline);
+      const bridgeDeckWidth = 2 * (carriagewayOffset + 0.36);
+      const bridgeLaneWidth = 0.52;
+      addRoad(ehsanOverpassCenterline, bridgeDeckWidth, materials.bridge, false, bridgeCenterElevations, -0.01);
+      for (const [routeIndex, route] of ehsanOverpassRoutes.entries()) {
+        const elevations = bridgeElevationProfile(route);
+        addRoad(route, bridgeLaneWidth, materials.road, true, elevations, 0, false);
+        const outerSide = routeIndex === 0 ? -1 : 1;
+        const edge = offsetPath(route, outerSide * (0.72 / 2 - 0.04));
+        for (let index = 0; index < edge.length - 1; index += 1) {
+          addSlopedLinearBar(
+            edge[index], edge[index + 1], 0.045, 0.085,
+            elevations[index] + 0.11,
+            elevations[index + 1] + 0.11,
+            materials.bridgeRail,
+          );
         }
       }
-      for (const dx of [-0.76, 0.76]) {
-        addBox(ehsanRoundaboutSite.x + dx, 0.92, 8.05, 0.07, 0.28, 4.2, materials.bridgeRail);
+      const overpassNavigator = createPolylineNavigator(ehsanOverpassCenterline);
+      for (const [x, z] of samplePath(ehsanOverpassCenterline, 3.2)) {
+        if (Math.hypot(x - ehsanRoundaboutSite.x, z - ehsanRoundaboutSite.z) < roundaboutRadiusX + 0.3) continue;
+        const station = overpassNavigator.closestStation([x, z]);
+        const roadElevation = elevationOnPath(ehsanOverpassCenterline, bridgeCenterElevations, station);
+        const supportHeight = Math.max(0.08, roadElevation - 0.06);
+        if (supportHeight <= 0.12) continue;
+        addBox(x, supportHeight / 2, z, 0.18, supportHeight, 0.2, materials.bridge);
       }
 
       // The pedestrian bridge is placed 20m south of the club pin along the street axis.
@@ -570,7 +690,7 @@ if (MAP) {
       // Main MG FitClub building: multi-floor facade, warm cladding, windows and rooftop sign.
       const club = new THREE.Group();
       club.position.set(clubSite.x, 0, clubSite.z);
-      // The local front is +Z; this rotation plus the mirrored map world turns it west,
+      // The local front is +Z; this rotation plus the mirrored map world turns it east,
       // toward Rajai Blvd and the public street frontage.
       club.rotation.y = -Math.PI / 2;
       mapWorld.add(club);
@@ -665,6 +785,148 @@ if (MAP) {
         return sprite;
       };
 
+      // Compact, physical landmark signs: a framed 3D board, lit edge, posts,
+      // and a crisp canvas face. Unlike map labels, these belong to the building.
+      const makeBillboardFace = (title, subtitle, accent = "#c6ff3f", monogram = "MG") => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1024;
+        canvas.height = 512;
+        const ctx = canvas.getContext("2d");
+        const gradient = ctx.createLinearGradient(0, 0, 1024, 512);
+        gradient.addColorStop(0, "#19221b");
+        gradient.addColorStop(0.56, "#0b100d");
+        gradient.addColorStop(1, "#20201a");
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 1024, 512);
+        ctx.fillStyle = accent;
+        ctx.fillRect(0, 0, 20, 512);
+        ctx.globalAlpha = 0.13;
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.moveTo(760, 0);
+        ctx.lineTo(1024, 0);
+        ctx.lineTo(1024, 512);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = "rgba(255,255,255,.22)";
+        ctx.lineWidth = 5;
+        ctx.strokeRect(28, 28, 968, 456);
+
+        ctx.fillStyle = accent;
+        const markRadius = 34;
+        ctx.beginPath();
+        ctx.moveTo(62 + markRadius, 98);
+        ctx.arcTo(312, 98, 312, 348, markRadius);
+        ctx.arcTo(312, 348, 62, 348, markRadius);
+        ctx.arcTo(62, 348, 62, 98, markRadius);
+        ctx.arcTo(62, 98, 312, 98, markRadius);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#10150f";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.direction = "ltr";
+        ctx.font = "900 110px Arial, sans-serif";
+        ctx.fillText(monogram, 187, 218, 220);
+        ctx.fillStyle = "#f2f5eb";
+        ctx.textAlign = "right";
+        ctx.direction = /[\u0600-\u06ff]/.test(title) ? "rtl" : "ltr";
+        ctx.font = '800 72px "B Esfehan", Tahoma, sans-serif';
+        ctx.fillText(title, 940, 198, 575);
+        ctx.fillStyle = accent;
+        ctx.fillRect(364, 270, 570, 10);
+        ctx.fillStyle = "#d4d7cc";
+        ctx.font = '600 38px "B Esfehan", Tahoma, sans-serif';
+        ctx.fillText(subtitle, 940, 340, 575);
+        ctx.textAlign = "left";
+        ctx.direction = "ltr";
+        ctx.fillStyle = "rgba(255,255,255,.68)";
+        ctx.font = "700 24px Arial, sans-serif";
+        ctx.fillText("SHIRAZ  •  MG FITCLUB", 370, 425, 540);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+        return texture;
+      };
+
+      const addBuildingBillboard = (parent, {
+        title,
+        subtitle,
+        accent = "#c6ff3f",
+        monogram = "MG",
+        width,
+        height,
+        x = 0,
+        y,
+        z,
+        yaw = 0,
+        postBottom = y,
+      }) => {
+        const sign = new THREE.Group();
+        sign.position.set(x, 0, z);
+        sign.rotation.y = yaw;
+        parent.add(sign);
+
+        const boardDepth = Math.max(0.055, height * 0.16);
+        const centerY = y;
+        const accentColor = new THREE.Color(accent);
+        const frameMaterial = new THREE.MeshStandardMaterial({
+          color: 0x242b25,
+          metalness: 0.76,
+          roughness: 0.3,
+        });
+        const trimMaterial = new THREE.MeshStandardMaterial({
+          color: accentColor,
+          emissive: accentColor,
+          emissiveIntensity: 0.42,
+          metalness: 0.24,
+          roughness: 0.34,
+        });
+        const frame = new THREE.Mesh(new THREE.BoxGeometry(width + 0.07, height + 0.07, boardDepth), frameMaterial);
+        frame.position.set(0, centerY, 0);
+        sign.add(frame);
+
+        const face = new THREE.Mesh(
+          new THREE.PlaneGeometry(width - 0.045, height - 0.045),
+          new THREE.MeshBasicMaterial({
+            map: makeBillboardFace(title, subtitle, accent, monogram),
+            toneMapped: false,
+            side: THREE.DoubleSide,
+          }),
+        );
+        face.position.set(0, centerY, boardDepth / 2 + 0.006);
+        sign.add(face);
+
+        const topRail = new THREE.Mesh(new THREE.BoxGeometry(width + 0.13, 0.035, boardDepth + 0.05), trimMaterial);
+        topRail.position.set(0, centerY + height / 2 + 0.032, 0);
+        sign.add(topRail);
+        const lowerRail = new THREE.Mesh(new THREE.BoxGeometry(width + 0.1, 0.022, boardDepth + 0.045), trimMaterial);
+        lowerRail.position.set(0, centerY - height / 2 - 0.025, 0);
+        sign.add(lowerRail);
+
+        const postMaterial = new THREE.MeshStandardMaterial({ color: 0x545d51, metalness: 0.7, roughness: 0.38 });
+        const postHeight = Math.max(0.04, centerY - height / 2 - postBottom);
+        for (const postX of [-width * 0.34, width * 0.34]) {
+          const post = new THREE.Mesh(new THREE.BoxGeometry(0.045, postHeight, 0.055), postMaterial);
+          post.position.set(postX, postBottom + postHeight / 2, 0);
+          sign.add(post);
+          const foot = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.035, 0.1), frameMaterial);
+          foot.position.set(postX, postBottom + 0.018, 0);
+          sign.add(foot);
+        }
+        const boltMaterial = new THREE.MeshStandardMaterial({ color: 0xc7cec2, metalness: 0.82, roughness: 0.28 });
+        const boltGeometry = new THREE.SphereGeometry(Math.min(0.022, height * 0.04), 7, 5);
+        for (const boltX of [-width / 2 + 0.04, width / 2 - 0.04]) {
+          for (const boltY of [centerY - height / 2 + 0.04, centerY + height / 2 - 0.04]) {
+            const bolt = new THREE.Mesh(boltGeometry, boltMaterial);
+            bolt.position.set(boltX, boltY, boardDepth / 2 + 0.012);
+            sign.add(bolt);
+          }
+        }
+        return sign;
+      };
+
       // A real facade-mounted sign keeps the club identity attached to its building.
       const signCanvas = document.createElement("canvas");
       signCanvas.width = 640;
@@ -697,7 +959,7 @@ if (MAP) {
       const pinMaterial = new THREE.MeshStandardMaterial({ color: 0xc6ff3f, emissive: 0x455b0e, roughness: 0.4 });
       const markerGeometry = new THREE.SphereGeometry(0.105, 12, 9);
       const ringGeometry = new THREE.TorusGeometry(0.23, 0.022, 6, 24);
-      const addPin = (x, z, label, color = 0xc6ff3f, tagScale = 2.6, labelOffset = [0, 0]) => {
+      const addPin = (x, z, label, color = 0xc6ff3f, tagScale = 2.6, labelOffset = [0, 0], showBadge = true) => {
         const material = color === 0xc6ff3f ? pinMaterial : new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.16 });
         const stem = new THREE.Mesh(pinGeometry, material);
         stem.position.set(x, 0.34, z);
@@ -709,42 +971,126 @@ if (MAP) {
         ring.position.set(x, 0.045, z);
         ring.rotation.x = Math.PI / 2;
         mapWorld.add(ring);
+        if (!showBadge) return null;
         const badge = makeTextSprite(label, { scale: tagScale, border: `#${color.toString(16).padStart(6, "0")}` });
         badge.position.set(x + labelOffset[0], 1.08, z + labelOffset[1]);
         return badge;
       };
-      const vipSign = makeTextSprite("VIP", { scale: 0.92, fontSize: 56, border: "#c3a3d7", background: "rgba(35, 25, 42, .96)" });
-      vipSign.position.set(vipBakerySite.x - 0.42, 1.42, vipBakerySite.z + 0.12);
-      const stationSign = makeTextSprite("24H", { scale: 0.86, fontSize: 50, border: "#c3a3d7", background: "rgba(35, 25, 42, .96)" });
-      stationSign.position.set(petrolStationSite.x + 0.88, 1.34, petrolStationSite.z + 0.57);
-      const neginSign = makeTextSprite("NEGIN", { scale: 1.12, fontSize: 48, border: "#69aaa1", background: "rgba(18, 37, 37, .96)" });
-      neginSign.position.set(neginSite.x, 2.45, neginSite.z + 0.9);
+      addBuildingBillboard(club, {
+        title: "باشگاه بدنسازی بانوان",
+        subtitle: "باشگاه ام‌جی شیراز",
+        accent: "#c6ff3f",
+        monogram: "MG",
+        width: 1.12,
+        height: 0.52,
+        y: 3.4,
+        z: clubDepth / 2 + 0.045,
+        postBottom: clubHeight + 0.19,
+      });
+      addBuildingBillboard(vipBakery, {
+        title: "شیرینی VIP",
+        subtitle: "قنادی و کافه",
+        accent: "#d1a8e7",
+        monogram: "VIP",
+        width: 0.66,
+        height: 0.31,
+        y: 1.1,
+        z: 0.37,
+        postBottom: 0.82,
+      });
+      addBuildingBillboard(sportsComplex, {
+        title: "ورزشی احسان",
+        subtitle: "مجموعه ورزشی",
+        accent: "#84d874",
+        monogram: "ES",
+        width: 0.82,
+        height: 0.32,
+        y: 1.02,
+        z: 0.7,
+        yaw: -Math.PI / 2,
+        postBottom: 0.78,
+      });
+      addBuildingBillboard(petrolStation, {
+        title: "پمپ بنزین",
+        subtitle: "سوخت‌رسانی شبانه‌روزی",
+        accent: "#c3a3d7",
+        monogram: "24H",
+        width: 0.76,
+        height: 0.34,
+        x: 0.88,
+        y: 1.3,
+        z: 0.63,
+        yaw: -Math.PI / 2,
+        postBottom: 0.99,
+      });
+      addBuildingBillboard(neginComplex, {
+        title: "مجتمع تجاری نگین",
+        subtitle: "معالی‌آباد • شیراز",
+        accent: "#72c8bd",
+        monogram: "N",
+        width: 1.12,
+        height: 0.4,
+        y: 2.36,
+        z: 0.92,
+        yaw: -Math.PI / 2,
+        postBottom: 2.05,
+      });
       addPin(ehsanRoundaboutSite.x, ehsanRoundaboutSite.z, "میدان احسان", 0xf4a340, 2.15, [-1.15, 0.42]);
       addPin(pedestrianBridgeSite.x, pedestrianBridgeSite.z, "پل عابر • ۲۰م جنوب", 0xf4a340, 2.65, [-2.8, -0.32]);
-      addPin(petrolStationSite.x, petrolStationSite.z, "پمپ بنزین", 0xc3a3d7, 2.0, [0.6, 0.35]);
-      addPin(ehsanSportsSite.x, ehsanSportsSite.z, "ورزشی احسان", 0x84d874, 2.2, [-0.55, -0.65]);
-      addPin(vipBakerySite.x, vipBakerySite.z, "شیرینی VIP", 0xc3a3d7, 1.9, [3.0, -0.18]);
-      addPin(neginSite.x, neginSite.z, "مجتمع نگین", 0x69aaa1, 2.2, [-2.4, 0.55]);
-      addPin(4.55, 6.55, "معالی‌آباد", 0xf4a340, 2.15, [1.15, 0.25]);
+      addPin(petrolStationSite.x, petrolStationSite.z, "پمپ بنزین", 0xc3a3d7, 2.0, [0.6, 0.35], false);
+      addPin(ehsanSportsSite.x, ehsanSportsSite.z, "ورزشی احسان", 0x84d874, 2.2, [-0.55, -0.65], false);
+      addPin(vipBakerySite.x, vipBakerySite.z, "شیرینی VIP", 0xc3a3d7, 1.9, [3.0, -0.18], false);
+      addPin(neginSite.x, neginSite.z, "مجتمع نگین", 0x69aaa1, 2.2, [-2.4, 0.55], false);
+      addPin(maaliAbadSite.x, maaliAbadSite.z, "معالی‌آباد", 0xf4a340, 2.15, [1.15, 0.25]);
       addPin(7.05, 8.65, "فرهنگ‌شهر", 0xf4a340, 2.35);
-
       const roadLabelStyle = { background: "rgba(36, 48, 51, .94)", border: "#b7cbd0", foreground: "#eef2e8", fontSize: 34 };
       const roadLabels = [
         { text: "بلوار رجایی", x: 0.95, z: -4.25, scale: 1.8 },
         { text: "کوچه ۵۲", x: 5.25, z: -3.05, scale: 1.6 },
         { text: "خیابان پرستار", x: -2.75, z: 9.72, scale: 2.0 },
-        { text: "کنارگذر", x: 2.45, z: 7.1, scale: 1.8 },
+        { text: "خیابان معالی‌آباد", x: 2.45, z: 6.85, scale: 1.8 },
+        { text: "خیابان بهاران", x: 5.15, z: 1.9, scale: 1.6 },
       ];
       for (const label of roadLabels) {
         const sprite = makeTextSprite(label.text, { ...roadLabelStyle, scale: label.scale });
         sprite.position.set(label.x, 0.22, label.z);
       }
 
-      const target = new THREE.Vector3(-clubSite.x, 0.1, clubSite.z);
-      const defaultTheta = 2.25; // approach from Rajai Blvd so the club's street-facing facade is visible
-      const orbit = { theta: defaultTheta, phi: 0.94, radius: 33 };
+      const defaultTheta = 2.25; // reference view from Rajai Blvd, matching the supplied screenshot
+      const defaultPhi = 0.94;
+      const streetNavigator = createPolylineNavigator(streetTravelRoute.map(([x, z]) => [-x, z]));
+      const homeRoadStation = streetNavigator.closestStation([-clubSite.x, clubSite.z]);
+      const homeRoadPoint = streetNavigator.at(homeRoadStation).point;
+      const maxStreetOffsetUnits = Math.min(
+        LOCKED_STREET_LIMIT_UNITS,
+        homeRoadStation,
+        streetNavigator.length - homeRoadStation,
+      );
+      const homeTarget = new THREE.Vector3(-clubSite.x, 0.1, clubSite.z);
+      const target = homeTarget.clone();
+      const orbit = { theta: defaultTheta, phi: defaultPhi, radius: 33 };
+      let streetOffsetUnits = 0;
+      let angleLocked = true;
       let userAdjustedView = false;
-      const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+      const lockButton = toolbar.querySelector('[data-map-action="toggle-lock"]');
+      const modeLabel = toolbar.querySelector("[data-map-mode-label]");
+      const updateLockButton = () => {
+        lockButton.setAttribute("aria-pressed", String(angleLocked));
+        lockButton.setAttribute("aria-label", angleLocked
+          ? "زاویه قفل است؛ برای چرخش آزاد باز کنید"
+          : "قفل زاویه روی نمای مرجع");
+        lockButton.title = angleLocked ? "زاویه ثابت؛ حرکت در امتداد خیابان" : "قفل زاویه روی نمای مرجع";
+        modeLabel.textContent = angleLocked ? "زاویه ثابت · حرکت روی خیابان" : "چرخش آزاد";
+      };
+      const setStreetOffset = (offset) => {
+        streetOffsetUnits = clamp(offset, -maxStreetOffsetUnits, maxStreetOffsetUnits);
+        const roadPoint = streetNavigator.at(homeRoadStation + streetOffsetUnits).point;
+        target.copy(homeTarget).add(new THREE.Vector3(
+          roadPoint[0] - homeRoadPoint[0],
+          0,
+          roadPoint[1] - homeRoadPoint[1],
+        ));
+      };
       const updateCamera = () => {
         orbit.phi = clamp(orbit.phi, 0.42, 1.34);
         orbit.radius = clamp(orbit.radius, 18, 40);
@@ -761,7 +1107,8 @@ if (MAP) {
         camera.fov = narrow ? 50 : 34;
         if (!userAdjustedView) {
           orbit.radius = narrow ? 37 : 33;
-          target.set(-clubSite.x, 0.1, clubSite.z + (narrow ? 1.6 : 0));
+          homeTarget.set(-clubSite.x, 0.1, clubSite.z + (narrow ? 1.6 : 0));
+          setStreetOffset(0);
         }
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
@@ -798,8 +1145,28 @@ if (MAP) {
         const dx = event.clientX - pointer.x;
         const dy = event.clientY - pointer.y;
         pointer = { x: event.clientX, y: event.clientY };
-        orbit.theta -= dx * 0.006;
-        orbit.phi += dy * 0.0045;
+        if (angleLocked) {
+          const roadFrame = streetNavigator.at(homeRoadStation + streetOffsetUnits);
+          const streetTangent = new THREE.Vector3(roadFrame.tangent[0], 0, roadFrame.tangent[1]);
+          const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+          const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+          const axisScreenX = streetTangent.dot(cameraRight);
+          const axisScreenY = -streetTangent.dot(cameraUp);
+          const projectedAxisLength = Math.hypot(axisScreenX, axisScreenY);
+          const focalPixels = viewport.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
+          const pixelsPerWorldUnit = (focalPixels / orbit.radius) * projectedAxisLength;
+          setStreetOffset(offsetFromStreetDrag({
+            currentOffsetUnits: streetOffsetUnits,
+            deltaX: dx,
+            deltaY: dy,
+            axisScreenX,
+            axisScreenY,
+            pixelsPerWorldUnit,
+          }));
+        } else {
+          orbit.theta -= dx * 0.006;
+          orbit.phi += dy * 0.0045;
+        }
         userAdjustedView = true;
         updateCamera();
         renderer.render(scene, camera);
@@ -817,10 +1184,16 @@ if (MAP) {
       }, { passive: false });
       canvas.addEventListener("keydown", (event) => {
         const step = event.shiftKey ? 0.14 : 0.08;
-        if (event.key === "ArrowLeft") orbit.theta += step;
-        else if (event.key === "ArrowRight") orbit.theta -= step;
-        else if (event.key === "ArrowUp") orbit.phi = clamp(orbit.phi - step, 0.42, 1.34);
-        else if (event.key === "ArrowDown") orbit.phi = clamp(orbit.phi + step, 0.42, 1.34);
+        if (angleLocked && event.key === "ArrowUp") setStreetOffset(streetOffsetUnits - step * 2);
+        else if (angleLocked && event.key === "ArrowDown") setStreetOffset(streetOffsetUnits + step * 2);
+        else if (angleLocked && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
+          event.preventDefault();
+          return;
+        }
+        else if (!angleLocked && event.key === "ArrowLeft") orbit.theta += step;
+        else if (!angleLocked && event.key === "ArrowRight") orbit.theta -= step;
+        else if (!angleLocked && event.key === "ArrowUp") orbit.phi = clamp(orbit.phi - step, 0.42, 1.34);
+        else if (!angleLocked && event.key === "ArrowDown") orbit.phi = clamp(orbit.phi + step, 0.42, 1.34);
         else if (event.key === "+" || event.key === "=") orbit.radius *= 0.92;
         else if (event.key === "-") orbit.radius *= 1.08;
         else return;
@@ -832,10 +1205,13 @@ if (MAP) {
 
       const reset = () => {
         const narrow = viewport.clientWidth / Math.max(1, viewport.clientHeight) < 0.82;
-        target.set(-clubSite.x, 0.1, clubSite.z + (narrow ? 1.6 : 0));
+        homeTarget.set(-clubSite.x, 0.1, clubSite.z + (narrow ? 1.6 : 0));
+        setStreetOffset(0);
         orbit.theta = defaultTheta;
-        orbit.phi = 0.94;
+        orbit.phi = defaultPhi;
         userAdjustedView = false;
+        angleLocked = true;
+        updateLockButton();
         orbit.radius = narrow ? 37 : 33;
         updateCamera();
         renderer.render(scene, camera);
@@ -844,8 +1220,21 @@ if (MAP) {
         const button = event.target.closest("[data-map-action]");
         if (!button) return;
         const action = button.dataset.mapAction;
+        if (action === "toggle-lock") {
+          angleLocked = !angleLocked;
+          if (angleLocked) {
+            orbit.theta = defaultTheta;
+            orbit.phi = defaultPhi;
+          }
+          updateLockButton();
+          userAdjustedView = true;
+          updateCamera();
+          renderer.render(scene, camera);
+          return;
+        }
         if (action === "focus") {
-          target.set(-clubSite.x, 0.8, clubSite.z);
+          homeTarget.set(-clubSite.x, 0.8, clubSite.z);
+          setStreetOffset(0);
           orbit.radius = 22;
         } else if (action === "zoom-in") orbit.radius *= 0.84;
         else if (action === "zoom-out") orbit.radius *= 1.19;
@@ -856,6 +1245,7 @@ if (MAP) {
       });
 
       MAP.classList.add("is-ready");
+      updateLockButton();
       toolbar.hidden = false;
       if (status) {
         status.hidden = true;

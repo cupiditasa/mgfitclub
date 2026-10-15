@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261014-location-detail-v17";
+const CACHE_NAME = "mg-fitclub-v20261015-ehsan-junction-v27";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -9,7 +9,7 @@ const APP_SHELL = [
   "./workout-domain.js",
   "./workouts.css?v=20261005",
   "./",
-  "./styles.css?v=20261014-location-detail-v17",
+  "./styles.css?v=20261015-map-directions-v27",
   "./account.html",
   "./dashboard-switch.js?v=20261008",
   "./dashboard-switch.css?v=20261008",
@@ -71,7 +71,10 @@ const APP_SHELL = [
   "./assets/education/mg-anatomy-character.png",
   "./assets/vendor/three/three.module.js",
   "./assets/vendor/three/examples/jsm/environments/RoomEnvironment.js",
-  "./assets/location-scene.js?v=20261014-location-detail-v17",
+  "./assets/location-scene.js?v=20261015-ehsan-junction-v27",
+  "./assets/map-directions.js?v=20261015-mg-directions-v27",
+  "./assets/map-pan.mjs",
+  "./assets/location-scene-layout.mjs",
   "./assets/images/location-map.webp",
 ];
 self.addEventListener("install", (event) => {

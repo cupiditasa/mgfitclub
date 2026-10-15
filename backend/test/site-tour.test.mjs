@@ -37,7 +37,7 @@ test('site tour explains key public destinations with skippable, accessible cont
 
 test('service worker refreshes its shell cache and includes the versioned tour assets', () => {
   const worker = read('sw.js');
-  assert.match(worker, /mg-fitclub-v20261014-location-detail-v15/);
+  assert.match(worker, /mg-fitclub-v20261015-ehsan-junction-v27/);
   assert.match(worker, /site-tour\.css\?v=20261011-first-visit/);
   assert.match(worker, /site-tour\.js\?v=20261011-first-visit/);
   assert.match(worker, /panel-tour\.css\?v=20261012-role-tours-v1/);

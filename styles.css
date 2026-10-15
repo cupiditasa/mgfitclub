@@ -1838,6 +1838,11 @@ img {
   outline: none;
 }
 
+.map__controls button[aria-pressed="true"] {
+  color: #10140f;
+  background: var(--acid);
+}
+
 .map__controls button svg {
   width: 18px;
   height: 18px;
@@ -1911,11 +1916,206 @@ img {
   text-decoration: none;
 }
 
+.map--real figcaption .map__directions-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  flex: 0 0 auto;
+  padding: 0;
+  color: var(--acid);
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: .7rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .map--real figcaption a:hover,
-.map--real figcaption a:focus-visible {
+.map--real figcaption a:focus-visible,
+.map--real figcaption .map__directions-trigger:hover,
+.map--real figcaption .map__directions-trigger:focus-visible {
   color: var(--white);
   text-decoration: underline;
   text-underline-offset: .2em;
+}
+
+.map__directions-trigger:focus-visible,
+.map-directions :focus-visible {
+  outline: 2px solid var(--acid);
+  outline-offset: 3px;
+}
+
+.map-directions {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: min(32rem, calc(100vw - 2rem));
+  max-width: none;
+  max-height: min(90vh, 42rem);
+  overflow: auto;
+  padding: 1.35rem;
+  color: #f2f5ed;
+  background: #111710;
+  border: 1px solid rgba(198, 255, 63, .38);
+  border-radius: 20px;
+  box-shadow: 0 24px 90px rgba(0, 0, 0, .54);
+  direction: rtl;
+}
+
+.map-directions::backdrop {
+  background: rgba(3, 6, 4, .76);
+  backdrop-filter: blur(6px);
+}
+
+.map-directions__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.map-directions__eyebrow,
+.map-directions__destination > span {
+  color: var(--acid);
+  font-size: .74rem;
+  font-weight: 700;
+}
+
+.map-directions__close {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  color: #e8eee1;
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.map-directions__close svg,
+.map-directions__choice > svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.map-directions h3 {
+  margin: .65rem 0 .4rem;
+  color: #fff;
+  font-size: 1.3rem;
+}
+
+.map-directions > p:not(.map-directions__status) {
+  margin: 0;
+  color: #c6cec0;
+  font-size: .88rem;
+  line-height: 1.9;
+}
+
+.map-directions__choices {
+  display: grid;
+  gap: .65rem;
+  margin-top: 1.1rem;
+}
+
+.map-directions__choice {
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 20px;
+  align-items: center;
+  gap: .75rem;
+  padding: .8rem .9rem;
+  color: #f3f6ef;
+  background: rgba(255, 255, 255, .045);
+  border: 1px solid rgba(226, 240, 218, .16);
+  border-radius: 13px;
+  text-decoration: none;
+  transition: background-color .16s ease, border-color .16s ease;
+}
+
+.map-directions__choice:hover,
+.map-directions__choice:focus-visible {
+  color: #fff;
+  background: rgba(198, 255, 63, .09);
+  border-color: rgba(198, 255, 63, .65);
+}
+
+.map-directions__choice > svg {
+  color: var(--acid);
+}
+
+.map-directions__choice span:nth-child(2) {
+  display: grid;
+  gap: .18rem;
+}
+
+.map-directions__choice b {
+  font-size: .94rem;
+}
+
+.map-directions__choice small {
+  color: #c2cbbb;
+  font-size: .72rem;
+  line-height: 1.6;
+}
+
+.map-directions__arrow {
+  color: var(--acid);
+  font-size: 1.1rem;
+}
+
+.map-directions__destination {
+  display: grid;
+  gap: .55rem;
+  margin-top: .9rem;
+  padding: .9rem;
+  background: rgba(0, 0, 0, .18);
+  border: 1px solid rgba(226, 240, 218, .12);
+  border-radius: 13px;
+}
+
+.map-directions__destination p {
+  margin: 0;
+  color: #f3f6ef;
+  font-size: .82rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.map-directions__destination button {
+  min-height: 44px;
+  justify-self: start;
+  padding: .55rem .9rem;
+  color: #12170e;
+  background: var(--acid);
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.map-directions__status {
+  margin: .65rem 0 0;
+  color: var(--acid);
+  font-size: .78rem;
+  line-height: 1.7;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-directions__choice,
+  .map__directions-trigger {
+    transition: none;
+  }
 }
 
 .map__grid {
@@ -2828,6 +3028,7 @@ img {
     top: .65rem;
     right: .65rem;
     left: .65rem;
+    flex-wrap: wrap;
     align-items: flex-start;
   }
 
