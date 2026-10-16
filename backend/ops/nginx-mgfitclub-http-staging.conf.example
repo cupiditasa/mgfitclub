@@ -29,6 +29,30 @@ server {
         deny all;
     }
 
+    # Revalidate HTML so releases appear immediately; long cache is for assets.
+    location ~* \.html?$ {
+        expires -1;
+        try_files $uri =404;
+    }
+
+    # Compress text assets; binary images/models are cached but not recompressed.
+    # Install deploy/nginx/mgfitclub-cache-map.conf under /etc/nginx/conf.d/;
+    # its policy is one year for ?v= URLs and one week otherwise.
+    location ~* \.(?:css|js|mjs|json|svg)$ {
+        default_type application/javascript;
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_types text/css application/javascript text/javascript application/json image/svg+xml;
+        expires $mgfitclub_static_expires;
+        try_files $uri =404;
+    }
+
+    location ~* \.(?:avif|gif|jpe?g|png|webp|ico|woff2?|ttf|otf|glb)$ {
+        expires $mgfitclub_static_expires;
+        try_files $uri =404;
+    }
+
     location / {
         try_files $uri $uri/ =404;
     }
