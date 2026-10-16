@@ -256,6 +256,18 @@ test('education planner defers 3D startup and pauses its animation loop outside 
  assert.match(html,/document\.addEventListener\('visibilitychange'/,'hidden tabs suspend the draw loop and pending 3D startup');
 });
 
+test('anatomy mode renders the visible GLB without advancing the hidden procedural doll',()=>{
+ const frameStart=html.indexOf('  frame(now,poseU,exercise,playing){');
+ const frameEnd=html.indexOf('\n  handWorld(',frameStart);
+ assert.ok(frameStart>=0&&frameEnd>frameStart,'the shared education renderer frame loop is present');
+ const frame=html.slice(frameStart,frameEnd);
+ const cameraAt=frame.indexOf('const c=this.cam,g=this.camGoal');
+ const anatomyAt=frame.indexOf('if(this.anatomyMode){');
+ const dollPoseAt=frame.indexOf('this.applyPose(');
+ assert.ok(cameraAt>=0&&cameraAt<anatomyAt&&anatomyAt<dollPoseAt,'camera movement remains live before hidden-doll work is skipped');
+ assert.match(frame.slice(anatomyAt,dollPoseAt),/this\.updateAnatomyHotspots\(\);\s*this\.renderer\.render\(this\.scene,this\.camera\);\s*return;/);
+});
+
 test('optimized medical anatomy asset retains all selectable meshes and parses with the bundled Meshopt decoder',async()=>{
  const original=fs.readFileSync(new URL('../../assets/education/mg-male-anatomy.glb',import.meta.url));
  const optimized=fs.readFileSync(new URL('../../assets/education/mg-male-anatomy-web-v1.glb',import.meta.url));

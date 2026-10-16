@@ -111,7 +111,10 @@ test('effort expressions blend smoothly and stay within visual bounds', () => {
 
 test('animated doll details stay rigged and the mobile model uses a lighter geometry profile', () => {
   assert.match(html, /const compact3D=matchMedia\('\(max-width: 720px\), \(pointer: coarse\)'\)/);
-  assert.match(html, /R\.setPixelRatio\(Math\.min\(devicePixelRatio,compact3D\?1\.5:2\)\)/);
+  assert.match(html, /new THREE\.WebGLRenderer\(\{canvas,antialias:!compact3D,alpha:true,powerPreference:compact3D\?'low-power':'high-performance'\}\)/);
+  assert.match(html, /R\.setPixelRatio\(Math\.min\(devicePixelRatio,compact3D\?1\.1:2\)\)/);
+  assert.match(html, /R\.shadowMap\.enabled=!compact3D/);
+  assert.match(html, /key\.castShadow=!compact3D/);
   assert.match(html, /key\.shadow\.mapSize\.set\(compact3D\?512:1024,compact3D\?512:1024\)/);
   assert.match(html, /const compact3D=this\.compact3D/);
   assert.match(html, /parent\.add\(m\);return m/);
@@ -134,7 +137,7 @@ test('animated doll details stay rigged and the mobile model uses a lighter geom
   assert.match(html, /dput\(cap\(\.0015,\.042,sneakerTreadM\),\[-\.023,-\.116,\.075\+i\*\.020\],\[\.023,-\.116,\.075\+i\*\.020\],ag\)/);
   assert.match(html, /sneakerSoleM/);
   assert.match(html, /doll-character-math\.mjs\?v=20261013-doll-hand-v1/);
-  assert.match(serviceWorker, /mg-fitclub-v20261016-doll-detail-v28/);
+  assert.match(serviceWorker, /mg-fitclub-v20261016-mobile-webgl-v29/);
   assert.match(serviceWorker, /doll-character-math\.mjs\?v=20261013-doll-hand-v1/);
 });
 

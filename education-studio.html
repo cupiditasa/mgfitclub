@@ -1089,11 +1089,11 @@ class Studio{
     canvas.title='برای چرخش از کلیدهای جهت‌نما، برای زوم از + و - و برای بازگشت از Home استفاده کنید.';
     canvas.setAttribute('aria-label','مدل سه‌بعدی تعاملی مربی ورزشی؛ برای چرخاندن مدل بکشید و حرکت را از فهرست انتخاب کنید.');
     this.canvas=canvas; this.view=view;
-    const R=this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'});
-    R.setPixelRatio(Math.min(devicePixelRatio,compact3D?1.5:2));
+    const R=this.renderer=new THREE.WebGLRenderer({canvas,antialias:!compact3D,alpha:true,powerPreference:compact3D?'low-power':'high-performance'});
+    R.setPixelRatio(Math.min(devicePixelRatio,compact3D?1.1:2));
     R.outputColorSpace=THREE.SRGBColorSpace;
     R.toneMapping=THREE.ACESFilmicToneMapping; R.toneMappingExposure=1.06;
-    R.shadowMap.enabled=true; R.shadowMap.type=THREE.PCFSoftShadowMap;
+    R.shadowMap.enabled=!compact3D; R.shadowMap.type=THREE.PCFSoftShadowMap;
     const sc=this.scene=new THREE.Scene();
     const cam=this.camera=new THREE.PerspectiveCamera(37,1,.1,60);
     this.target=new THREE.Vector3(0,1.02,0);
@@ -1102,7 +1102,7 @@ class Studio{
     /* نورها */
     sc.add(new THREE.HemisphereLight(0xa8dcc9,0x141f1c,.44));
     const key=new THREE.DirectionalLight(0xfff0da,1.62);
-    key.position.set(1.7,5.3,2.3); key.castShadow=true;
+    key.position.set(1.7,5.3,2.3); key.castShadow=!compact3D;
     key.shadow.mapSize.set(compact3D?512:1024,compact3D?512:1024); key.shadow.camera.near=.5; key.shadow.camera.far=12;
     key.shadow.camera.left=-2.6; key.shadow.camera.right=2.6; key.shadow.camera.top=3.4; key.shadow.camera.bottom=-1;
     key.shadow.bias=-.0006; key.shadow.radius=5; sc.add(key);
@@ -2015,6 +2015,21 @@ async ensureAnatomy(){
     this._lastFrameNow=frameNow;
     const time=frameNow/1000;
     const ambientMotion=REDUCED?0:1;
+    this.pts.rotation.y=time*.02*ambientMotion;
+    this.pts.position.y=Math.sin(time*.6)*.04*ambientMotion;
+    this.ring.material.opacity=.55+Math.sin(time*2.2)*.3*ambientMotion;
+    /* دوربین برای هر دو مدل به‌روز می‌شود؛ مدل پنهان نباید در هر فریم شبیه‌سازی شود. */
+    const c=this.cam,g=this.camGoal;
+    const cameraEase=1-Math.exp(-5.65*delta);
+    c.yaw+=(g.yaw-c.yaw)*cameraEase; c.pitch+=(g.pitch-c.pitch)*cameraEase; c.dist+=(g.dist-c.dist)*cameraEase;
+    const cp=this.camera.position;
+    cp.set(Math.sin(c.yaw)*Math.cos(c.pitch),Math.sin(c.pitch),Math.cos(c.yaw)*Math.cos(c.pitch)).multiplyScalar(c.dist).add(this.target);
+    this.camera.lookAt(this.target);
+    if(this.anatomyMode){
+      this.updateAnatomyHotspots();
+      this.renderer.render(this.scene,this.camera);
+      return;
+    }
     this.root.rotation.y=Math.sin(time*.5)*.015*ambientMotion;
     let p,vel=0;
     if(exercise&&POSES[exercise]){
@@ -2030,18 +2045,6 @@ async ensureAnatomy(){
     if(exercise==='squat')this.ikSquatGrip();
     /* عضله‌ها */
     this.updateMuscles(time,exercise,delta);
-    /* ذرات */
-    this.pts.rotation.y=time*.02*ambientMotion;
-    this.pts.position.y=Math.sin(time*.6)*.04*ambientMotion;
-    this.ring.material.opacity=.55+Math.sin(time*2.2)*.3*ambientMotion;
-    /* دوربین */
-    const c=this.cam,g=this.camGoal;
-    const cameraEase=1-Math.exp(-5.65*delta);
-    c.yaw+=(g.yaw-c.yaw)*cameraEase; c.pitch+=(g.pitch-c.pitch)*cameraEase; c.dist+=(g.dist-c.dist)*cameraEase;
-    const cp=this.camera.position;
-    cp.set(Math.sin(c.yaw)*Math.cos(c.pitch),Math.sin(c.pitch),Math.cos(c.yaw)*Math.cos(c.pitch)).multiplyScalar(c.dist).add(this.target);
-    this.camera.lookAt(this.target);
-    this.updateAnatomyHotspots();
     /* برچسب‌ها */
     this.updateLabels(exercise);
     this.renderer.render(this.scene,this.camera);
