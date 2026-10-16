@@ -52,7 +52,7 @@ test('3D map keeps the approved bridge-over-circle orientation and restores land
   assert.match(scene, /addBuildingBillboard\(vipBakery,\s*\{/);
   assert.match(scene, /let angleLocked = true/);
   assert.match(scene, /LOCKED_STREET_LIMIT_UNITS/);
-  assert.match(serviceWorker, /mg-fitclub-v20261015-ehsan-junction-v27/);
+  assert.match(serviceWorker, /mg-fitclub-v20261016-doll-detail-v28/);
   assert.match(serviceWorker, /location-scene\.js\?v=20261015-ehsan-junction-v27/);
   assert.match(serviceWorker, /assets\/map-directions\.js\?v=20261015-mg-directions-v27/);
   assert.match(serviceWorker, /\.\/assets\/location-scene-layout\.mjs/);

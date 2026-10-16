@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { CatmullRomCurve3, LatheGeometry, TubeGeometry, Vector2, Vector3 } from '../../assets/vendor/three/three.module.js';
+import { CatmullRomCurve3, LatheGeometry, TorusGeometry, TubeGeometry, Vector2, Vector3 } from '../../assets/vendor/three/three.module.js';
 import { blinkEnvelope, dollEyeClosure, dollCameraKeyboardInput, dollIdleMotion, dollBreathingMotion, dollGazeMotion, dollHeadCounterTilt, dollGripMotion, dollThumbOpposition, dollEffortMotion } from '../../assets/education/doll-character-math.mjs';
 
 const html = fs.readFileSync(new URL('../../education-studio.html', import.meta.url), 'utf8');
@@ -130,11 +130,11 @@ test('animated doll details stay rigged and the mobile model uses a lighter geom
   assert.match(html, /toeCap=sph\(\.024,sneakerSoleM\)/);
   assert.match(html, /const shoeTongue=sph\(\.018,sneakerM\)/);
   assert.match(html, /new T\.TorusGeometry\(\.021,\.0018,6,28\),fabricTrimM/);
-  assert.match(html, /dput\(cap\(\.0011,\.018,sportAccentM\),\[-\.014,-\.050,laceZ\],\[\.014,-\.050,laceZ\+\.009\],ag\)/);
+  assert.match(html, /dput\(cap\(\.0011,\.018,sportAccentM\),\[-\.014,-\.058,laceZ\],\[\.014,-\.058,laceZ\+\.009\],ag\)/);
   assert.match(html, /dput\(cap\(\.0015,\.042,sneakerTreadM\),\[-\.023,-\.116,\.075\+i\*\.020\],\[\.023,-\.116,\.075\+i\*\.020\],ag\)/);
   assert.match(html, /sneakerSoleM/);
   assert.match(html, /doll-character-math\.mjs\?v=20261013-doll-hand-v1/);
-  assert.match(serviceWorker, /mg-fitclub-v20261015-ehsan-junction-v27/);
+  assert.match(serviceWorker, /mg-fitclub-v20261016-doll-detail-v28/);
   assert.match(serviceWorker, /doll-character-math\.mjs\?v=20261013-doll-hand-v1/);
 });
 
@@ -323,6 +323,79 @@ test('stage 12 elbow bridge fully covers the forearm entry without swallowing th
  assert.ok(elbowShellRadius>=forearmEntryRadius,'elbow shell reaches beyond the widest forearm entry to prevent a visible joint gap');
  assert.ok(elbowShellRadius>=upperArmEndRadius,'elbow shell overlaps the upper-arm terminal ring');
  assert.ok(elbowTrimOuterRadius<elbowShellRadius,'the metallic trim stays inset instead of protruding beyond the soft joint shell');
+});
+
+test('stage 13 adds a symmetric neckline stitch that stays on the front collar arc',()=>{
+ assert.match(html,/const collarTopstitchProfile=\[\[-\.052,\.205,\.045\],\[-\.034,\.198,\.078\],\[0,\.193,\.084\],\[\.034,\.198,\.078\],\[\.052,\.205,\.045\]\]/);
+ assert.match(html,/clothSeam\(collarTopstitchProfile,chestG,stitchM,\.0008\)/);
+ const points=[[-.052,.205,.045],[-.034,.198,.078],[0,.193,.084],[.034,.198,.078],[.052,.205,.045]];
+ const seam=new TubeGeometry(new CatmullRomCurve3(points.map(point=>new Vector3(...point))),25,.0008,5,false);
+ seam.computeBoundingBox();
+ assert.ok([...seam.attributes.position.array].every(Number.isFinite),'neckline stitch vertices stay finite');
+ assert.ok(Math.abs(seam.boundingBox.min.x+seam.boundingBox.max.x)<1e-6,'neckline stitch is mirrored around the centerline');
+ assert.ok(seam.boundingBox.min.z>.043&&seam.boundingBox.max.z<.086,'the stitch remains on the front neckline instead of crossing the back of the neck');
+ assert.ok(seam.boundingBox.min.y>.190&&seam.boundingBox.max.y<.207,'the seam stays within the collar-to-shirt transition');
+ seam.dispose();
+});
+
+test('stage 14 shoulder yoke seams mirror and track the fitted shirt shell',()=>{
+ assert.match(html,/const shoulderYokeProfile=\[\[\.038,\.190,\.083\],\[\.068,\.178,\.080\],\[\.103,\.157,\.060\],\[\.132,\.130,\.034\]\]/);
+ assert.match(html,/shoulderYokeProfile\.map\(\(\[x,y,z\]\)=>\[x\*side,y,z\]\)/);
+ const path=[[.038,.190,.083],[.068,.178,.080],[.103,.157,.060],[.132,.130,.034]];
+ const shellRadii=[.092,.105,.119,.136];
+ for(let i=0;i<path.length;i++)assert.ok(Math.abs(Math.hypot(path[i][0],path[i][2])-shellRadii[i])<.002,'yoke points stay on the shirt profile');
+ const boxes=[];
+ for(const side of [-1,1]){
+  const points=path.map(([x,y,z])=>[x*side,y,z]);
+  const seam=new TubeGeometry(new CatmullRomCurve3(points.map(point=>new Vector3(...point))),20,.0009,5,false);
+  seam.computeBoundingBox();
+  assert.ok([...seam.attributes.position.array].every(Number.isFinite),'yoke vertices stay finite');
+  assert.ok(seam.boundingBox.min.z>.03&&seam.boundingBox.max.z<.09,'yoke remains on the visible front shoulder shell');
+  boxes.push(seam.boundingBox.clone());seam.dispose();
+ }
+ assert.ok(Math.abs(boxes[0].min.x+boxes[1].max.x)<1e-6&&Math.abs(boxes[0].max.x+boxes[1].min.x)<1e-6,'left and right yokes remain symmetric');
+});
+
+test('stage 15 adds paired shorts drawcords below the shirt hem without exceeding the waistband',()=>{
+ assert.match(html,/const shortsDrawcordProfile=\[\[\.006,\.016,\.156\],\[\.010,-\.010,\.157\],\[\.009,-\.045,\.154\]\]/);
+ assert.match(html,/shortsDrawcordProfile\.map\(\(\[x,y,z\]\)=>\[x\*side,y,z\]\),hips,sportAccentM,\.0012\)/);
+ const path=[[.006,.016,.156],[.010,-.010,.157],[.009,-.045,.154]],boxes=[];
+ for(const side of [-1,1]){
+  const points=path.map(([x,y,z])=>[x*side,y,z]);
+  const cord=new TubeGeometry(new CatmullRomCurve3(points.map(point=>new Vector3(...point))),10,.0012,5,false);
+  cord.computeBoundingBox();
+  assert.ok([...cord.attributes.position.array].every(Number.isFinite),'drawcord vertices stay finite');
+  assert.ok(cord.boundingBox.max.y<.018&&cord.boundingBox.min.y>-.05,'cord hangs just below the shirt hem and above the short-leg hem');
+  boxes.push(cord.boundingBox.clone());cord.dispose();
+ }
+ assert.ok(Math.abs(boxes[0].min.x+boxes[1].max.x)<1e-6&&Math.abs(boxes[0].max.x+boxes[1].min.x)<1e-6,'drawcords remain symmetric on the shorts front');
+});
+
+test('stage 16 aligns sneaker eyelets, laces, and tongue with the upper shell',()=>{
+ assert.match(html,/shoeTongue\.position\.set\(0,-\.058,\.087\)/);
+ assert.match(html,/dput\(cap\(\.0011,\.018,sportAccentM\),\[-\.014,-\.058,laceZ\],\[\.014,-\.058,laceZ\+\.009\],ag\)/);
+ assert.match(html,/for\(const eyeletSide of \[-1,1\]\)for\(let i=0;i<3;i\+\+\)\{\s*const eyelet=new T\.Mesh\(new T\.TorusGeometry\(\.0022,\.00055,5,12\),gearTrimM\);\s*eyelet\.position\.set\(eyeletSide\*\.014,-\.058,\.070\+i\*\.016\);ag\.add\(eyelet\)/);
+ const ring=new TorusGeometry(.0022,.00055,5,12);ring.computeBoundingBox();
+ assert.ok([...ring.attributes.position.array].every(Number.isFinite),'eyelet ring vertices stay finite');
+ assert.ok(Math.abs(ring.boundingBox.max.x-.00275)<1e-6,'eyelet has a compact, bounded outer radius');
+ const upperHalfX=.043*1.20,upperHalfY=.043*.54,upperHalfZ=.043*1.82;
+ for(const side of [-1,1])for(let i=0;i<3;i++){
+  const x=side*.014,y=-.058,z=.070+i*.016;
+  const shellDistance=(x/upperHalfX)**2+((y+.078)/upperHalfY)**2+((z-.101)/upperHalfZ)**2;
+  assert.ok(shellDistance<1.05,'eyelet centers remain on or just above the shoe upper surface');
+ }
+ ring.dispose();
+});
+
+test('stage 17 heel tab overlaps its counter and sole piping follows the sidewall',()=>{
+ assert.match(html,/const heelTab=sph\(\.008,sportAccentM\);heelTab\.scale\.set\(\.72,1\.15,\.24\);heelTab\.position\.set\(0,-\.066,\.032\);ag\.add\(heelTab\)/);
+ assert.match(html,/dput\(cap\(\.0016,\.064,sportAccentM\),\[soleSide\*\.045,-\.105,\.068\],\[soleSide\*\.045,-\.105,\.132\],ag\)/);
+ const heelRear=.045-.022*.54,tabFront=.032+.008*.24;
+ assert.ok(tabFront>heelRear&&tabFront-heelRear<.001,'reflective tab intersects the heel counter instead of floating behind it');
+ const soleHalfX=.041*1.22,soleHalfZ=.041*1.78;
+ const sidewallRadius=Math.hypot(.045/soleHalfX,.032/soleHalfZ);
+ assert.ok(Math.abs(sidewallRadius-1)<.002,'side stripe centerline follows the sole perimeter within 0.2%');
+ assert.ok(Math.abs(Math.hypot(.045,.064)-.0782)<.001,'sole stripe has a stable measured segment length');
 });
 
 test('training doll uses restrained fitted clothing with fabric detail and rigged separate shorts', () => {

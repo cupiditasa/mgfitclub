@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261015-ehsan-junction-v27";
+const CACHE_NAME = "mg-fitclub-v20261016-doll-detail-v28";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
