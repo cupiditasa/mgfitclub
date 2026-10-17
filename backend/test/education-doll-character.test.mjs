@@ -134,7 +134,7 @@ test('animated doll details stay rigged and the mobile model uses a lighter geom
   assert.match(html, /const shoeTongue=sph\(\.018,sneakerM\)/);
   assert.match(html, /new T\.TorusGeometry\(\.021,\.0018,6,28\),fabricTrimM/);
   assert.match(html, /dput\(cap\(\.0011,\.018,sportAccentM\),\[-\.014,-\.058,laceZ\],\[\.014,-\.058,laceZ\+\.009\],ag\)/);
-  assert.match(html, /dput\(cap\(\.0015,\.042,sneakerTreadM\),\[-\.023,-\.116,\.075\+i\*\.020\],\[\.023,-\.116,\.075\+i\*\.020\],ag\)/);
+  assert.match(html, /for\(let i=0;i<5;i\+\+\)dput\(cap\(\.0015,\.042,sneakerTreadM\),\[-\.023,-\.116,\.067\+i\*\.016\],\[\.023,-\.116,\.067\+i\*\.016\],ag\)/);
   assert.match(html, /sneakerSoleM/);
   assert.match(html, /doll-character-math\.mjs\?v=20261013-doll-hand-v1/);
   assert.match(serviceWorker, /mg-fitclub-v20261016-mobile-webgl-v29/);
@@ -401,11 +401,98 @@ test('stage 17 heel tab overlaps its counter and sole piping follows the sidewal
  assert.ok(Math.abs(Math.hypot(.045,.064)-.0782)<.001,'sole stripe has a stable measured segment length');
 });
 
+test('stage 18 lifts the neutral training fabric enough to separate the doll from the dark stage',()=>{
+ assert.match(html,/fabricM=phy\(0x4b514b,\.98,0\)/);
+ const baseline=[0x34,0x3a,0x37],updated=[0x4b,0x51,0x4b];
+ assert.ok(updated.every((channel,index)=>channel-baseline[index]>=20),'each neutral channel rises by at least twenty sRGB code values');
+ assert.ok(Math.max(...updated)-Math.min(...updated)<=8,'the charcoal stays neutral rather than becoming a colored garment');
+});
+
+test('stage 19 adds five evenly spaced outsole ribs fully inside the sneaker sole footprint',()=>{
+ assert.match(html,/for\(let i=0;i<5;i\+\+\)dput\(cap\(\.0015,\.042,sneakerTreadM\),\[-\.023,-\.116,\.067\+i\*\.016\],\[\.023,-\.116,\.067\+i\*\.016\],ag\)/);
+ const ribs=Array.from({length:5},(_,index)=>.067+index*.016),soleCenter=.100,soleHalfDepth=.041*1.78;
+ assert.equal(ribs.length,5);
+ assert.ok(Math.abs((ribs[1]-ribs[0])-.016)<1e-9,'tread spacing remains uniform');
+ assert.ok(ribs[0]>.100-soleHalfDepth&&ribs.at(-1)<.100+soleHalfDepth,'all ribs lie within the outsole depth');
+});
+
+test('stage 20 shirt hem topstitch follows the shell and stays mirrored on its front',()=>{
+ assert.match(html,/const shirtHemTopstitchProfile=\[\[-\.110,-\.320,\.088\],\[-\.075,-\.320,\.119\],\[0,-\.320,\.141\],\[\.075,-\.320,\.119\],\[\.110,-\.320,\.088\]\]/);
+ assert.match(html,/clothSeam\(shirtHemTopstitchProfile,chestG,stitchM,\.00065\)/);
+ const points=[[-.110,.088],[-.075,.119],[0,.141],[.075,.119],[.110,.088]];
+ for(const [x,z] of points)assert.ok(Math.abs(Math.hypot(x,z)-.1414)<.0015,'stitch centerline tracks the lower shirt profile');
+ for(let i=0;i<points.length;i++)assert.ok(Math.abs(points[i][0]+points.at(-1-i)[0])<1e-9&&Math.abs(points[i][1]-points.at(-1-i)[1])<1e-9,'stitch path is mirrored across the front centerline');
+});
+
+test('stage 21 shorts cuff has a second stitch ring seated on the fitted leg shell',()=>{
+ assert.match(html,/const shortsHemTopstitch=new T\.Mesh\(new T\.TorusGeometry\(\.0991,\.00065,5,36\),stitchM\)/);
+ assert.match(html,/shortsHemTopstitch\.position\.set\(0,-\.251,\.004\);shortsHemTopstitch\.scale\.z=1\.03/);
+ const cuffRadius=.0991,profileAtCuff=.100+(-.251+.235)*((.098-.100)/(-.270+.235));
+ assert.ok(Math.abs(cuffRadius-profileAtCuff)<.001,'stitch ring radius matches the shorts profile at its height');
+ assert.ok(-.251>-.266&&Math.abs(-.251-(-.266))<.02,'topstitch stays a restrained inset above the binding ring');
+});
+
+test('stage 22 drawcord tips are paired, rounded, and remain within the shorts waist region',()=>{
+ assert.match(html,/for\(const side of \[-1,1\]\)\{const cordTip=sph\(\.0024,sportAccentM\);cordTip\.scale\.set\(\.85,1\.15,\.85\);cordTip\.position\.set\(side\*\.009,-\.045,\.154\);hips\.add\(cordTip\);\}/);
+ const tips=[-1,1].map(side=>[side*.009,-.045,.154]);
+ assert.equal(Math.hypot(tips[0][0]+tips[1][0],tips[0][1]-tips[1][1],tips[0][2]-tips[1][2]),0,'the two aglets mirror exactly');
+ assert.ok(tips.every(([,y])=>y>-.106&&y<.132),'aglets remain between the shorts hem and waist seam');
+});
+
+test('stage 24 ankle socks cover the joint and overlap the sneaker collar without extending onto the forefoot',()=>{
+ assert.match(html,/const ankleSockProfile=\[\[\.019,-\.060\],\[\.024,-\.054\],\[\.025,-\.020\],\[\.023,\.006\]\]/);
+ assert.match(html,/new T\.Mesh\(ankleSockGeometry,fabricM\);ankleSock\.castShadow=true;ankleSock\.receiveShadow=true;ag\.add\(ankleSock\)/);
+ assert.match(html,/new T\.TorusGeometry\(\.0235,\.0012,6,28\),fabricTrimM/);
+ const [soleTop, sockBottom, sockTop, jointRadius]=[-.061,-.060,.006,.0255];
+ assert.ok(sockBottom<=soleTop+.002,'sock overlaps the shoe collar to avoid a bare gap');
+ assert.ok(sockTop<jointRadius,'sock ends below the ankle-joint crown');
+ assert.ok(.0235<jointRadius,'cuff stays inside the ankle silhouette');
+});
+
+test('stage 25 mirrored back yokes follow the shirt shell opposite the front shoulder seams',()=>{
+ assert.match(html,/const shoulderBackYokeProfile=\[\[\.038,\.190,\.083\],\[\.068,\.178,\.080\],\[\.103,\.157,\.060\],\[\.132,\.130,\.034\]\]/);
+ assert.match(html,/shoulderBackYokeProfile\.map\(\(\[x,y,z\]\)=>\[x\*side,y,-z\]\),chestG,fabricTrimM,\.00075\)/);
+ const path=[[.038,.190,.083],[.068,.178,.080],[.103,.157,.060],[.132,.130,.034]];
+ const shellRadii=[.092,.105,.119,.136];
+ for(let i=0;i<path.length;i++)assert.ok(Math.abs(Math.hypot(path[i][0],path[i][2])-shellRadii[i])<.002,'back seam points stay on the fitted shell');
+ assert.ok(path.every(([,y,z])=>y>0&&z>0),'the mirrored seam lies on the back-facing upper shirt, not the front');
+});
+
+test('stage 26 sleeve cuff topstitch matches the sleeve shell at the cuff height',()=>{
+ assert.match(html,/new T\.TorusGeometry\(\.0482,\.00065,5,28\),stitchM/);
+ assert.match(html,/sleeveTopstitch\.position\.set\(0,-\.136,0\);arm\.sg\.add\(sleeveTopstitch\)/);
+ const profile=[[-.153,.043],[-.139,.048],[-.104,.050]],y=-.136;
+ const radius=profile[1][1]+((y-profile[1][0])/(profile[2][0]-profile[1][0]))*(profile[2][1]-profile[1][1]);
+ assert.ok(Math.abs(radius-.0482)<.001,'topstitch follows the conical short-sleeve cuff');
+ assert.ok(Math.abs(-.136-(-.148))<.02,'topstitch remains adjacent to the bound sleeve edge');
+});
+
+test('stage 27 each sneaker gets a centered lime tongue bar seated on the tongue face',()=>{
+ assert.match(html,/shoeAccentM=phy\(0xb8e63f,\.72,\.02\)/);
+ assert.match(html,/dput\(cap\(\.0010,\.010,shoeAccentM\),\[-\.0055,-\.058,\.108\],\[\.0055,-\.058,\.108\],ag\)/);
+ const tongueCenterZ=.087,tongueHalfDepth=.018*1.25,lineZ=.108,lineHalfWidth=.0055,tongueHalfWidth=.018*.72;
+ const faceAtEdge=tongueCenterZ+tongueHalfDepth*Math.sqrt(1-(lineHalfWidth/tongueHalfWidth)**2);
+ assert.ok(Math.abs(lineZ-faceAtEdge)<.0015,'bar follows the curved tongue face instead of floating in front');
+ assert.ok(lineHalfWidth<tongueHalfWidth,'bar stays within the tongue side edges');
+});
+
+test('stage 28 mirrored socks reuse one valid LatheGeometry instead of allocating two copies',()=>{
+ assert.match(html,/const ankleSockGeometry=new T\.LatheGeometry\(ankleSockProfile\.map\(\(\[radius,y\]\)=>new T\.Vector2\(radius,y\)\),24\)/);
+ assert.match(html,/new T\.Mesh\(ankleSockGeometry,fabricM\);ankleSock\.castShadow=true;ankleSock\.receiveShadow=true;ag\.add\(ankleSock\)/);
+ assert.match(html,/this\.legL=mkLeg\(-1\); this\.legR=mkLeg\(1\)/);
+ assert.equal((html.match(/const ankleSockGeometry=new T\.LatheGeometry/g)||[]).length,1,'one buffer geometry is allocated and reused by both legs');
+ const profile=[[.019,-.060],[.024,-.054],[.025,-.020],[.023,.006]];
+ const geometry=new LatheGeometry(profile.map(([radius,y])=>new Vector2(radius,y)),24);geometry.computeBoundingBox();
+ assert.ok(Math.abs(geometry.boundingBox.min.x+.025)<1e-6&&Math.abs(geometry.boundingBox.max.x-.025)<1e-6,'shared sock geometry keeps the measured ankle width');
+ assert.ok(Math.abs(geometry.boundingBox.min.y+.060)<1e-6&&Math.abs(geometry.boundingBox.max.y-.006)<1e-6,'shared sock geometry retains its joint-to-collar coverage');
+ geometry.dispose();
+});
+
 test('training doll uses restrained fitted clothing with fabric detail and rigged separate shorts', () => {
   assert.match(html, /const trainingTop=clothLathe\(/);
   assert.match(html, /fabricM\.bumpMap=weaveTexture/);
   assert.match(html, /weaveCanvas\.width=weaveCanvas\.height=128/);
-  assert.match(html, /fabricM=phy\(0x343a37,\.98,0\)/);
+  assert.match(html, /fabricM=phy\(0x4b514b,\.98,0\)/);
   assert.match(html, /weaveTexture\.repeat\.set\(4,3\);fabricM\.bumpMap=weaveTexture;fabricM\.roughnessMap=weaveTexture;fabricM\.bumpScale=\.00065/);
   assert.match(html, /clothSeam\(\[\[side\*\.148,-\.280/);
   assert.match(html, /const trainingShorts=clothLathe\(/);

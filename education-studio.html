@@ -1474,10 +1474,11 @@ async ensureAnatomy(){
       if(i%8===0){weaveCtx.fillStyle='rgba(255,255,255,.045)';weaveCtx.fillRect(i,0,1,128);}
     }
      const hairM=phy(0x241b26,.50,.32),
-        fabricM=phy(0x343a37,.98,0), fabricTrimM=phy(0x505a52,.94,0),
+        /* Stage 18: lift the charcoal kit slightly so its silhouette reads on the dark mobile stage. */
+        fabricM=phy(0x4b514b,.98,0), fabricTrimM=phy(0x505a52,.94,0),
         stitchM=phy(0x778276,.96,0), gearTrimM=phy(0x71827c,.42,.42),
         braM=bodySkin, dark=phy(0x2a2430,.4),
-        hairAccentM=phy(0x4b414a,.36,.24), sportAccentM=phy(0x777d71,.76,.02),
+        hairAccentM=phy(0x4b414a,.36,.24), sportAccentM=phy(0x777d71,.76,.02), shoeAccentM=phy(0xb8e63f,.72,.02),
         sneakerM=phy(0x202832,.34,.28), sneakerSoleM=phy(0xd4d9d1,.45,.12),
         sneakerTreadM=phy(0x69716c,.95,0);
     const weaveTexture=new T.CanvasTexture(weaveCanvas);weaveTexture.wrapS=weaveTexture.wrapT=T.RepeatWrapping;
@@ -1721,6 +1722,9 @@ async ensureAnatomy(){
     };
     this.armL=mkArm(-1); this.armR=mkArm(1);
     /* ---------- پاها با پای برهنهٔ آناتومیک ---------- */
+    /* Stage 28: both ankle socks share one light profile geometry on mobile and desktop. */
+    const ankleSockProfile=[[.019,-.060],[.024,-.054],[.025,-.020],[.023,.006]];
+    const ankleSockGeometry=new T.LatheGeometry(ankleSockProfile.map(([radius,y])=>new T.Vector2(radius,y)),24);
     const mkLeg=(side)=>{
       const tg=new T.Group(); tg.position.set(.104*side,-.02,0); hips.add(tg);dputParent=tg;
       const thigh=lathe([[.086,.02],[.080,-.14],[.064,-.30],[.048,-.48]],thighM); tg.add(thigh); R[side<0?'thighL':'thighR']=thigh;
@@ -1769,6 +1773,10 @@ async ensureAnatomy(){
       const ankJ=sph(.0255,shinM); ankJ.scale.set(1,1.05,.92); ankJ.position.set(0,-.008,0); ag.add(ankJ);
       const fbody=cap(.0290,.115,footSkin); fbody.rotation.x=1.35; fbody.scale.set(1.05,.72,.96); fbody.position.set(0,-.073,.030); ag.add(fbody);
       const fore=sph(.0285,footSkin); fore.scale.set(1.45,.58,1.15); fore.position.set(0,-.083,.098); ag.add(fore);
+      /* Stage 24: a short ribbed ankle sock bridges the joint cleanly into the sneaker collar. */
+      const ankleSock=new T.Mesh(ankleSockGeometry,fabricM);ankleSock.castShadow=true;ankleSock.receiveShadow=true;ag.add(ankleSock);
+      const sockCuff=new T.Mesh(new T.TorusGeometry(.0235,.0012,6,28),fabricTrimM);
+      sockCuff.rotation.x=Math.PI/2;sockCuff.position.set(0,-.015,0);ag.add(sockCuff);
       for(const s of [-1,1]){const ank=sph(.014,footSkin); ank.position.set(.030*s,-.045,-.005); ag.add(ank);}
       {const pad=sph(.024,footSkin); pad.scale.set(1,.65,1.15); pad.position.set(0,-.062,-.042); ag.add(pad);}   /* بالشتک پاشنه */
       for(let i=0;i<4;i++) dput(cap(.0058,.045,skinD),[( -.021+i*.014),-.072,.060],[(-.021+i*.014),-.090,.125]); /* تاندون‌های روی پا */
@@ -1787,6 +1795,8 @@ async ensureAnatomy(){
        /* Stage 17: a small reflective heel tab overlaps the counter shell without becoming a hard badge. */
        const heelTab=sph(.008,sportAccentM);heelTab.scale.set(.72,1.15,.24);heelTab.position.set(0,-.066,.032);ag.add(heelTab);
        const shoeTongue=sph(.018,sneakerM);shoeTongue.scale.set(.72,.20,1.25);shoeTongue.position.set(0,-.058,.087);ag.add(shoeTongue);
+       /* Stage 27: a short lime tongue bar adds a legible brand-color cue on each shoe. */
+       dput(cap(.0010,.010,shoeAccentM),[-.0055,-.058,.108],[.0055,-.058,.108],ag);
        const shoeCollar=new T.Mesh(new T.TorusGeometry(.021,.0018,6,28),fabricTrimM);
        shoeCollar.position.set(0,-.061,.041);shoeCollar.scale.set(1.08,.86,1);ag.add(shoeCollar);
        for(let i=0;i<3;i++){
@@ -1799,7 +1809,8 @@ async ensureAnatomy(){
          const eyelet=new T.Mesh(new T.TorusGeometry(.0022,.00055,5,12),gearTrimM);
          eyelet.position.set(eyeletSide*.014,-.058,.070+i*.016);ag.add(eyelet);
        }
-       for(let i=0;i<3;i++)dput(cap(.0015,.042,sneakerTreadM),[-.023,-.116,.075+i*.020],[.023,-.116,.075+i*.020],ag);
+       /* Stage 19: five close outsole ribs span the forefoot without leaving the foam sole. */
+       for(let i=0;i<5;i++)dput(cap(.0015,.042,sneakerTreadM),[-.023,-.116,.067+i*.016],[.023,-.116,.067+i*.016],ag);
        /* Stage 17: a restrained sidewall stripe follows the visible boundary of the foam sole. */
        for(const soleSide of [-1,1])dput(cap(.0016,.064,sportAccentM),[soleSide*.045,-.105,.068],[soleSide*.045,-.105,.132],ag);
        return {tg,kg,ag,side};
@@ -1816,6 +1827,9 @@ async ensureAnatomy(){
     clothSeam(collarTopstitchProfile,chestG,stitchM,.0008);
     const topHem=new T.Mesh(new T.TorusGeometry(.133,.0018,6,48),fabricTrimM);
     topHem.rotation.x=Math.PI/2;topHem.position.set(0,-.342,0);topHem.scale.z=.98;chestG.add(topHem);
+    /* Stage 20: a short mirrored topstitch follows the fitted shirt shell above its lower binding. */
+    const shirtHemTopstitchProfile=[[-.110,-.320,.088],[-.075,-.320,.119],[0,-.320,.141],[.075,-.320,.119],[.110,-.320,.088]];
+    clothSeam(shirtHemTopstitchProfile,chestG,stitchM,.00065);
     for(const side of [-1,1]){
       clothSeam([[side*.148,-.280,.066],[side*.145,-.200,.038],[side*.128,-.105,.055],[side*.140,.030,.072],[side*.070,.180,.084]],chestG,fabricTrimM,.0010);
       clothSeam([[side*.148,-.270,.018],[side*.127,-.080,.018],[side*.141,.095,.018]],chestG,stitchM,.00075);
@@ -1823,6 +1837,9 @@ async ensureAnatomy(){
     /* Stage 14: paired shoulder yoke seams follow the shirt shell from collar to sleeve cap. */
     const shoulderYokeProfile=[[.038,.190,.083],[.068,.178,.080],[.103,.157,.060],[.132,.130,.034]];
     for(const side of [-1,1])clothSeam(shoulderYokeProfile.map(([x,y,z])=>[x*side,y,z]),chestG,fabricTrimM,.0009);
+    /* Stage 25: mirrored back yoke seams complete the shirt construction around the shoulders. */
+    const shoulderBackYokeProfile=[[.038,.190,.083],[.068,.178,.080],[.103,.157,.060],[.132,.130,.034]];
+    for(const side of [-1,1])clothSeam(shoulderBackYokeProfile.map(([x,y,z])=>[x*side,y,-z]),chestG,fabricTrimM,.00075);
     const brandCanvas=document.createElement('canvas');brandCanvas.width=128;brandCanvas.height=64;
     const brandCtx=brandCanvas.getContext('2d');brandCtx.fillStyle='rgba(210,216,210,.74)';brandCtx.font='700 44px Arial,sans-serif';
     brandCtx.textAlign='center';brandCtx.textBaseline='middle';brandCtx.fillText('MG',64,33);
@@ -1837,12 +1854,17 @@ async ensureAnatomy(){
     /* Stage 15: twin soft drawcords add a readable athletic-kit detail below the shirt hem. */
     const shortsDrawcordProfile=[[.006,.016,.156],[.010,-.010,.157],[.009,-.045,.154]];
     for(const side of [-1,1])clothSeam(shortsDrawcordProfile.map(([x,y,z])=>[x*side,y,z]),hips,sportAccentM,.0012);
+    /* Stage 22: small rounded aglets finish both drawcord ends without extending their hang. */
+    for(const side of [-1,1]){const cordTip=sph(.0024,sportAccentM);cordTip.scale.set(.85,1.15,.85);cordTip.position.set(side*.009,-.045,.154);hips.add(cordTip);}
     this.trainingShorts=[];
     for(const leg of [this.legL,this.legR]){
       const shortsLeg=clothLathe([[.086,.018],[.095,.004],[.103,-.030],[.105,-.075],[.104,-.130],[.102,-.185],[.100,-.235],[.098,-.270]],fabricM,32);
       shortsLeg.scale.set(1,1,1.03);shortsLeg.position.z=.004;leg.tg.add(shortsLeg);this.trainingShorts.push(shortsLeg);
       const shortsHem=new T.Mesh(new T.TorusGeometry(.098,.0018,6,36),fabricTrimM);
       shortsHem.rotation.x=Math.PI/2;shortsHem.position.set(0,-.266,.004);shortsHem.scale.z=1.03;leg.tg.add(shortsHem);
+      /* Stage 21: a fine second stitch follows the short-leg cuff, inset from its bound edge. */
+      const shortsHemTopstitch=new T.Mesh(new T.TorusGeometry(.0991,.00065,5,36),stitchM);
+      shortsHemTopstitch.rotation.x=Math.PI/2;shortsHemTopstitch.position.set(0,-.251,.004);shortsHemTopstitch.scale.z=1.03;leg.tg.add(shortsHemTopstitch);
       clothSeam([[0,.008,.091],[0,-.080,.097],[0,-.175,.093],[0,-.260,.090]],leg.tg,stitchM,.0008);
       clothSeam([[leg.side*.072,.008,.065],[leg.side*.086,-.105,.046],[leg.side*.082,-.260,.030]],leg.tg,fabricTrimM,.0010);
     }
@@ -1850,6 +1872,9 @@ async ensureAnatomy(){
       const sleeve=clothLathe([[.043,-.153],[.048,-.139],[.050,-.104],[.050,-.067],[.047,-.034]],fabricM,28);arm.sg.add(sleeve);
       const sleeveHem=new T.Mesh(new T.TorusGeometry(.044,.0016,6,28),fabricTrimM);
       sleeveHem.rotation.x=Math.PI/2;sleeveHem.position.set(0,-.148,0);arm.sg.add(sleeveHem);
+      /* Stage 26: a fine parallel stitch sits directly on the short-sleeve cuff profile. */
+      const sleeveTopstitch=new T.Mesh(new T.TorusGeometry(.0482,.00065,5,28),stitchM);
+      sleeveTopstitch.rotation.x=Math.PI/2;sleeveTopstitch.position.set(0,-.136,0);arm.sg.add(sleeveTopstitch);
       clothSeam([[0,-.038,.046],[0,-.090,.050],[0,-.140,.046]],arm.sg,stitchM,.00075);
     }
        const muscleMaterials=new Map();
