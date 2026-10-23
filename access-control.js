@@ -1,7 +1,18 @@
 (() => {
   const routes = { athlete: "dashboard.html", coach: "coach-dashboard.html", manager: "admin.html", admin: "admin.html", secretary: "secretary.html", support: "support.html" };
   const page = location.pathname.split("/").pop();
-  const center = page === "access-center.html";
+  const center = page === "access-center.html" || Boolean(document.querySelector("#access-app"));
+  const findLocalPageLink = (file) => {
+    const expected = new URL(file, location.href);
+    return Array.from(document.querySelectorAll("a")).find(link => {
+      const raw = link.getAttribute?.("href") || link.href || "";
+      if (!raw) return false;
+      try {
+        const target = new URL(raw, location.href);
+        return target.origin === expected.origin && target.pathname === expected.pathname;
+      } catch { return false; }
+    }) || null;
+  };
   const style = document.createElement("style");
   style.textContent = `
     #mg-access-lock{position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;padding:20px;background:#080d08bb;backdrop-filter:blur(18px);direction:rtl;color:#f1f4ef;font-family:Tahoma,sans-serif;visibility:visible}
@@ -12,7 +23,10 @@
     #mg-access-lock a.secondary{background:#ffffff10;color:#edf4e7;border:1px solid #ffffff30}
     #mg-network-notice{position:fixed;top:12px;left:12px;right:12px;z-index:2147483645;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border:1px solid #e7bd58;border-radius:14px;background:#332a17f2;color:#fff4d2;box-shadow:0 8px 30px #0007;direction:rtl;font:14px/1.8 Tahoma,sans-serif}
     #mg-network-notice button{font:inherit;font-weight:700;padding:8px 14px;border:0;border-radius:10px;background:#c6ff3f;color:#142008;cursor:pointer}
-    .mg-account-link,.mg-device-link,.mg-bridge-link{position:fixed;left:14px;bottom:16px;z-index:99999;background:#162015e8;color:#d4ff8d;border:1px solid #8ba95a;padding:10px 14px;border-radius:30px;font:12px Tahoma;text-decoration:none;backdrop-filter:blur(12px)}
+    .mg-account-link,.mg-device-link,.mg-bridge-link{position:fixed;left:max(14px,env(safe-area-inset-left,0px));z-index:99999;background:#162015e8;color:#d4ff8d;border:1px solid #8ba95a;padding:9px 13px;min-height:40px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border-radius:30px;font:12px/1.45 Tahoma;text-decoration:none;backdrop-filter:blur(12px);max-width:calc(100vw - 28px)}
+    .mg-account-link{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+    .mg-device-link{bottom:calc(144px + env(safe-area-inset-bottom,0px))}
+    .mg-bridge-link{bottom:calc(200px + env(safe-area-inset-bottom,0px))}
   `;
   document.head.appendChild(style);
   const hidden = new Map();
@@ -78,26 +92,22 @@
       unlock();
       document.body.dataset.role = user.role;
       window.MGCurrentUser = user;
-      if (["support", "manager", "secretary"].includes(user.role) && !document.querySelector('.mg-bridge-link')) {
-        const bridgeLink = document.createElement('a'); bridgeLink.href = 'club-attendance.html'; bridgeLink.textContent = 'تردد و دانلود رابط MG'; bridgeLink.className = 'mg-bridge-link'; bridgeLink.style.bottom = '128px'; document.body.append(bridgeLink);
+      if (["support", "manager", "secretary"].includes(user.role) && !center && page !== "club-attendance.html" && !findLocalPageLink("club-attendance.html") && !document.querySelector('.mg-bridge-link')) {
+        const bridgeLink = document.createElement('a'); bridgeLink.href = 'club-attendance.html'; bridgeLink.textContent = 'تردد و دانلود رابط MG'; bridgeLink.className = 'mg-bridge-link'; document.body.append(bridgeLink);
       }
-      let deviceLink = document.querySelector('.mg-device-link');
-      if (!deviceLink) {
+      let deviceLink = center
+        ? document.querySelector('a[href="device-verification.html"]')
+        : document.querySelector('.mg-device-link') || findLocalPageLink("device-verification.html");
+      if (!deviceLink && !center && page !== "device-verification.html") {
         deviceLink = document.createElement('a'); deviceLink.href = 'device-verification.html'; deviceLink.className = 'mg-device-link';
-        deviceLink.style.cssText = 'bottom:72px;max-width:calc(100vw - 56px);font-size:12px';
         deviceLink.textContent = 'تأیید دستگاه تردد'; document.body.appendChild(deviceLink);
       }
-      Promise.resolve().then(() => MGApi.request('/api/device-verification/me', typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? {signal:AbortSignal.timeout(10000)} : {})).then(data => {
+      if (deviceLink) Promise.resolve().then(() => MGApi.request('/api/device-verification/me', typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? {signal:AbortSignal.timeout(10000)} : {})).then(data => {
         const verified=data.registrations.filter(r=>r.state==='verified');
         deviceLink.textContent=(verified.length?'✓ ':data.registrations.some(r=>r.state==='pending')?'⏳ ':'')+'تأیید دستگاه تردد';
         deviceLink.title=verified.length?'تأییدشده در: '+verified.map(r=>r.clubName).join('، '):'بررسی وضعیت و ثبت درخواست';
-      }).catch(()=>{deviceLink.textContent='تأیید دستگاه تردد';deviceLink.title='وضعیت قابل دریافت نیست؛ برای بررسی باز کنید.'}).finally(()=>{
-        return MGApi.request('/api/mg-bridge/mine',typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? {signal:AbortSignal.timeout(10000)} : {}).then(data=>{
-          deviceLink.href='club-attendance.html';
-          if(data.registrations?.length){deviceLink.textContent='✓ اتصال دستگاه تردد';deviceLink.title=data.registrations.map(r=>r.club_name+' / '+r.member_id).join('، ')}
-        }).catch(()=>{});
-      });
-      if (!center && page !== "support.html" && !document.querySelector(".mg-account-link")) {
+      }).catch(()=>{deviceLink.textContent='تأیید دستگاه تردد';deviceLink.title='وضعیت قابل دریافت نیست؛ برای بررسی باز کنید.'});
+      if (!center && page !== "support.html" && !findLocalPageLink("access-center.html") && !document.querySelector(".mg-account-link")) {
         const link = document.createElement("a"); link.href = "access-center.html"; link.className = "mg-account-link";
         link.textContent = user.role === "manager" ? "کاربران و درخواست‌های تأیید" : "مشخصات و نقش من"; document.body.appendChild(link);
       }

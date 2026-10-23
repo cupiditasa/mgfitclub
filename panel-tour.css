@@ -2,7 +2,7 @@
   position: fixed;
   z-index: 2147481800;
   inset-inline-start: 18px;
-  bottom: max(18px, env(safe-area-inset-bottom));
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   display: inline-flex;
   min-height: 46px;
   align-items: center;

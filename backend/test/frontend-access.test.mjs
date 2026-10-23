@@ -5,6 +5,9 @@ import vm from "node:vm";
 
 const frontendRoot = fs.existsSync(new URL("../../current/access-control.js", import.meta.url)) ? new URL("../../current/", import.meta.url) : new URL("../../", import.meta.url);
 const source = fs.readFileSync(new URL("access-control.js", frontendRoot), "utf8");
+const accountSource = fs.readFileSync(new URL("account.html", frontendRoot), "utf8");
+const dashboardSwitchCss = fs.readFileSync(new URL("dashboard-switch.css", frontendRoot), "utf8");
+const panelTourCss = fs.readFileSync(new URL("panel-tour.css", frontendRoot), "utf8");
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
 function guardBrowser(path, getUser, stored = {}) {
@@ -38,8 +41,8 @@ function guardBrowser(path, getUser, stored = {}) {
     setItem(key, value) { local.set(key, String(value)); },
     removeItem(key) { local.delete(key); },
   };
-  const context = vm.createContext({ document, Date, localStorage,
-    location: { pathname: "/" + path, search: "?demo=coach", replace(url) { this.redirect = url; } },
+  const context = vm.createContext({ document, Date, URL, localStorage,
+    location: { href: "https://mgfitclub.ir/" + path, origin: "https://mgfitclub.ir", pathname: "/" + path, search: "?demo=coach", replace(url) { this.redirect = url; } },
     MGApi: { restoreSession: getUser, recentVerifiedUser: async () => null, request: async () => ({ profile: {} }), logout: async () => {} },
     CustomEvent: class { constructor(type, data) { this.type = type; this.detail = data.detail; } },
     addEventListener(type, listener) { listeners[type] = listener; }, dispatchEvent: event => events.push(event),
@@ -139,6 +142,30 @@ test("pending or wrong-role cached user cannot open a protected dashboard offlin
   assert.ok(wrongRole.document.getElementById("mg-access-lock"));
 });
 
+test("a valid saved session from the public login page routes by server role without logging out", () => {
+  const restore = accountSource.match(/const restore = async \(\) => \{([\s\S]*?)\n\s*\};/)?.[1];
+  assert.ok(restore, "the account page must keep its restore-session path");
+  assert.match(restore, /window\.MGApi\.restoreSession\(\)/);
+  assert.match(restore, /location\.replace\(postLoginPath\(user\.role\)\)/);
+  assert.doesNotMatch(restore, /!isStaffPortal\s*&&\s*user\.role\s*!==\s*"athlete"/);
+});
+
+test("device verification is one action per panel and fixed controls do not share positions", () => {
+  assert.match(source, /let deviceLink = center\s*\?\s*document\.querySelector\('a\[href="device-verification\.html"\]'\)/);
+  assert.match(source, /page === "access-center\.html" \|\| Boolean\(document\.querySelector\("#access-app"\)\)/);
+  assert.match(source, /findLocalPageLink\("device-verification\.html"\)/);
+  assert.match(source, /findLocalPageLink\("access-center\.html"\)/);
+  assert.match(source, /!deviceLink && !center && page !== "device-verification\.html"/);
+  assert.doesNotMatch(source, /deviceLink\.href\s*=\s*'club-attendance\.html'/);
+  assert.match(source, /!center && page !== "club-attendance\.html"/);
+  assert.match(source, /\.mg-device-link\{bottom:calc\(144px/);
+  assert.match(source, /\.mg-bridge-link\{bottom:calc\(200px/);
+  assert.match(dashboardSwitchCss, /bottom:112px/);
+  assert.match(dashboardSwitchCss, /bottom:calc\(142px \+ env\(safe-area-inset-bottom/);
+  assert.match(panelTourCss, /inset-inline-start: 18px/);
+  assert.match(panelTourCss, /bottom: calc\(18px \+ env\(safe-area-inset-bottom/);
+});
+
 test("a previously validated page remains open and offers recovery after the connection drops", async () => {
   let attempts = 0;
   const b = guardBrowser("coach-dashboard.html", async () => {
@@ -158,7 +185,7 @@ test("all protected HTML pages load the guard version and begin cloaked; inline 
     const html = fs.readFileSync(new URL(file, root), "utf8");
     if (html.includes("mg-api.js") && file !== "account.html") {
       assert.ok(html.includes('id="mg-access-cloak"'), file);
-      assert.ok(/mg-api\.js\?v=20261012-role-tours-v1/.test(html), file);
+      assert.ok(/mg-api\.js\?v=20261023-session-controls-v1/.test(html), file);
     }
     for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
       if (/type=["'](?:application\/(?:ld\+)?json|module)/.test(match[1]) || !match[2].trim()) continue;

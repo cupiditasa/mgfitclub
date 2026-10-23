@@ -1,4 +1,4 @@
-const CACHE_NAME = "mg-fitclub-v20261016-mobile-webgl-v29";
+const CACHE_NAME = "mg-fitclub-v20261023-session-controls-v1";
 const APP_SHELL = [
   "./nutrition.html",
   "./nutrition-builder.html",
@@ -11,16 +11,16 @@ const APP_SHELL = [
   "./",
   "./styles.css?v=20261015-map-directions-v27",
   "./account.html",
-  "./dashboard-switch.js?v=20261008",
-  "./dashboard-switch.css?v=20261008",
-  "./mg-api.js?v=20261012-role-tours-v1",
+  "./dashboard-switch.js?v=20261023-session-controls-v1",
+  "./dashboard-switch.css?v=20261023-session-controls-v1",
+  "./mg-api.js?v=20261023-session-controls-v1",
   "./mg-global-theme.css?v=20261012-studio-contrast",
   "./mg-global-theme.js?v=20261012-studio-contrast",
   "./site-tour.css?v=20261011-first-visit",
   "./site-tour.js?v=20261011-first-visit",
-  "./panel-tour.css?v=20261012-role-tours-v1",
+  "./panel-tour.css?v=20261023-session-controls-v1",
   "./panel-tour.js?v=20261012-role-tours-v1",
-  "./access-control.js?v=20261010-athlete-api-outage",
+  "./access-control.js?v=20261023-session-controls-v1",
   "./device-verification.html",
   "./device-verification.js?v=20260928",
   "./access-center.html",

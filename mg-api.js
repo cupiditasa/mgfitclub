@@ -78,7 +78,7 @@
     if (!document.querySelector("link[data-mg-panel-tour]")) {
       const tourCss = document.createElement("link");
       tourCss.rel = "stylesheet";
-      tourCss.href = "panel-tour.css?v=20261012-role-tours-v1";
+      tourCss.href = "panel-tour.css?v=20261023-session-controls-v1";
       tourCss.dataset.mgPanelTour = "true";
       document.head.appendChild(tourCss);
     }
@@ -262,7 +262,7 @@
   const page = location.pathname?.split("/").pop();
   if (page && page !== "account.html" && !/^\/staff\/login\/?$/.test(String(location.pathname || ""))) {
     const guard = document.createElement("script");
-    guard.src = "access-control.js?v=20261010-athlete-api-outage";
+    guard.src = "access-control.js?v=20261023-session-controls-v1";
     guard.onerror = () => {
       document.getElementById("mg-access-cloak")?.remove();
       document.body.replaceChildren(document.createTextNode("بررسی دسترسی ممکن نشد؛ اتصال اینترنت را بررسی و صفحه را دوباره بارگذاری کنید."));

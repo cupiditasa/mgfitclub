@@ -14,7 +14,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="apple-touch-icon" href="assets/brand/mg-mark-acid.webp" />
     <script>window.MG_API_BASE = location.hostname === "staff.mgfitclub.ir" ? "https://api.mgfitclub.ir" : "/api/api01";</script>
-    <script src="mg-api.js?v=20261012-role-tours-v1"></script>
+    <script src="mg-api.js?v=20261023-session-controls-v1"></script>
     <title>ورود | MG FitClub</title>
     <style>
       @font-face {
@@ -277,7 +277,6 @@
     <script>
       (() => {
         const API = window.MG_API_BASE || (location.hostname === "staff.mgfitclub.ir" ? "https://api.mgfitclub.ir" : "/api/api01"),
-          STAFF_LOGIN_URL = "https://mgfitclub.ir/staff/login",
           isStaffPortal = String(location.hostname || "").toLowerCase() === "staff.mgfitclub.ir" || /^\/staff\/login\/?$/.test(String(location.pathname || "")),
           $ = (id) => document.getElementById(id),
           target = $("target"),
@@ -414,11 +413,6 @@
           try {
             const user = await window.MGApi.restoreSession();
             if (user) {
-              if (!isStaffPortal && user.role !== "athlete") {
-                await window.MGApi.logout();
-                location.replace(STAFF_LOGIN_URL);
-                return;
-              }
               if (isStaffPortal && user.role === "athlete") {
                 await window.MGApi.logout();
                 location.replace("https://mgfitclub.ir/account.html");

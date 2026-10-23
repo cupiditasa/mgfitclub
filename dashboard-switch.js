@@ -19,7 +19,7 @@
 
   const style = document.createElement("link");
   style.rel = "stylesheet";
-  style.href = new URL("dashboard-switch.css?v=20261008", document.currentScript.src).href;
+  style.href = new URL("dashboard-switch.css?v=20261023-session-controls-v1", document.currentScript.src).href;
   document.head.append(style);
 
   const root = document.createElement("div");
